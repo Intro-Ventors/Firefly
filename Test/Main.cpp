@@ -1,8 +1,10 @@
 #include <iostream>
 
+#include "RCHAC/Core/Instance.hpp"
+
 int main()
 {
-	std::cout << "Hello World!\n";
+	RCHAC::Instance mInstance(true);
 
 	return 0;
 }

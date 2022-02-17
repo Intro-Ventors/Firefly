@@ -21,6 +21,7 @@ project "Test"
 	includedirs {
 		"%{wks.location}/Include",
 		"%{wks.location}/Tests",
+		"%{IncludeDirectories.Vulkan}",
 	}
 
 	libdirs {

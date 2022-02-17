@@ -13,6 +13,14 @@ workspace "RCHAC"
 
 	VulkanSDKPath = path.translate(os.getenv("VULKAN_SDK"))
 
+	if os.host() == "windows" then
+		LibraryDirectories["Vulkan"] = VulkanSDKPath .. "/Lib/"
+		IncludeDirectories["Vulkan"] = VulkanSDKPath .. "/Include/"
+	else
+		LibraryDirectories["Vulkan"] = VulkanSDKPath .. "/lib/"
+		IncludeDirectories["Vulkan"] = VulkanSDKPath .. "/include/"
+	end
+
 	Binaries["Vulkan"] = "vulkan-1"
 
 	filter "configurations:Debug"
@@ -27,13 +35,9 @@ workspace "RCHAC"
 
 	filter "system:windows"
 		defines { "RCHAC_PLATFORM_WINDOWS" }
-		LibraryDirectories["Vulkan"] = VulkanSDKPath .. "/Lib/"
-		IncludeDirectories["Vulkan"] = VulkanSDKPath .. "/Include/"
 
 	filter "system:linux"
 		defines { "RCHAC_PLATFORM_LINUX" }
-		LibraryDirectories["Vulkan"] = VulkanSDKPath .. "/lib/"
-		IncludeDirectories["Vulkan"] = VulkanSDKPath .. "/include/"
 
 	filter ""
 

@@ -352,8 +352,11 @@ MigrationBackup/
 # Don't include the .sln files and .vcxproj files.
 **.sln
 **.vcxproj
-**.vcxproj.filter
+**.vcxproj.filters
 **.vcxproj.user
 
 # Don't include the build files.
 /Builds
+
+# Don't include the Vulkan logs.
+Test/VulkanGeneralOutput.txt
