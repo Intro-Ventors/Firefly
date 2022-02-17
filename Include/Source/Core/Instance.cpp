@@ -1,5 +1,8 @@
 #include "RCHAC/Core/Instance.hpp"
 
+#include "RCHAC/Encoder/Encoder.hpp"
+#include "RCHAC/Decoder/Decoder.hpp"
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -141,5 +144,20 @@ namespace RCHAC
 
 		// Destroy the Vulkan instance.
 		vkDestroyInstance(m_vInstance, nullptr);
+	}
+
+	std::shared_ptr<Instance> Instance::create(bool enableValidation)
+	{
+		return std::make_shared<Instance>(enableValidation);
+	}
+
+	std::shared_ptr<Engine> Instance::createEncoder()
+	{
+		return std::make_shared<Encoder>(shared_from_this());
+	}
+
+	std::shared_ptr<Engine> Instance::createDecoder()
+	{
+		return std::make_shared<Decoder>(shared_from_this());
 	}
 }

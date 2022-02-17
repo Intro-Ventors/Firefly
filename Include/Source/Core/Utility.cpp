@@ -54,5 +54,11 @@ namespace RCHAC
 			default:																throw std::runtime_error("Unknown error!");
 			}
 		}
+		
+		void ValidateResult(const VkResult result, const std::string_view& string)
+		{
+			if (result != VkResult::VK_SUCCESS)
+				throw std::runtime_error(string.data());
+		}
 	}
 }
