@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Utility.hpp"
+#include "Queue.hpp"
 #include <vk_video/vulkan_video_codec_h265std.h>
 #include <memory>
+#include <vector>
 
 namespace RCHAC
 {
@@ -43,8 +45,27 @@ namespace RCHAC
 		 */
 		VkPhysicalDevice getPhysicalDevice() const { return m_vPhysicalDevice; }
 
+	private:
+		/**
+		 * Setup the physical device.
+		 *
+		 * @param extensions The required extension.
+		 * @param flag The queue flag bits.
+		 */
+		void setupPhysicalDevice(const std::vector<const char*>& extensions, const VkQueueFlagBits flag);
+
+		/**
+		 * Setup the logical device.
+		 *
+		 * @param extensions The required extension.
+		 * @param flag The queue flag bits.
+		 */
+		void setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlagBits flag);
+
 	protected:
 		std::shared_ptr<Instance> m_pInstance = nullptr;
+
+		Queue m_Queue = {};
 
 		VkDevice m_vLogicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDevice m_vPhysicalDevice = VK_NULL_HANDLE;

@@ -54,6 +54,13 @@ namespace RCHAC
 		VkDebugUtilsMessengerEXT getDebugger() const { return m_vDebugUtilsMessenger; }
 
 		/**
+		 * Get the validation layers.
+		 * 
+		 * @return The validation layers.
+		 */
+		std::vector<const char*> getValidationLayers() const { return m_ValidationLayers; }
+
+		/**
 		 * Create a new encoder object.
 		 *
 		 * @return The created encoder engine.

@@ -30,4 +30,9 @@ namespace RCHAC
 
 		throw std::runtime_error("A queue wasn't found with the required flags!");
 	}
+	
+	void Queue::setupQueue(VkDevice vLogicalDevice)
+	{
+		vkGetDeviceQueue(vLogicalDevice, m_QueueFamily.value(), 0, &m_vQueue);
+	}
 }
