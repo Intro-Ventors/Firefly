@@ -12,13 +12,12 @@ workspace "RCHAC"
 	Binaries = {}
 
 	VulkanSDKPath = path.translate(os.getenv("VULKAN_SDK"))
+	IncludeDirectories["Vulkan"] = "%{wks.location}/ThirdParty/Vulkan-Headers/include"
 
 	if os.host() == "windows" then
 		LibraryDirectories["Vulkan"] = VulkanSDKPath .. "/Lib/"
-		IncludeDirectories["Vulkan"] = VulkanSDKPath .. "/Include/"
 	else
 		LibraryDirectories["Vulkan"] = VulkanSDKPath .. "/lib/"
-		IncludeDirectories["Vulkan"] = VulkanSDKPath .. "/include/"
 	end
 
 	Binaries["Vulkan"] = "vulkan-1"
