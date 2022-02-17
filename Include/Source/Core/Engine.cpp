@@ -17,17 +17,22 @@ namespace RCHAC
 		 */
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions)
 		{
+			// Get the extension count.
 			uint32_t extensionCount = 0;
-			vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, nullptr);
+			Utility::ValidateResult(vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, nullptr));
 
+			// Load the extensions.
 			std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-			vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, availableExtensions.data());
+			Utility::ValidateResult(vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, availableExtensions.data()));
 
 			std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
+			// Iterate and check if it contains the extensions we need. If it does, remove them from the set so we can later check if 
+			// all the required extensions exist.
 			for (const VkExtensionProperties& extension : availableExtensions)
 				requiredExtensions.erase(extension.extensionName);
 
+			// If the required extensions set is empty, it means that all the required extensions exist within the physical device.
 			return requiredExtensions.empty();
 		}
 
@@ -41,8 +46,8 @@ namespace RCHAC
 		 */
 		bool IsPhysicalDeviceSuitable(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions, const VkQueueFlagBits flags)
 		{
+			const Queue vQueue(vPhysicalDevice, flags);
 			const bool extensionsSupported = CheckDeviceExtensionSupport(vPhysicalDevice, deviceExtensions);
-			Queue vQueue(vPhysicalDevice, flags);
 
 			return vQueue.isComplete() && extensionsSupported;
 		}
@@ -119,8 +124,6 @@ namespace RCHAC
 				else
 					m_vPhysicalDevice = vCandidateDevice;
 			}
-
-			m_vPhysicalDevice = VK_NULL_HANDLE;
 		}
 
 		// Validate if a physical device was found.
