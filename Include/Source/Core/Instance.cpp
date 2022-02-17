@@ -27,7 +27,7 @@ namespace RCHAC
 			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 			void* pUserData)
 		{
-			std::string myMessagePreStatement = ": ";
+			std::string_view myMessagePreStatement = ": ";
 			static std::ofstream generalOutputFile("VulkanGeneralOutput.txt");
 
 			if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
@@ -56,17 +56,20 @@ namespace RCHAC
 		{
 			VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
 			createInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-			createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-				| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-				| VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-			createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-				| VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-				| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-			createInfo.pfnUserCallback = DebugCallback;
-
 			createInfo.pNext = VK_NULL_HANDLE;
 			createInfo.pUserData = VK_NULL_HANDLE;
 			createInfo.flags = 0;
+			createInfo.pfnUserCallback = DebugCallback;
+
+			createInfo.messageSeverity
+				= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+				| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+				| VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+
+			createInfo.messageType
+				= VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+				| VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+				| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
 			return createInfo;
 		}
@@ -90,9 +93,7 @@ namespace RCHAC
 		vCreateInfo.pApplicationInfo = &vApplicationInfo;
 
 		// Get the required extensions.
-		const char* pExtensions[] = {
-			VK_EXT_DEBUG_UTILS_EXTENSION_NAME
-		};
+		const char* pExtensions[] = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
 
 		vCreateInfo.enabledExtensionCount = 1;
 		vCreateInfo.ppEnabledExtensionNames = pExtensions;
@@ -118,7 +119,7 @@ namespace RCHAC
 		}
 
 		// Create the instance.
-		Utility::ValidateResult(vkCreateInstance(&vCreateInfo, nullptr, &m_vInstance));
+		Utility::ValidateResult(vkCreateInstance(&vCreateInfo, nullptr, &m_vInstance), "Failed to create the instance.");
 
 		// Create the debug utils messenger if validation is enabled.
 		if (m_bEnableValidation)
@@ -126,7 +127,7 @@ namespace RCHAC
 			VkDebugUtilsMessengerCreateInfoEXT createInfo = CreateDebugMessengerCreateInfo();
 
 			const auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkCreateDebugUtilsMessengerEXT"));
-			Utility::ValidateResult(func(m_vInstance, &createInfo, nullptr, &m_vDebugUtilsMessenger));
+			Utility::ValidateResult(func(m_vInstance, &createInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
 		}
 	}
 
