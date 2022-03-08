@@ -21,16 +21,12 @@ project "GraphcisCore"
 
 	includedirs {
 		"%{wks.location}/Include/",
-		"%{IncludeDirectories.Vulkan}",
-		"%{IncludeDirectories.volk}",
 	}
 	
 	libdirs {
-		"%{LibraryDirectories.Vulkan}",
 	}
 	
 	links { 
-		"%{Binaries.Vulkan}",
 	}
 
 	filter { "toolset:msc", "configurations:Debug" }

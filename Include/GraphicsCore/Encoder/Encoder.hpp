@@ -1,8 +1,8 @@
 #pragma once
 
-#include "RCHAC/Core/Engine.hpp"
+#include "GraphicsCore/Engine.hpp"
 
-namespace RCHAC
+namespace GraphicsCore
 {
 	/**
 	 * RCHAC Encoder class.
@@ -17,6 +17,9 @@ namespace RCHAC
 		 * @param pInstance The instance pointer to which this object is bound.
 		 * @throws std::runtime_error if the instance pointer is null.
 		 */
-		Encoder(const std::shared_ptr<Instance>& pInstance);
+		Encoder(const std::shared_ptr<Instance>& pInstance)
+			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
+		{
+		}
 	};
 }

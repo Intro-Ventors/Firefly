@@ -1,8 +1,8 @@
 #pragma once
 
-#include "RCHAC/Core/Engine.hpp"
+#include "GraphicsCore/Engine.hpp"
 
-namespace RCHAC
+namespace GraphicsCore
 {
 	/**
 	 * RCHAC Decoder class.
@@ -13,10 +13,13 @@ namespace RCHAC
 	public:
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param pInstance The instance pointer to which this object is bound.
 		 * @throws std::runtime_error if the instance pointer is null.
 		 */
-		Decoder(const std::shared_ptr<Instance>& pInstance);
+		Decoder(const std::shared_ptr<Instance>& pInstance)
+			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR)
+		{
+		}
 	};
 }

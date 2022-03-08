@@ -1,12 +1,12 @@
 #include <iostream>
 
-#include "RCHAC/Core/Instance.hpp"
-#include "RCHAC/Encoder/Encoder.hpp"
-#include "RCHAC/Decoder/Decoder.hpp"
+#include "GraphicsCore/Instance.hpp"
+#include "GraphicsCore/Encoder/Encoder.hpp"
+#include "GraphicsCore/Decoder/Decoder.hpp"
 
 int main()
 {
-	auto pInstance = RCHAC::Instance::create(true);
+	auto pInstance = GraphicsCore::Instance::create(true);
 	auto pEncoder = pInstance->createEncoder();
 	auto pDecoder = pInstance->createDecoder();
 

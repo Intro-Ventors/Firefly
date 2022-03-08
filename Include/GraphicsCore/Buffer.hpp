@@ -2,7 +2,7 @@
 
 #include "Engine.hpp"
 
-namespace RCHAC
+namespace GraphicsCore
 {
 
 }
