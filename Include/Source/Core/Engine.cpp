@@ -61,7 +61,7 @@ namespace RCHAC
 			throw std::runtime_error("The instance pointer should not be null!");
 
 		// Setup extensions.
-		std::vector<const char*> extensions = { "VK_KHR_video_queue", "VK_KHR_synchronization2" };
+		std::vector<const char*> extensions = { "VK_KHR_video_queue" , "VK_KHR_synchronization2" };
 
 		if (flag == VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
 		{

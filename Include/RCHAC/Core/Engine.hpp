@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Utility.hpp"
 #include "Queue.hpp"
-#include <vk_video/vulkan_video_codec_h265std.h>
+
 #include <memory>
 #include <vector>
 

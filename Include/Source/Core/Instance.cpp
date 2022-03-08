@@ -85,7 +85,7 @@ namespace RCHAC
 		vApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		vApplicationInfo.pEngineName = "RCHAC";
 		vApplicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		vApplicationInfo.apiVersion = VK_API_VERSION_1_2;
+		vApplicationInfo.apiVersion = VK_API_VERSION_1_3;
 
 		// Setup the instance create info structure.
 		VkInstanceCreateInfo vCreateInfo = {};
@@ -94,9 +94,6 @@ namespace RCHAC
 
 		// Get the required extensions.
 		const char* pExtensions[] = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
-
-		vCreateInfo.enabledExtensionCount = 1;
-		vCreateInfo.ppEnabledExtensionNames = pExtensions;
 
 		// Setup debug info if required.
 		VkDebugUtilsMessengerCreateInfoEXT vDebugCreateInfo = {};
@@ -109,6 +106,8 @@ namespace RCHAC
 			vDebugCreateInfo = CreateDebugMessengerCreateInfo();
 
 			vCreateInfo.pNext = &vDebugCreateInfo;
+			vCreateInfo.enabledExtensionCount = 1;
+			vCreateInfo.ppEnabledExtensionNames = pExtensions;
 			vCreateInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
 			vCreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 		}

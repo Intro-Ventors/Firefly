@@ -16,7 +16,7 @@ namespace RCHAC
 		vkGetPhysicalDeviceQueueFamilyProperties(vPhysicalDevice, &queueFamilyCount, queueFamilies.data());
 
 		// Iterate over those queue family properties and find the most suitable one.
-		for (int32_t family = 0; family < queueFamilyCount; family++)
+		for (uint32_t family = 0; family < queueFamilyCount; family++)
 		{
 			if (queueFamilies[family].queueCount > 0)
 			{

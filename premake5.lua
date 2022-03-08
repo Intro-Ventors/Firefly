@@ -1,4 +1,4 @@
-workspace "RCHAC"
+workspace "GraphcisCore"
 	architecture "x64"
 
 	configurations {
@@ -13,6 +13,7 @@ workspace "RCHAC"
 
 	VulkanSDKPath = path.translate(os.getenv("VULKAN_SDK"))
 	IncludeDirectories["Vulkan"] = "%{wks.location}/ThirdParty/Vulkan-Headers/include"
+	IncludeDirectories["volk"] = "%{wks.location}/ThirdParty/volk"
 
 	if os.host() == "windows" then
 		LibraryDirectories["Vulkan"] = VulkanSDKPath .. "/Lib/"
@@ -41,5 +42,5 @@ workspace "RCHAC"
 	filter ""
 
 	-- Include the projects.
-	include "Include/RCHAC.lua"
+	include "Include/GraphicsCore.lua"
 	include "Test/Test.lua"

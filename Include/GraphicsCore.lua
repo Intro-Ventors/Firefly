@@ -1,4 +1,4 @@
-project "RCHAC"
+project "GraphcisCore"
 	language "C++"
 	kind "StaticLib"
 	systemversion "latest"
@@ -22,6 +22,7 @@ project "RCHAC"
 	includedirs {
 		"%{wks.location}/Include/",
 		"%{IncludeDirectories.Vulkan}",
+		"%{IncludeDirectories.volk}",
 	}
 	
 	libdirs {
