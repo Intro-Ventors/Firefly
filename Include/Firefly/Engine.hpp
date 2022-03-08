@@ -189,7 +189,7 @@ namespace Firefly
 			// Choose the physical device with the highest priority.
 			for (uint8_t i = 0; i < 6; i++)
 			{
-				if (vPriorityMap.contains(i))
+				if (vPriorityMap.find(i) != vPriorityMap.end())
 				{
 					m_vPhysicalDevice = vPriorityMap[i];
 					break;
