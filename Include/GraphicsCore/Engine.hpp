@@ -124,6 +124,13 @@ namespace GraphicsCore
 		 */
 		VolkDeviceTable getDeviceTable() const { return m_DeviceTable; }
 
+		/**
+		 * Get all the queue.
+		 *
+		 * @return The queues.
+		 */
+		std::vector<Queue> getQueues() const { return m_Queues; }
+
 	private:
 		/**
 		 * Setup the physical device.

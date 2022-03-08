@@ -28,6 +28,7 @@ namespace GraphicsCore
 		 * @throws std::runtime_error If no queue was found.
 		 */
 		Queue(VkPhysicalDevice vPhysicalDevice, VkQueueFlagBits vFlag)
+			: m_vFlags(vFlag)
 		{
 			// Get the queue family count.
 			uint32_t queueFamilyCount = 0;
@@ -90,8 +91,16 @@ namespace GraphicsCore
 		 */
 		VkQueue* getQueueAddr() { return &m_vQueue; }
 
+		/**
+		 * Get the queue flags.
+		 *
+		 * @return The queue flags.
+		 */
+		VkQueueFlagBits getFlags() const { return m_vFlags; }
+
 	private:
 		std::optional<uint32_t> m_QueueFamily = {};
 		VkQueue m_vQueue = VK_NULL_HANDLE;
+		VkQueueFlagBits m_vFlags;
 	};
 }

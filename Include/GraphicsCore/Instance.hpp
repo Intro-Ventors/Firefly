@@ -84,7 +84,7 @@ namespace GraphicsCore
 		 *
 		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds.
 		 */
-		Instance(bool enableValidation)
+		Instance(bool enableValidation, const uint32_t vulkanAPIVersion = VK_API_VERSION_1_3)
 			: m_bEnableValidation(enableValidation)
 		{
 			// Initialize volk.
@@ -93,11 +93,11 @@ namespace GraphicsCore
 			// Setup the application info structure.
 			VkApplicationInfo vApplicationInfo = {};
 			vApplicationInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_APPLICATION_INFO;
-			vApplicationInfo.pApplicationName = "RCHAC";
+			vApplicationInfo.pApplicationName = "GraphicsCore";
 			vApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-			vApplicationInfo.pEngineName = "RCHAC";
+			vApplicationInfo.pEngineName = "GraphicsCore";
 			vApplicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-			vApplicationInfo.apiVersion = VK_API_VERSION_1_3;
+			vApplicationInfo.apiVersion = vulkanAPIVersion;
 
 			// Setup the instance create info structure.
 			VkInstanceCreateInfo vCreateInfo = {};
@@ -138,10 +138,10 @@ namespace GraphicsCore
 			// Create the debug utils messenger if validation is enabled.
 			if (m_bEnableValidation)
 			{
-				VkDebugUtilsMessengerCreateInfoEXT createInfo = CreateDebugMessengerCreateInfo();
+				VkDebugUtilsMessengerCreateInfoEXT vCreateInfo = CreateDebugMessengerCreateInfo();
 
 				const auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkCreateDebugUtilsMessengerEXT"));
-				Utility::ValidateResult(func(m_vInstance, &createInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
+				Utility::ValidateResult(func(m_vInstance, &vCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
 			}
 		}
 
