@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include <map>
+#include <array>
 
 namespace Firefly
 {
@@ -145,8 +146,7 @@ namespace Firefly
 			std::vector<VkPhysicalDevice> vCandidates(deviceCount);
 			Utility::ValidateResult(vkEnumeratePhysicalDevices(vInstance, &deviceCount, vCandidates.data()), "Failed to enumerate physical devices.");
 
-			std::map<uint8_t, VkPhysicalDevice> vPriorityMap;
-
+			std::array<VkPhysicalDevice, 6> vPriorityMap;
 			VkPhysicalDeviceProperties vPhysicalDeviceProperties = {};
 			// Iterate through all the candidate devices and find the best device.
 			for (const VkPhysicalDevice& vCandidateDevice : vCandidates)
@@ -189,12 +189,11 @@ namespace Firefly
 			// Choose the physical device with the highest priority.
 			for (uint8_t i = 0; i < 6; i++)
 			{
-				if (vPriorityMap.find(i) != vPriorityMap.end())
+				if (vPriorityMap[i] != VK_NULL_HANDLE)
 				{
 					m_vPhysicalDevice = vPriorityMap[i];
 					break;
 				}
-
 			}
 
 			// Validate if a physical device was found.
