@@ -1,11 +1,11 @@
 #pragma once
 
-#include "GraphicsCore/Engine.hpp"
+#include "Firefly/Engine.hpp"
 
-namespace GraphicsCore
+namespace Firefly
 {
 	/**
-	 * RCHAC Encoder class.
+	 * Firefly Encoder class.
 	 * This class is the main Encoder engine.
 	 */
 	class Encoder final : public Engine

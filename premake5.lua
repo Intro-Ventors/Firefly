@@ -1,4 +1,4 @@
-workspace "GraphcisCore"
+workspace "Firefly"
 	architecture "x64"
 
 	configurations {
@@ -7,23 +7,23 @@ workspace "GraphcisCore"
 	}
 
 	filter "configurations:Debug"
-		defines { "GraphicsCore_DEBUG" }
+		defines { "FIREFLY_DEBUG" }
 		symbols "On"
 		runtime "Debug"
 
 	filter "configurations:Release"
-		defines { "GraphicsCore_RELEASE" }
+		defines { "FIREFLY_RELEASE" }
 		optimize "On"
 		runtime "Release"
 
 	filter "system:windows"
-		defines { "GraphicsCore_PLATFORM_WINDOWS" }
+		defines { "FIREFLY_PLATFORM_WINDOWS" }
 
 	filter "system:linux"
-		defines { "GraphicsCore_PLATFORM_LINUX" }
+		defines { "FIREFLY_PLATFORM_LINUX" }
 
 	filter ""
 
 	-- Include the projects.
-	include "Include/GraphicsCore.lua"
+	include "Include/Firefly.lua"
 	include "Test/Test.lua"

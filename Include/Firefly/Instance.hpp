@@ -7,7 +7,7 @@
 #include <iostream>
 #include <fstream>
 
-namespace GraphicsCore
+namespace Firefly
 {
 	/**
 	 * Vulkan debug callback.

@@ -2,7 +2,7 @@
 
 #include "Engine.hpp"
 
-namespace GraphicsCore
+namespace Firefly
 {
 
 }

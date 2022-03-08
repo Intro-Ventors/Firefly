@@ -1,4 +1,4 @@
-project "GraphcisCore"
+project "Firefly"
 	language "C++"
 	kind "StaticLib"
 	systemversion "latest"

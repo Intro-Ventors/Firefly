@@ -1,14 +1,16 @@
 #include <iostream>
 
-#include "GraphicsCore/Instance.hpp"
-#include "GraphicsCore/Encoder/Encoder.hpp"
-#include "GraphicsCore/Decoder/Decoder.hpp"
+#include "Firefly/Instance.hpp"
+#include "Firefly/Encoder/Encoder.hpp"
+#include "Firefly/Decoder/Decoder.hpp"
+#include "Firefly/Graphics/GraphicsEngine.hpp"
 
 int main()
 {
-	auto pInstance = GraphicsCore::Instance::create(true);
-	auto pEncoder = GraphicsCore::Encoder::create(pInstance);
-	auto pDecoder = GraphicsCore::Decoder::create(pInstance);
+	auto pInstance = Firefly::Instance::create(true, VK_API_VERSION_1_1);
+	auto pEncoder = Firefly::Encoder::create(pInstance);
+	auto pDecoder = Firefly::Decoder::create(pInstance);
+	auto pGraphics = Firefly::GraphicsEngine::create(pInstance);
 
 	return 0;
 }

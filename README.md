@@ -1,13 +1,13 @@
-# Graphics Core
+# Firefly
 
-Graphics Core API used by the mobile renderer.
+Firefly is a low level graphics API supporting multiple graphics operations (depending on the platform) using Vulkan. It currently supports Windows, Linux, iOS and Android.
 
 ## How to use
 
 First, clone this repository.
 
 ```bash
-git clone https://github.com/Intro-Ventors/GraphicsCore {SOURCE}
+git clone https://github.com/Intro-Ventors/Firefly {SOURCE}
 cd {SOURCE}
 ```
 

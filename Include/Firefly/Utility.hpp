@@ -4,13 +4,16 @@
 #define VK_ENABLE_BETA_EXTENSIONS
 #include <vulkan/vulkan.h>
 
+#ifndef VOLK_IMPLEMENTATION
 #define VOLK_IMPLEMENTATION
 #include <volk/volk.h>
+
+#endif
 
 #include <string>
 #include <stdexcept>
 
-namespace GraphicsCore
+namespace Firefly
 {
 	namespace Utility
 	{

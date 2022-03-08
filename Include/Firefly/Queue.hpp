@@ -5,7 +5,7 @@
 #include <optional>
 #include <vector>
 
-namespace GraphicsCore
+namespace Firefly
 {
 	/**
 	 * RCHAC Queue object.

@@ -6,7 +6,7 @@
 #include <set>
 #include <map>
 
-namespace GraphicsCore
+namespace Firefly
 {
 	/**
 	 * Check if the device supports the required extensions.
@@ -44,17 +44,21 @@ namespace GraphicsCore
 	 * @param flags The device flags that are needed.
 	 * @return Boolean value stating if its viable or not.
 	 */
-	inline bool IsPhysicalDeviceSuitable(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions, const VkQueueFlagBits flags)
+	inline bool IsPhysicalDeviceSuitable(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions, const VkQueueFlags flags)
 	{
-		const Queue vQueue(vPhysicalDevice, flags);
-		const bool extensionsSupported = CheckDeviceExtensionSupport(vPhysicalDevice, deviceExtensions);
+		// Check if all the provided queue flags are supported.
+		for (uint32_t i = 1; i < 0x00000080; i = i << 1)
+		{
+			if (i & flags && !Queue(vPhysicalDevice, static_cast<VkQueueFlagBits>(i)).isComplete())
+				return false;
+		}
 
-		return vQueue.isComplete() && extensionsSupported;
+		return CheckDeviceExtensionSupport(vPhysicalDevice, deviceExtensions);
 	}
 
 	/**
 	 * RCHAC Engine class.
-	 * This class is the base class for the two engines, Encoder and Decoder.
+	 * This class is the base class for the three engines, Graphics, Encoder and Decoder.
 	 */
 	class Engine
 	{
@@ -66,7 +70,7 @@ namespace GraphicsCore
 		 * @param flag The queue flag bits.
 		 * @throws std::runtime_error If the pointer is null. It could also throw this same exception if there are no physical devices.
 		 */
-		Engine(const std::shared_ptr<Instance>& pInstance, const VkQueueFlagBits flag)
+		Engine(const std::shared_ptr<Instance>& pInstance, const VkQueueFlags flag)
 			: m_pInstance(pInstance)
 		{
 			// Validate the pointer.
@@ -138,7 +142,7 @@ namespace GraphicsCore
 		 * @param extensions The required extension.
 		 * @param flag The queue flag bits.
 		 */
-		void setupPhysicalDevice(const std::vector<const char*>& extensions, const VkQueueFlagBits flag)
+		void setupPhysicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags)
 		{
 			// Get the Vulkan instance.
 			const auto vInstance = m_pInstance->getInstance();
@@ -158,7 +162,7 @@ namespace GraphicsCore
 			// Iterate through all the candidate devices and find the best device.
 			for (const VkPhysicalDevice& vCandidateDevice : vCandidates)
 			{
-				if (IsPhysicalDeviceSuitable(vCandidateDevice, extensions, flag))
+				if (IsPhysicalDeviceSuitable(vCandidateDevice, extensions, flags))
 				{
 					vkGetPhysicalDeviceProperties(vCandidateDevice, &vPhysicalDeviceProperties);
 
@@ -188,13 +192,13 @@ namespace GraphicsCore
 		 * @param extensions The required extension.
 		 * @param flag The queue flag bits.
 		 */
-		void setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlagBits flag)
+		void setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags)
 		{
 			// Initialize the queue families.
 			std::map<uint32_t, uint32_t> uniqueQueueFamilies;
 
 			// Get the transfer queue if required.
-			if (flag & VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT)
+			if (flags & VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT)
 			{
 				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
 				m_Queues.emplace_back(queue);
@@ -203,49 +207,49 @@ namespace GraphicsCore
 			}
 
 			// Get the graphics queue if required.
-			if (flag & VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT)
+			if (flags & VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT)
 			{
-				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT);
 				m_Queues.emplace_back(queue);
 
 				uniqueQueueFamilies[queue.getFamily().value()]++;
 			}
 
 			// Get the compute queue if required.
-			if (flag & VkQueueFlagBits::VK_QUEUE_COMPUTE_BIT)
+			if (flags & VkQueueFlagBits::VK_QUEUE_COMPUTE_BIT)
 			{
-				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_COMPUTE_BIT);
 				m_Queues.emplace_back(queue);
 
 				uniqueQueueFamilies[queue.getFamily().value()]++;
 			}
 
 			// Get the encode queue if required.
-			if (flag & VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
+			if (flags & VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
 			{
-				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR);
 				m_Queues.emplace_back(queue);
 
 				uniqueQueueFamilies[queue.getFamily().value()]++;
 			}
 
 			// else, get the decode queue if required.
-			else if (flag & VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR)
+			else if (flags & VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR)
 			{
-				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR);
 				m_Queues.emplace_back(queue);
 
 				uniqueQueueFamilies[queue.getFamily().value()]++;
 			}
 
 			// Setup device queues.
-			constexpr float priority = 1.0f;
+			constexpr float priority[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			std::vector<VkDeviceQueueCreateInfo> vQueueCreateInfos;
 			vQueueCreateInfos.reserve(uniqueQueueFamilies.size());
 
 			VkDeviceQueueCreateInfo vQueueCreateInfo = {};
 			vQueueCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			vQueueCreateInfo.pQueuePriorities = &priority;
+			vQueueCreateInfo.pQueuePriorities = priority;
 
 			for (const auto& [family, count] : uniqueQueueFamilies)
 			{
