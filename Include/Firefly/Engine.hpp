@@ -68,28 +68,15 @@ namespace Firefly
 		 *
 		 * @param pInstance The instance pointer to which this object is bound to.
 		 * @param flag The queue flag bits.
+		 * @param extensions The device extensions to activate.
 		 * @throws std::runtime_error If the pointer is null. It could also throw this same exception if there are no physical devices.
 		 */
-		Engine(const std::shared_ptr<Instance>& pInstance, const VkQueueFlags flag)
+		Engine(const std::shared_ptr<Instance>& pInstance, const VkQueueFlags flag, const std::vector<const char*> extensions)
 			: m_pInstance(pInstance)
 		{
 			// Validate the pointer.
 			if (!m_pInstance)
 				throw std::runtime_error("The instance pointer should not be null!");
-
-			// Setup extensions.
-			std::vector<const char*> extensions = { "VK_KHR_video_queue" , "VK_KHR_synchronization2" };
-
-			if (flag == VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
-			{
-				extensions.emplace_back("VK_KHR_video_encode_queue");
-				extensions.emplace_back("VK_EXT_video_encode_h264");
-			}
-			else if (flag == VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR)
-			{
-				extensions.emplace_back("VK_KHR_video_decode_queue");
-				extensions.emplace_back("VK_EXT_video_decode_h264");
-			}
 
 			// Create the physical device.
 			setupPhysicalDevice(extensions, flag);
@@ -158,27 +145,56 @@ namespace Firefly
 			std::vector<VkPhysicalDevice> vCandidates(deviceCount);
 			Utility::ValidateResult(vkEnumeratePhysicalDevices(vInstance, &deviceCount, vCandidates.data()), "Failed to enumerate physical devices.");
 
+			std::map<uint8_t, VkPhysicalDevice> vPriorityMap;
+
 			VkPhysicalDeviceProperties vPhysicalDeviceProperties = {};
 			// Iterate through all the candidate devices and find the best device.
 			for (const VkPhysicalDevice& vCandidateDevice : vCandidates)
 			{
+				// Check if the device is suitable for our use.
 				if (IsPhysicalDeviceSuitable(vCandidateDevice, extensions, flags))
 				{
 					vkGetPhysicalDeviceProperties(vCandidateDevice, &vPhysicalDeviceProperties);
 
-					// Select this as the highest priority.
-					if (vPhysicalDeviceProperties.deviceType == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+					// Sort the candidates by priority.
+					switch (vPhysicalDeviceProperties.deviceType)
 					{
-						m_vPhysicalDevice = vCandidateDevice;
+					case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+						vPriorityMap[4] = vCandidateDevice;
+						break;
+
+					case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+						vPriorityMap[1] = vCandidateDevice;
+						break;
+
+					case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+						vPriorityMap[0] = vCandidateDevice;
+						break;
+
+					case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+						vPriorityMap[2] = vCandidateDevice;
+						break;
+
+					case VK_PHYSICAL_DEVICE_TYPE_CPU:
+						vPriorityMap[3] = vCandidateDevice;
+						break;
+
+					default:
+						vPriorityMap[5] = vCandidateDevice;
 						break;
 					}
-
-					// The rest can be with normal priority.
-					else if (vPhysicalDeviceProperties.deviceType == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
-						m_vPhysicalDevice = vCandidateDevice;
-					else
-						m_vPhysicalDevice = vCandidateDevice;
 				}
+			}
+
+			// Choose the physical device with the highest priority.
+			for (uint8_t i = 0; i < 6; i++)
+			{
+				if (vPriorityMap.contains(i))
+				{
+					m_vPhysicalDevice = vPriorityMap[i];
+					break;
+				}
+
 			}
 
 			// Validate if a physical device was found.

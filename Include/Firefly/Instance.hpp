@@ -83,8 +83,10 @@ namespace Firefly
 		 * Constructor.
 		 *
 		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds.
+		 * @param vulkanAPIVersion The Vulkan API version to use.
+		 * @param usedForGraphics Whether or not this instance is used for graphics.
 		 */
-		Instance(bool enableValidation, const uint32_t vulkanAPIVersion)
+		Instance(bool enableValidation, const uint32_t vulkanAPIVersion, bool usedForGraphics)
 			: m_bEnableValidation(enableValidation)
 		{
 			// Initialize volk.
@@ -105,7 +107,10 @@ namespace Firefly
 			vCreateInfo.pApplicationInfo = &vApplicationInfo;
 
 			// Get the required extensions.
-			const char* pExtensions[] = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
+			std::vector<const char*> extensions = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
+
+			if (usedForGraphics)
+				extensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
 			// Setup debug info if required.
 			VkDebugUtilsMessengerCreateInfoEXT vDebugCreateInfo = {};
@@ -118,8 +123,8 @@ namespace Firefly
 				vDebugCreateInfo = CreateDebugMessengerCreateInfo();
 
 				vCreateInfo.pNext = &vDebugCreateInfo;
-				vCreateInfo.enabledExtensionCount = 1;
-				vCreateInfo.ppEnabledExtensionNames = pExtensions;
+				vCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+				vCreateInfo.ppEnabledExtensionNames = extensions.data();
 				vCreateInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
 				vCreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 			}
@@ -168,11 +173,13 @@ namespace Firefly
 		 * Create a new instance.
 		 *
 		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds.
+		 * @param vulkanAPIVersion The Vulkan API version to use.
+		 * @param usedForGraphics Whether or not this instance is used for graphics. Default is true.
 		 * @return The created instance object pointer.
 		 */
-		static std::shared_ptr<Instance> create(bool enableValidation, const uint32_t vulkanAPIVersion = VK_API_VERSION_1_3)
+		static std::shared_ptr<Instance> create(bool enableValidation, const uint32_t vulkanAPIVersion = VK_API_VERSION_1_3, bool usedForGraphics = true)
 		{
-			return std::make_shared<Instance>(enableValidation, vulkanAPIVersion);
+			return std::make_shared<Instance>(enableValidation, vulkanAPIVersion, usedForGraphics);
 		}
 
 		/**

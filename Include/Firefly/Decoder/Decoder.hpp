@@ -18,7 +18,8 @@ namespace Firefly
 		 * @throws std::runtime_error if the instance pointer is null.
 		 */
 		Decoder(const std::shared_ptr<Instance>& pInstance)
-			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR)
+			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR, 
+				{ VK_KHR_VIDEO_QUEUE_EXTENSION_NAME , VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME, VK_KHR_VIDEO_DECODE_QUEUE_EXTENSION_NAME, VK_EXT_VIDEO_DECODE_H264_EXTENSION_NAME })
 		{
 		}
 

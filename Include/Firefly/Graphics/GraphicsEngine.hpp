@@ -18,7 +18,7 @@ namespace Firefly
 		 * @throws std::runtime_error if the instance pointer is null.
 		 */
 		GraphicsEngine(const std::shared_ptr<Instance>& pInstance)
-			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT | VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT)
+			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT | VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT, { VK_KHR_SWAPCHAIN_EXTENSION_NAME })
 		{
 		}
 
