@@ -21,5 +21,16 @@ namespace GraphicsCore
 			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR)
 		{
 		}
+
+		/**
+		 * Create a new decoder.
+		 *
+		 * @param pInstance The instance pointer.
+		 * @rerurn The created decoder pointer.
+		 */
+		static std::shared_ptr<Decoder> create(const std::shared_ptr<Instance>& pInstance)
+		{
+			return std::make_shared<Decoder>(pInstance);
+		}
 	};
 }

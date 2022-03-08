@@ -1,8 +1,6 @@
 #pragma once
 
-#define VK_NO_PROTOTYPES
-#define VOLK_IMPLEMENTATION
-#include <volk/volk.h>
+#include "Queue.hpp"
 
 #include <vector>
 #include <string>
@@ -89,6 +87,9 @@ namespace GraphicsCore
 		Instance(bool enableValidation)
 			: m_bEnableValidation(enableValidation)
 		{
+			// Initialize volk.
+			volkInitialize();
+
 			// Setup the application info structure.
 			VkApplicationInfo vApplicationInfo = {};
 			vApplicationInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -130,6 +131,9 @@ namespace GraphicsCore
 
 			// Create the instance.
 			Utility::ValidateResult(vkCreateInstance(&vCreateInfo, nullptr, &m_vInstance), "Failed to create the instance.");
+
+			// Load the instance.
+			volkLoadInstance(m_vInstance);
 
 			// Create the debug utils messenger if validation is enabled.
 			if (m_bEnableValidation)

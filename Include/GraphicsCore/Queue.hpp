@@ -3,6 +3,7 @@
 #include "Utility.hpp"
 
 #include <optional>
+#include <vector>
 
 namespace GraphicsCore
 {
@@ -55,17 +56,6 @@ namespace GraphicsCore
 		}
 
 		/**
-		 * Create the queue object using the logical device.
-		 *
-		 * @param vLogicalDevice The logical device to which the queue is bound to.
-		 */
-		void setupQueue(VkDevice vLogicalDevice)
-		{
-			// Get the queue from the device.
-			vkGetDeviceQueue(vLogicalDevice, m_QueueFamily.value(), 0, &m_vQueue);
-		}
-
-		/**
 		 * Check if the queue is complete.
 		 *
 		 * @return Boolean value.
@@ -85,6 +75,20 @@ namespace GraphicsCore
 		 * @return The queue.
 		 */
 		VkQueue getQueue() const { return m_vQueue; }
+
+		/**
+		 * Get the Vulkan queue address.
+		 *
+		 * @return The queue pointer.
+		 */
+		const VkQueue* getQueueAddr() const { return &m_vQueue; }
+
+		/**
+		 * Get the Vulkan queue address.
+		 *
+		 * @return The queue pointer.
+		 */
+		VkQueue* getQueueAddr() { return &m_vQueue; }
 
 	private:
 		std::optional<uint32_t> m_QueueFamily = {};

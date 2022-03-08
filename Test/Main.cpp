@@ -7,8 +7,8 @@
 int main()
 {
 	auto pInstance = GraphicsCore::Instance::create(true);
-	auto pEncoder = pInstance->createEncoder();
-	auto pDecoder = pInstance->createDecoder();
+	auto pEncoder = GraphicsCore::Encoder::create(pInstance);
+	auto pDecoder = GraphicsCore::Decoder::create(pInstance);
 
 	return 0;
 }

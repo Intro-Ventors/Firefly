@@ -21,5 +21,16 @@ namespace GraphicsCore
 			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
 		{
 		}
+
+		/**
+		 * Create a new encoder.
+		 *
+		 * @param pInstance The instance pointer.
+		 * @rerurn The created encoder pointer.
+		 */
+		static std::shared_ptr<Encoder> create(const std::shared_ptr<Instance>& pInstance)
+		{
+			return std::make_shared<Encoder>(pInstance);
+		}
 	};
 }

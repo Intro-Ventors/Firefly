@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Queue.hpp"
 #include "Instance.hpp"
 
 #include <memory>
-#include <vector>
 #include <set>
+#include <map>
 
 namespace GraphicsCore
 {
@@ -184,19 +183,69 @@ namespace GraphicsCore
 		 */
 		void setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlagBits flag)
 		{
-			// Get the Vulkan instance.
-			const auto vInstance = m_pInstance->getInstance();
-
 			// Initialize the queue families.
-			m_Queue = Queue(m_vPhysicalDevice, flag);
+			std::map<uint32_t, uint32_t> uniqueQueueFamilies;
+
+			// Get the transfer queue if required.
+			if (flag & VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT)
+			{
+				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+				m_Queues.emplace_back(queue);
+
+				uniqueQueueFamilies[queue.getFamily().value()]++;
+			}
+
+			// Get the graphics queue if required.
+			if (flag & VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT)
+			{
+				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+				m_Queues.emplace_back(queue);
+
+				uniqueQueueFamilies[queue.getFamily().value()]++;
+			}
+
+			// Get the compute queue if required.
+			if (flag & VkQueueFlagBits::VK_QUEUE_COMPUTE_BIT)
+			{
+				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+				m_Queues.emplace_back(queue);
+
+				uniqueQueueFamilies[queue.getFamily().value()]++;
+			}
+
+			// Get the encode queue if required.
+			if (flag & VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
+			{
+				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+				m_Queues.emplace_back(queue);
+
+				uniqueQueueFamilies[queue.getFamily().value()]++;
+			}
+
+			// else, get the decode queue if required.
+			else if (flag & VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR)
+			{
+				const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+				m_Queues.emplace_back(queue);
+
+				uniqueQueueFamilies[queue.getFamily().value()]++;
+			}
 
 			// Setup device queues.
 			constexpr float priority = 1.0f;
+			std::vector<VkDeviceQueueCreateInfo> vQueueCreateInfos;
+			vQueueCreateInfos.reserve(uniqueQueueFamilies.size());
+
 			VkDeviceQueueCreateInfo vQueueCreateInfo = {};
 			vQueueCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			vQueueCreateInfo.queueFamilyIndex = m_Queue.getFamily().value();
-			vQueueCreateInfo.queueCount = 1;
 			vQueueCreateInfo.pQueuePriorities = &priority;
+
+			for (const auto& [family, count] : uniqueQueueFamilies)
+			{
+				vQueueCreateInfo.queueCount = count;
+				vQueueCreateInfo.queueFamilyIndex = family;
+				vQueueCreateInfos.emplace_back(vQueueCreateInfo);
+			}
 
 			// Physical device features.
 			VkPhysicalDeviceFeatures vFeatures = {};
@@ -204,8 +253,8 @@ namespace GraphicsCore
 			// Device create info.
 			VkDeviceCreateInfo vDeviceCreateInfo = {};
 			vDeviceCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-			vDeviceCreateInfo.queueCreateInfoCount = 1;
-			vDeviceCreateInfo.pQueueCreateInfos = &vQueueCreateInfo;
+			vDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(vQueueCreateInfos.size());
+			vDeviceCreateInfo.pQueueCreateInfos = vQueueCreateInfos.data();
 			vDeviceCreateInfo.pEnabledFeatures = &vFeatures;
 			vDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 			vDeviceCreateInfo.ppEnabledExtensionNames = extensions.data();
@@ -223,15 +272,19 @@ namespace GraphicsCore
 			// Create the device.
 			Utility::ValidateResult(vkCreateDevice(m_vPhysicalDevice, &vDeviceCreateInfo, nullptr, &m_vLogicalDevice), "Failed to create the logical device!");
 
-			// Setup the queue.
-			m_Queue.setupQueue(m_vLogicalDevice);
+			// Load the device table.
+			volkLoadDeviceTable(&m_DeviceTable, m_vLogicalDevice);
+
+			// Setup queues.
+			for (auto& queue : m_Queues)
+				getDeviceTable().vkGetDeviceQueue(m_vLogicalDevice, queue.getFamily().value(), 0, queue.getQueueAddr());
 		}
 
 	protected:
 		std::shared_ptr<Instance> m_pInstance = nullptr;
 		VolkDeviceTable m_DeviceTable;
 
-		Queue m_Queue = {};
+		std::vector<Queue> m_Queues;
 
 		VkDevice m_vLogicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDevice m_vPhysicalDevice = VK_NULL_HANDLE;
