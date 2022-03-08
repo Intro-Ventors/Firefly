@@ -84,7 +84,7 @@ namespace GraphicsCore
 		 *
 		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds.
 		 */
-		Instance(bool enableValidation, const uint32_t vulkanAPIVersion = VK_API_VERSION_1_3)
+		Instance(bool enableValidation, const uint32_t vulkanAPIVersion)
 			: m_bEnableValidation(enableValidation)
 		{
 			// Initialize volk.
@@ -170,9 +170,9 @@ namespace GraphicsCore
 		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds.
 		 * @return The created instance object pointer.
 		 */
-		static std::shared_ptr<Instance> create(bool enableValidation)
+		static std::shared_ptr<Instance> create(bool enableValidation, const uint32_t vulkanAPIVersion = VK_API_VERSION_1_3)
 		{
-			return std::make_shared<Instance>(enableValidation);
+			return std::make_shared<Instance>(enableValidation, vulkanAPIVersion);
 		}
 
 		/**
