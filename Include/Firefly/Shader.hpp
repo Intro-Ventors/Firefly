@@ -67,6 +67,27 @@ namespace Firefly
 		}
 
 		/**
+		 * Constructor.
+		 *
+		 * @param pEngine The engine pointer.
+		 * @param shaderCode The shader source code.
+		 * @param flags The shader stage flags.
+		 * @param binding The shader bindings.
+		 */
+		explicit Shader(const std::shared_ptr<Engine>& pEngine, const ShaderCode& shaderCode, const VkShaderStageFlags flags)
+			: EngineBoundObject(pEngine), m_Flags(flags)
+		{
+			// Create the shader module.
+			createShaderModule(shaderCode);
+
+			// Perform reflection.
+			const auto bindings = performReflection(shaderCode);
+
+			// Create the descriptor set layout.
+			createDescriptorSetLayout(bindings);
+		}
+
+		/**
 		 * Destructor.
 		 */
 		~Shader() override
@@ -87,6 +108,20 @@ namespace Firefly
 		static std::shared_ptr<Shader> create(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& file, const VkShaderStageFlags flags)
 		{
 			return std::make_shared<Shader>(pEngine, file, flags);
+		}
+
+		/**
+		 * Create a new shader object.
+		 *
+		 * @param pEngine The engine pointer.
+		 * @param shaderCode The shader source code.
+		 * @param flags The shader stage flags.
+		 * @param binding The shader bindings.
+		 * @return The shader object.
+		 */
+		static std::shared_ptr<Shader> create(const std::shared_ptr<Engine>& pEngine, const ShaderCode& shaderCode, const VkShaderStageFlags flags)
+		{
+			return std::make_shared<Shader>(pEngine, shaderCode, flags);
 		}
 
 		/**
