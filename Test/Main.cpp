@@ -21,6 +21,7 @@ int main()
 		auto ptr = pBuffer->mapMemory();
 
 		auto pImage = Firefly::Image::create(pGraphics, { 512, 512, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, Firefly::ImageType::TwoDimension, 1);
+		auto pCopyBuffer = pImage->toBuffer();
 	}
 	catch (const Firefly::BackendError& e)
 	{

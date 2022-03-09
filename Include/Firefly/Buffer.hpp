@@ -148,6 +148,13 @@ namespace Firefly
 		VmaMemoryUsage getMemoryUsage() const { return m_MemoryUsage; }
 
 		/**
+		 * Get the Vulkan buffer.
+		 *
+		 * @return The buffer.
+		 */
+		VkBuffer getBuffer() const { return m_vBuffer; }
+
+		/**
 		 * Create a new buffer.
 		 *
 		 * @param pEngine The engine pointer.

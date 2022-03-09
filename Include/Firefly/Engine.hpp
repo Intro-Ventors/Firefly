@@ -27,12 +27,15 @@ namespace Firefly
 		 * @param extensions The device extensions to activate.
 		 * @throws std::runtime_error If the pointer is null. It could also throw this same exception if there are no physical devices.
 		 */
-		explicit Engine(const std::shared_ptr<Instance>& pInstance, const VkQueueFlags flag, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features = VkPhysicalDeviceFeatures())
+		explicit Engine(const std::shared_ptr<Instance>& pInstance, VkQueueFlags flag, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features = VkPhysicalDeviceFeatures())
 			: m_pInstance(pInstance)
 		{
 			// Validate the pointer.
 			if (!m_pInstance)
 				throw BackendError("The instance pointer should not be null!");
+
+			// Make sure that we have the transfer queue.
+			flag |= VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT;
 
 			// Create the physical device.
 			setupPhysicalDevice(extensions, flag);
@@ -42,6 +45,12 @@ namespace Firefly
 
 			// Create the memory manager's allocator.
 			createAllocator();
+
+			// Create the command pool.
+			createCommandPool();
+
+			// Allocate the command buffer.
+			allocateCommandBuffer();
 		}
 
 		/**
@@ -52,8 +61,93 @@ namespace Firefly
 			// Destroy the memory manager.
 			destroyAllocator();
 
+			// Free the command buffers.
+			freeCommandBuffer();
+
+			// Destroy the command pool.
+			destroyCommandPool();
+
 			// Destroy the logical device.
 			vkDestroyDevice(m_vLogicalDevice, nullptr);
+		}
+
+		/**
+		 * Begin command buffer recording.
+		 * If the command buffer is in the recording state, this will only return the command buffer.
+		 *
+		 * @return The command buffer.
+		 */
+		VkCommandBuffer beginCommandBufferRecording()
+		{
+			// Skip if we're on the recording state.
+			if (m_bIsCommandBufferRecording)
+				return m_vCommandBuffer;
+
+			// Begin recording.
+			VkCommandBufferBeginInfo vBeginInfo = {};
+			vBeginInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			vBeginInfo.pNext = nullptr;
+			vBeginInfo.flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+			Utility::ValidateResult(getDeviceTable().vkBeginCommandBuffer(m_vCommandBuffer, &vBeginInfo), "Failed to begin command buffer recording!");
+
+			m_bIsCommandBufferRecording = true;
+			return m_vCommandBuffer;
+		}
+
+		/**
+		 * End the command buffer recording.
+		 */
+		void endCommandBufferRecording()
+		{
+			// Skip if we weren't recording.
+			if (!m_bIsCommandBufferRecording)
+				return;
+
+			Utility::ValidateResult(getDeviceTable().vkEndCommandBuffer(m_vCommandBuffer), "Failed to end command buffer recording!");
+
+			m_bIsCommandBufferRecording = false;
+		}
+
+		/**
+		 * Execute the recorded commands.
+		 *
+		 * @param shouldWait Whether or not if we should wait until the GPU finishes execution. Default is true.
+		 */
+		void executeRecordedCommands(bool shouldWait = true)
+		{
+			// End recording if we haven't.
+			endCommandBufferRecording();
+
+			const auto queue = getQueue(VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+
+			VkSubmitInfo vSubmitInfo = {};
+			vSubmitInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			vSubmitInfo.commandBufferCount = 1;
+			vSubmitInfo.pCommandBuffers = &m_vCommandBuffer;
+
+			VkFence vFence = VK_NULL_HANDLE;
+
+			// Create the fence if we need to wait.
+			if (shouldWait)
+			{
+				VkFenceCreateInfo vFenceCreateInfo = {};
+				vFenceCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+				vFenceCreateInfo.pNext = VK_NULL_HANDLE;
+				vFenceCreateInfo.flags = 0;
+
+				Utility::ValidateResult(getDeviceTable().vkCreateFence(getLogicalDevice(), &vFenceCreateInfo, nullptr, &vFence), "Failed to create the synchronization fence!");
+			}
+
+			// Submit the queue.
+			Utility::ValidateResult(getDeviceTable().vkQueueSubmit(queue.getQueue(), 1, &vSubmitInfo, vFence), "Failed to submit the queue!");
+
+			// Destroy the fence if we created it.
+			if (shouldWait)
+			{
+				Utility::ValidateResult(getDeviceTable().vkWaitForFences(getLogicalDevice(), 1, &vFence, VK_TRUE, std::numeric_limits<uint64_t>::max()), "Failed to wait for the fence!");
+				getDeviceTable().vkDestroyFence(getLogicalDevice(), vFence, nullptr);
+			}
 		}
 
 		/**
@@ -413,6 +507,53 @@ namespace Firefly
 			vmaDestroyAllocator(m_vAllocator);
 		}
 
+		/**
+		 * Create the command pool.
+		 */
+		void createCommandPool()
+		{
+			const auto queue = getQueue(VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+
+			VkCommandPoolCreateInfo vCreateInfo = {};
+			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			vCreateInfo.flags = 0;
+			vCreateInfo.pNext = VK_NULL_HANDLE;
+			vCreateInfo.queueFamilyIndex = queue.getFamily().value();
+
+			Utility::ValidateResult(getDeviceTable().vkCreateCommandPool(getLogicalDevice(), &vCreateInfo, nullptr, &m_vCommandPool), "Failed to create the command pool!");
+		}
+
+		/**
+		 * Destroy a created command pool.
+		 */
+		void destroyCommandPool()
+		{
+			getDeviceTable().vkDestroyCommandPool(getLogicalDevice(), m_vCommandPool, nullptr);
+		}
+
+		/**
+		 * Allocate the command buffer.
+		 */
+		void allocateCommandBuffer()
+		{
+			VkCommandBufferAllocateInfo vAllocateInfo = {};
+			vAllocateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			vAllocateInfo.pNext = VK_NULL_HANDLE;
+			vAllocateInfo.level = VkCommandBufferLevel::VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			vAllocateInfo.commandPool = m_vCommandPool;
+			vAllocateInfo.commandBufferCount = 1;
+
+			Utility::ValidateResult(getDeviceTable().vkAllocateCommandBuffers(getLogicalDevice(), &vAllocateInfo, &m_vCommandBuffer), "Failed to allocate command buffer!");
+		}
+
+		/**
+		 * Free the command buffer.
+		 */
+		void freeCommandBuffer()
+		{
+			getDeviceTable().vkFreeCommandBuffers(getLogicalDevice(), m_vCommandPool, 1, &m_vCommandBuffer);
+		}
+
 	protected:
 		VkPhysicalDeviceProperties m_Properties = {};
 
@@ -423,8 +564,13 @@ namespace Firefly
 		VkDevice m_vLogicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDevice m_vPhysicalDevice = VK_NULL_HANDLE;
 
+		VkCommandPool m_vCommandPool = VK_NULL_HANDLE;
+		VkCommandBuffer m_vCommandBuffer = VK_NULL_HANDLE;
+
 	private:
 		VolkDeviceTable m_DeviceTable;
 		VmaAllocator m_vAllocator;
+
+		bool m_bIsCommandBufferRecording = false;
 	};
 }

@@ -21,10 +21,9 @@ namespace Firefly
 		 * @throws std::runtime_error if the instance pointer is null.
 		 */
 		explicit GraphicsEngine(const std::shared_ptr<Instance>& pInstance)
-			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT | VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT, { VK_KHR_SWAPCHAIN_EXTENSION_NAME }, getFeatures())
+			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT, { VK_KHR_SWAPCHAIN_EXTENSION_NAME }, getFeatures())
 		{
-			// Create the command pool.
-			createCommandPool();
+
 		}
 
 		/**
@@ -32,8 +31,7 @@ namespace Firefly
 		 */
 		~GraphicsEngine()
 		{
-			// Destroy the command pool.
-			destroyCommandPool();
+
 		}
 
 		/**
@@ -60,33 +58,5 @@ namespace Firefly
 
 			return vFeatures;
 		}
-
-		/**
-		 * Create the command pool.
-		 */
-		void createCommandPool()
-		{
-			const auto queue = getQueue(VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
-
-			VkCommandPoolCreateInfo vCreateInfo = {};
-			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			vCreateInfo.flags = 0;
-			vCreateInfo.pNext = VK_NULL_HANDLE;
-			vCreateInfo.queueFamilyIndex = queue.getFamily().value();
-
-			Utility::ValidateResult(getDeviceTable().vkCreateCommandPool(getLogicalDevice(), &vCreateInfo, nullptr, &m_vCommandPool), "Failed to create the command pool!");
-		}
-
-		/**
-		 * Destroy a created command pool.
-		 */
-		void destroyCommandPool()
-		{
-			getDeviceTable().vkDestroyCommandPool(getLogicalDevice(), m_vCommandPool, nullptr);
-		}
-
-	private:
-		VkCommandPool m_vCommandPool = VK_NULL_HANDLE;
-		VkCommandBuffer m_vCommandBuffer = VK_NULL_HANDLE;
 	};
 }
