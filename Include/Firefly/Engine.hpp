@@ -27,7 +27,7 @@ namespace Firefly
 		 * @param extensions The device extensions to activate.
 		 * @throws std::runtime_error If the pointer is null. It could also throw this same exception if there are no physical devices.
 		 */
-		explicit Engine(const std::shared_ptr<Instance>& pInstance, const VkQueueFlags flag, const std::vector<const char*>& extensions)
+		explicit Engine(const std::shared_ptr<Instance>& pInstance, const VkQueueFlags flag, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features = VkPhysicalDeviceFeatures())
 			: m_pInstance(pInstance)
 		{
 			// Validate the pointer.
@@ -38,7 +38,7 @@ namespace Firefly
 			setupPhysicalDevice(extensions, flag);
 
 			// Create the logical device.
-			setupLogicalDevice(extensions, flag);
+			setupLogicalDevice(extensions, flag, features);
 
 			// Create the memory manager's allocator.
 			createAllocator();
@@ -107,6 +107,13 @@ namespace Firefly
 			throw BackendError("Queue not found!");
 		}
 
+		/**
+		 * Get all the physical device properties.
+		 *
+		 * @return The properties.
+		 */
+		VkPhysicalDeviceProperties getPhysicalDeviceProperties() const { return m_Properties; }
+
 	private:
 		/**
 		 * Setup the physical device.
@@ -130,8 +137,8 @@ namespace Firefly
 			std::vector<VkPhysicalDevice> vCandidates(deviceCount);
 			Utility::ValidateResult(vkEnumeratePhysicalDevices(vInstance, &deviceCount, vCandidates.data()), "Failed to enumerate physical devices.");
 
-			std::array<VkPhysicalDevice, 6> vPriorityMap;
-			vPriorityMap.fill(VK_NULL_HANDLE);
+			struct Candidate { VkPhysicalDeviceProperties m_Properties; VkPhysicalDevice m_Candidate; };
+			std::array<Candidate, 6> vPriorityMap;
 
 			// Iterate through all the candidate devices and find the best device.
 			for (const auto& vCandidateDevice : vCandidates)
@@ -146,38 +153,45 @@ namespace Firefly
 					switch (vPhysicalDeviceProperties.deviceType)
 					{
 					case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-						vPriorityMap[0] = vCandidateDevice;
+						vPriorityMap[0].m_Candidate = vCandidateDevice;
+						vPriorityMap[0].m_Properties = vPhysicalDeviceProperties;
 						break;
 
 					case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-						vPriorityMap[1] = vCandidateDevice;
+						vPriorityMap[1].m_Candidate = vCandidateDevice;
+						vPriorityMap[1].m_Properties = vPhysicalDeviceProperties;
 						break;
 
 					case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-						vPriorityMap[2] = vCandidateDevice;
+						vPriorityMap[2].m_Candidate = vCandidateDevice;
+						vPriorityMap[2].m_Properties = vPhysicalDeviceProperties;
 						break;
 
 					case VK_PHYSICAL_DEVICE_TYPE_CPU:
-						vPriorityMap[3] = vCandidateDevice;
+						vPriorityMap[3].m_Candidate = vCandidateDevice;
+						vPriorityMap[3].m_Properties = vPhysicalDeviceProperties;
 						break;
 
 					case VK_PHYSICAL_DEVICE_TYPE_OTHER:
-						vPriorityMap[4] = vCandidateDevice;
+						vPriorityMap[4].m_Candidate = vCandidateDevice;
+						vPriorityMap[4].m_Properties = vPhysicalDeviceProperties;
 						break;
 
 					default:
-						vPriorityMap[5] = vCandidateDevice;
+						vPriorityMap[5].m_Candidate = vCandidateDevice;
+						vPriorityMap[5].m_Properties = vPhysicalDeviceProperties;
 						break;
 					}
 				}
 			}
 
 			// Choose the physical device with the highest priority.
-			for (const auto vCandidate : vPriorityMap)
+			for (const auto& candidate : vPriorityMap)
 			{
-				if (vCandidate != VK_NULL_HANDLE)
+				if (candidate.m_Candidate != VK_NULL_HANDLE)
 				{
-					m_vPhysicalDevice = vCandidate;
+					m_vPhysicalDevice = candidate.m_Candidate;
+					m_Properties = candidate.m_Properties;
 					break;
 				}
 			}
@@ -193,7 +207,7 @@ namespace Firefly
 		 * @param extensions The required extension.
 		 * @param flag The queue flag bits.
 		 */
-		void setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags)
+		void setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags, const VkPhysicalDeviceFeatures& features)
 		{
 			// Initialize the queue families.
 			std::map<uint32_t, uint32_t> uniqueQueueFamilies;
@@ -259,15 +273,12 @@ namespace Firefly
 				vQueueCreateInfos.emplace_back(vQueueCreateInfo);
 			}
 
-			// Physical device features.
-			VkPhysicalDeviceFeatures vFeatures = {};
-
 			// Device create info.
 			VkDeviceCreateInfo vDeviceCreateInfo = {};
 			vDeviceCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 			vDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(vQueueCreateInfos.size());
 			vDeviceCreateInfo.pQueueCreateInfos = vQueueCreateInfos.data();
-			vDeviceCreateInfo.pEnabledFeatures = &vFeatures;
+			vDeviceCreateInfo.pEnabledFeatures = &features;
 			vDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 			vDeviceCreateInfo.ppEnabledExtensionNames = extensions.data();
 
@@ -403,6 +414,8 @@ namespace Firefly
 		}
 
 	protected:
+		VkPhysicalDeviceProperties m_Properties = {};
+
 		std::shared_ptr<Instance> m_pInstance = nullptr;
 
 		std::vector<Queue> m_Queues;

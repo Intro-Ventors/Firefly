@@ -6,6 +6,7 @@
 #include "Firefly/Decoder/Decoder.hpp"
 #include "Firefly/Graphics/GraphicsEngine.hpp"
 #include "Firefly/Buffer.hpp"
+#include "Firefly/Image.hpp"
 
 int main()
 {
@@ -18,6 +19,8 @@ int main()
 		auto pBuffer = Firefly::Buffer::create(pGraphics, 1024, Firefly::BufferType::Staging);
 
 		auto ptr = pBuffer->mapMemory();
+
+		auto pImage = Firefly::Image::create(pGraphics, { 512, 512, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, Firefly::ImageType::TwoDimension, 1);
 	}
 	catch (const Firefly::BackendError& e)
 	{

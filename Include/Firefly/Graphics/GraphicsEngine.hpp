@@ -21,7 +21,7 @@ namespace Firefly
 		 * @throws std::runtime_error if the instance pointer is null.
 		 */
 		explicit GraphicsEngine(const std::shared_ptr<Instance>& pInstance)
-			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT | VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT, { VK_KHR_SWAPCHAIN_EXTENSION_NAME })
+			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT | VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT, { VK_KHR_SWAPCHAIN_EXTENSION_NAME }, getFeatures())
 		{
 			// Create the command pool.
 			createCommandPool();
@@ -48,6 +48,19 @@ namespace Firefly
 		}
 
 	private:
+		/**
+		 * Get all the required features.
+		 *
+		 * @return The physical device features.
+		 */
+		VkPhysicalDeviceFeatures getFeatures() const
+		{
+			VkPhysicalDeviceFeatures vFeatures = {};
+			vFeatures.samplerAnisotropy = VK_TRUE;
+
+			return vFeatures;
+		}
+
 		/**
 		 * Create the command pool.
 		 */

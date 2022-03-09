@@ -71,11 +71,11 @@ namespace Firefly
 
 			// Create the buffer.
 			VkBufferCreateInfo vCreateInfo = {};
-			vCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 			vCreateInfo.pNext = nullptr;
 			vCreateInfo.flags = 0;
 			vCreateInfo.size = m_Size;
-			vCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			vCreateInfo.sharingMode = VkSharingMode::VK_SHARING_MODE_EXCLUSIVE;
 			vCreateInfo.queueFamilyIndexCount = 0;
 			vCreateInfo.pQueueFamilyIndices = nullptr;
 			vCreateInfo.usage = static_cast<VkBufferUsageFlags>(type);
