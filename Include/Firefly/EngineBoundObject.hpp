@@ -11,6 +11,8 @@ namespace Firefly
 	class EngineBoundObject
 	{
 	public:
+		FIREFLY_NO_COPY(EngineBoundObject);
+
 		/**
 		 * Constructor.
 		 *
@@ -33,7 +35,29 @@ namespace Firefly
 		 */
 		virtual void terminate() = 0;
 
+		/**
+		 * Get the engine to which this object is bound to.
+		 *
+		 * @retrurn The engine pointer.
+		 */
+		std::shared_ptr<Engine> getEngine() const { return m_pEngine; }
+
+		/**
+		 * Check if the object is terminated.
+		 * Make sure to toggle this when the object is terminated.
+		 *
+		 * @return The boolean stating if the object is terminated or not.
+		 */
+		bool isTerminated() const { return bIsTerminated; }
+
 	protected:
+		/**
+		 * Toggle the terminated boolean to true.
+		 */
+		void toggleTerminated() { bIsTerminated = true; }
+
+	private:
 		std::shared_ptr<Engine> m_pEngine = nullptr;
+		bool bIsTerminated = false;
 	};
 }

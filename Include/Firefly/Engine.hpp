@@ -16,7 +16,7 @@ namespace Firefly
 	class Engine
 	{
 	public:
-		FIREFLY_DEFAULT_COPY(Engine);
+		FIREFLY_NO_COPY(Engine);
 		FIREFLY_DEFAULT_MOVE(Engine);
 
 		/**
@@ -348,6 +348,9 @@ namespace Firefly
 		VmaVulkanFunctions getVulkanFunctions() const
 		{
 			VmaVulkanFunctions functions = {};
+			functions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+			functions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+
 			functions.vkAllocateMemory = getDeviceTable().vkAllocateMemory;
 			functions.vkBindBufferMemory = getDeviceTable().vkBindBufferMemory;
 			functions.vkBindBufferMemory2KHR = getDeviceTable().vkBindBufferMemory2;

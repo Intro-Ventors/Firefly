@@ -51,7 +51,7 @@ namespace Firefly
 	class Instance final : public std::enable_shared_from_this<Instance>
 	{
 	public:
-		FIREFLY_DEFAULT_COPY(Instance);
+		FIREFLY_NO_COPY(Instance);
 		FIREFLY_DEFAULT_MOVE(Instance);
 
 		/**

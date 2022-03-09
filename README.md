@@ -16,6 +16,8 @@ cd {SOURCE}
 After cloning it, run the `Bootstrap.bat` file (if on Windows) or `Bootstrap.sh` (if on Linux) to build the required files. On Windows, it will build the required `.sln` and `.vcxproj` 
 files which you can then open using Visual Studio, or on Linux, it will generate the required `gmake2` files.
 
+When using the library, make sure to define `FIREFLY_SETUP_THIRD_PARTY` in ONE SOURCE FILE in order for us to set up all the dependencies.
+
 > Note that to properly run the application built using this library, it requires the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/).
 
 ## License

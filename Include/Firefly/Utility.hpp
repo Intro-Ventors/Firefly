@@ -1,17 +1,16 @@
 #pragma once
 
-
-#ifndef VOLK_IMPLEMENTATION
-
-#define VOLK_IMPLEMENTATION
 #define VK_ENABLE_BETA_EXTENSIONS
 #define VK_NO_PROTOTYPES
+
+#ifdef FIREFLY_SETUP_THIRD_PARTY
+#define VOLK_IMPLEMENTATION
 #define VMA_IMPLEMENTATION
+
+#endif
 
 #include <volk/volk.h>
 #include <VulkanMemoryAllocator/vk_mem_alloc.h>
-
-#endif
 
 #include "BackendError.hpp"
 
@@ -37,3 +36,6 @@ namespace Firefly
 
 #define FIREFLY_DEFAULT_COPY(name)	name(const name&) = default;	name& operator=(const name&) = default
 #define FIREFLY_DEFAULT_MOVE(name)	name(name&&) = default;			name& operator=(name&&) = default
+
+#define FIREFLY_NO_COPY(name)		name(const name&) = delete;		name& operator=(const name&) = delete
+#define FIREFLY_NO_MOVE(name)		name(name&&) = delete;			name& operator=(name&&) = delete
