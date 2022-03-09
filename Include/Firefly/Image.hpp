@@ -58,7 +58,7 @@ namespace Firefly
 		 */
 		std::shared_ptr<Buffer> toBuffer()
 		{
-			const auto size = static_cast<uint64_t>(m_Extent.width) * m_Extent.height * m_Extent.depth * getByteDepth();
+			const auto size = static_cast<uint64_t>(m_Extent.width) * m_Extent.height * m_Extent.depth * getPixelSize();
 			auto pBuffer = Buffer::create(getEngine(), size, BufferType::Staging);
 
 			VkBufferImageCopy vImageCopy = {};
@@ -291,146 +291,12 @@ namespace Firefly
 		 */
 		VkImageLayout getImageLayout() const { return m_CurrentLayout; }
 
-	private:
-		/**
-		 * Create the image.
-		 */
-		void createImage()
-		{
-			VkImageCreateInfo vCreateInfo = {};
-			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			vCreateInfo.pNext = nullptr;
-			vCreateInfo.extent = m_Extent;
-			vCreateInfo.format = m_Format;
-			vCreateInfo.arrayLayers = m_Layers;
-			vCreateInfo.initialLayout = m_CurrentLayout;
-			vCreateInfo.imageType = VkImageType::VK_IMAGE_TYPE_2D;
-			vCreateInfo.queueFamilyIndexCount = 0;
-			vCreateInfo.pQueueFamilyIndices = nullptr;
-			vCreateInfo.samples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
-			vCreateInfo.tiling = VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
-			vCreateInfo.usage = VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-			vCreateInfo.mipLevels = 1;
-
-			if (m_Type == ImageType::CubeMap)
-				vCreateInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-
-			VmaAllocationCreateInfo vAllocationCreateInfo = {};
-			vAllocationCreateInfo.usage = VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY;
-
-			Utility::ValidateResult(vmaCreateImage(getEngine()->getAllocator(), &vCreateInfo, &vAllocationCreateInfo, &m_vImage, &m_Allocation, nullptr), "Failed to create the image!");
-		}
-
-		/**
-		 * Create the image view.
-		 */
-		void createImageView()
-		{
-			VkImageViewCreateInfo vCreateInfo = {};
-			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			vCreateInfo.pNext = nullptr;
-			vCreateInfo.flags = 0;
-			vCreateInfo.format = m_Format;
-			vCreateInfo.image = m_vImage;
-			vCreateInfo.viewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
-			vCreateInfo.subresourceRange.layerCount = m_Layers;
-			vCreateInfo.subresourceRange.baseArrayLayer = 0;
-			vCreateInfo.subresourceRange.levelCount = 1;
-			vCreateInfo.subresourceRange.baseMipLevel = 0;
-			vCreateInfo.subresourceRange.aspectMask = VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
-			vCreateInfo.components.r = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
-			vCreateInfo.components.g = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
-			vCreateInfo.components.b = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
-			vCreateInfo.components.a = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
-
-			if (m_Type == ImageType::CubeMap)
-				vCreateInfo.viewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
-
-			Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateImageView(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vImageView), "Failed to create the image view!");
-		}
-
-		/**
-		 * Create image sampler.
-		 */
-		void createSampler()
-		{
-			VkSamplerAddressMode addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-			if (m_Type == ImageType::CubeMap)	// TODO
-				addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-			VkSamplerCreateInfo vCreateInfo = {};
-			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			vCreateInfo.pNext = nullptr;
-			vCreateInfo.magFilter = VkFilter::VK_FILTER_LINEAR;
-			vCreateInfo.minFilter = VkFilter::VK_FILTER_LINEAR;
-			vCreateInfo.addressModeU = addressMode;
-			vCreateInfo.addressModeV = addressMode;
-			vCreateInfo.addressModeW = addressMode;
-			vCreateInfo.anisotropyEnable = VK_TRUE;
-			vCreateInfo.maxAnisotropy = getEngine()->getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
-			vCreateInfo.borderColor = VkBorderColor::VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-			vCreateInfo.unnormalizedCoordinates = VK_FALSE;
-			vCreateInfo.compareEnable = VK_FALSE;
-			vCreateInfo.compareOp = VkCompareOp::VK_COMPARE_OP_ALWAYS;
-			vCreateInfo.mipmapMode = VkSamplerMipmapMode::VK_SAMPLER_MIPMAP_MODE_LINEAR;
-			vCreateInfo.minLod = 0.0;
-			vCreateInfo.maxLod = 1;
-			vCreateInfo.mipLodBias = 0.0;
-
-			Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateSampler(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vSampler), "Failed to create the image sampler!");
-		}
-
-		/**
-		 * Get the pipeline stage masks.
-		 *
-		 * @param flags The access flags.
-		 * @retrurn The pipeline stage flags.
-		 */
-		VkPipelineStageFlags getPipelineStageFlags(VkAccessFlags flags) const
-		{
-			switch (flags)
-			{
-			case VK_ACCESS_INDIRECT_COMMAND_READ_BIT:						return VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
-			case VK_ACCESS_INDEX_READ_BIT:									return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-			case VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT:						return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-			case VK_ACCESS_UNIFORM_READ_BIT:								return VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-			case VK_ACCESS_SHADER_READ_BIT:									return VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR | VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-			case VK_ACCESS_SHADER_WRITE_BIT:								return VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-			case VK_ACCESS_INPUT_ATTACHMENT_READ_BIT:						return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-			case VK_ACCESS_COLOR_ATTACHMENT_READ_BIT:						return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			case VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT:						return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			case VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT:				return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			case VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT:				return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			case VK_ACCESS_TRANSFER_READ_BIT:								return VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
-			case VK_ACCESS_TRANSFER_WRITE_BIT:								return VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
-			case VK_ACCESS_HOST_READ_BIT:									return VK_PIPELINE_STAGE_HOST_BIT;
-			case VK_ACCESS_HOST_WRITE_BIT:									return VK_PIPELINE_STAGE_HOST_BIT;
-			case VK_ACCESS_MEMORY_READ_BIT:									return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-			case VK_ACCESS_MEMORY_WRITE_BIT:								return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-			case VK_ACCESS_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT:		return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			case VK_ACCESS_COMMAND_PREPROCESS_READ_BIT_NV:					return VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV;
-			case VK_ACCESS_COMMAND_PREPROCESS_WRITE_BIT_NV:					return VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV;
-			case VK_ACCESS_CONDITIONAL_RENDERING_READ_BIT_EXT:				return VK_PIPELINE_STAGE_CONDITIONAL_RENDERING_BIT_EXT;
-			case VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR:	return VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
-				//case VK_ACCESS_2_INVOCATION_MASK_READ_BIT_HUAWEI:				return VK_PIPELINE_STAGE_2_INVOCATION_MASK_BIT_HUAWEI;
-			case VK_ACCESS_TRANSFORM_FEEDBACK_WRITE_BIT_EXT:				return VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
-			case VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_WRITE_BIT_EXT:		return VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
-			case VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_READ_BIT_EXT:			return VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
-			case VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR:				return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
-			case VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR:			return VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
-			case VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT:				return VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT;
-			}
-
-			return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-		}
-
 		/**
 		 * Get the byte depth of the current format.
 		 *
 		 * @return The pixel size in bytes.
 		 */
-		uint8_t getByteDepth() const
+		uint8_t getPixelSize() const
 		{
 			switch (m_Format)
 			{
@@ -699,6 +565,140 @@ namespace Firefly
 			}
 
 			return 0;
+		}
+
+	private:
+		/**
+		 * Create the image.
+		 */
+		void createImage()
+		{
+			VkImageCreateInfo vCreateInfo = {};
+			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			vCreateInfo.pNext = nullptr;
+			vCreateInfo.extent = m_Extent;
+			vCreateInfo.format = m_Format;
+			vCreateInfo.arrayLayers = m_Layers;
+			vCreateInfo.initialLayout = m_CurrentLayout;
+			vCreateInfo.imageType = VkImageType::VK_IMAGE_TYPE_2D;
+			vCreateInfo.queueFamilyIndexCount = 0;
+			vCreateInfo.pQueueFamilyIndices = nullptr;
+			vCreateInfo.samples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
+			vCreateInfo.tiling = VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
+			vCreateInfo.usage = VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			vCreateInfo.mipLevels = 1;
+
+			if (m_Type == ImageType::CubeMap)
+				vCreateInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+			VmaAllocationCreateInfo vAllocationCreateInfo = {};
+			vAllocationCreateInfo.usage = VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY;
+
+			Utility::ValidateResult(vmaCreateImage(getEngine()->getAllocator(), &vCreateInfo, &vAllocationCreateInfo, &m_vImage, &m_Allocation, nullptr), "Failed to create the image!");
+		}
+
+		/**
+		 * Create the image view.
+		 */
+		void createImageView()
+		{
+			VkImageViewCreateInfo vCreateInfo = {};
+			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			vCreateInfo.pNext = nullptr;
+			vCreateInfo.flags = 0;
+			vCreateInfo.format = m_Format;
+			vCreateInfo.image = m_vImage;
+			vCreateInfo.viewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
+			vCreateInfo.subresourceRange.layerCount = m_Layers;
+			vCreateInfo.subresourceRange.baseArrayLayer = 0;
+			vCreateInfo.subresourceRange.levelCount = 1;
+			vCreateInfo.subresourceRange.baseMipLevel = 0;
+			vCreateInfo.subresourceRange.aspectMask = VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
+			vCreateInfo.components.r = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
+			vCreateInfo.components.g = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
+			vCreateInfo.components.b = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
+			vCreateInfo.components.a = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
+
+			if (m_Type == ImageType::CubeMap)
+				vCreateInfo.viewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
+
+			Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateImageView(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vImageView), "Failed to create the image view!");
+		}
+
+		/**
+		 * Create image sampler.
+		 */
+		void createSampler()
+		{
+			VkSamplerAddressMode addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+			if (m_Type == ImageType::CubeMap)	// TODO
+				addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+			VkSamplerCreateInfo vCreateInfo = {};
+			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			vCreateInfo.pNext = nullptr;
+			vCreateInfo.magFilter = VkFilter::VK_FILTER_LINEAR;
+			vCreateInfo.minFilter = VkFilter::VK_FILTER_LINEAR;
+			vCreateInfo.addressModeU = addressMode;
+			vCreateInfo.addressModeV = addressMode;
+			vCreateInfo.addressModeW = addressMode;
+			vCreateInfo.anisotropyEnable = VK_TRUE;
+			vCreateInfo.maxAnisotropy = getEngine()->getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
+			vCreateInfo.borderColor = VkBorderColor::VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+			vCreateInfo.unnormalizedCoordinates = VK_FALSE;
+			vCreateInfo.compareEnable = VK_FALSE;
+			vCreateInfo.compareOp = VkCompareOp::VK_COMPARE_OP_ALWAYS;
+			vCreateInfo.mipmapMode = VkSamplerMipmapMode::VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			vCreateInfo.minLod = 0.0;
+			vCreateInfo.maxLod = 1;
+			vCreateInfo.mipLodBias = 0.0;
+
+			Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateSampler(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vSampler), "Failed to create the image sampler!");
+		}
+
+		/**
+		 * Get the pipeline stage masks.
+		 *
+		 * @param flags The access flags.
+		 * @retrurn The pipeline stage flags.
+		 */
+		VkPipelineStageFlags getPipelineStageFlags(VkAccessFlags flags) const
+		{
+			switch (flags)
+			{
+			case VK_ACCESS_INDIRECT_COMMAND_READ_BIT:						return VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+			case VK_ACCESS_INDEX_READ_BIT:									return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+			case VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT:						return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+			case VK_ACCESS_UNIFORM_READ_BIT:								return VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			case VK_ACCESS_SHADER_READ_BIT:									return VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR | VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			case VK_ACCESS_SHADER_WRITE_BIT:								return VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			case VK_ACCESS_INPUT_ATTACHMENT_READ_BIT:						return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			case VK_ACCESS_COLOR_ATTACHMENT_READ_BIT:						return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			case VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT:						return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			case VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT:				return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			case VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT:				return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			case VK_ACCESS_TRANSFER_READ_BIT:								return VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+			case VK_ACCESS_TRANSFER_WRITE_BIT:								return VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+			case VK_ACCESS_HOST_READ_BIT:									return VK_PIPELINE_STAGE_HOST_BIT;
+			case VK_ACCESS_HOST_WRITE_BIT:									return VK_PIPELINE_STAGE_HOST_BIT;
+			case VK_ACCESS_MEMORY_READ_BIT:									return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+			case VK_ACCESS_MEMORY_WRITE_BIT:								return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+			case VK_ACCESS_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT:		return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			case VK_ACCESS_COMMAND_PREPROCESS_READ_BIT_NV:					return VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV;
+			case VK_ACCESS_COMMAND_PREPROCESS_WRITE_BIT_NV:					return VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV;
+			case VK_ACCESS_CONDITIONAL_RENDERING_READ_BIT_EXT:				return VK_PIPELINE_STAGE_CONDITIONAL_RENDERING_BIT_EXT;
+			case VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR:	return VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+				//case VK_ACCESS_2_INVOCATION_MASK_READ_BIT_HUAWEI:				return VK_PIPELINE_STAGE_2_INVOCATION_MASK_BIT_HUAWEI;
+			case VK_ACCESS_TRANSFORM_FEEDBACK_WRITE_BIT_EXT:				return VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
+			case VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_WRITE_BIT_EXT:		return VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
+			case VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_READ_BIT_EXT:			return VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
+			case VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR:				return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+			case VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR:			return VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+			case VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT:				return VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT;
+			}
+
+			return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 		}
 
 	private:
