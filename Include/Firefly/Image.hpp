@@ -28,9 +28,11 @@ namespace Firefly
 		 * @param format The image format.
 		 * @param type The image type.
 		 * @param layers The image layers. Default is 1.
+		 * @param usageFlags The image usage flags. Default is sampled | transfer source | transfer destination.
 		 */
-		explicit Image(const std::shared_ptr<Engine>& pEngine, const VkExtent3D extent, const VkFormat format, const ImageType type, const uint32_t layers = 1)
-			: EngineBoundObject(pEngine), m_Extent(extent), m_Format(format), m_Type(type), m_Layers(layers)
+		explicit Image(const std::shared_ptr<Engine>& pEngine, const VkExtent3D extent, const VkFormat format, const ImageType type, const uint32_t layers = 1,
+			const VkImageUsageFlags usageFlags = VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+			: EngineBoundObject(pEngine), m_Extent(extent), m_Format(format), m_Type(type), m_Layers(layers), m_UsageFlags(usageFlags)
 		{
 			// Create the image.
 			createImage();
@@ -38,8 +40,31 @@ namespace Firefly
 			// Create the image view.
 			createImageView();
 
-			// Create the image sampler.
-			createSampler();
+			// Resolve the sampler usage.
+			if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT)
+			{
+				createSampler();
+				changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			}
+
+			// Resolve the color attachment usage.
+			else if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+			{
+				changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+			}
+
+			// Resolve the storage usage.
+			else if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_STORAGE_BIT)
+			{
+				changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_GENERAL);
+			}
+
+			// Resolve the depth stencil attachment usage.
+			else if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+			{
+				//changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);	// TODO
+				m_CurrentLayout = VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+			}
 		}
 
 		/**
@@ -64,7 +89,7 @@ namespace Firefly
 			VkBufferImageCopy vImageCopy = {};
 			vImageCopy.imageExtent = m_Extent;
 			vImageCopy.imageOffset = {};
-			vImageCopy.imageSubresource.aspectMask = VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
+			vImageCopy.imageSubresource.aspectMask = getImageAspectFlags();
 			vImageCopy.imageSubresource.baseArrayLayer = 0;
 			vImageCopy.imageSubresource.layerCount = m_Layers;
 			vImageCopy.imageSubresource.mipLevel = 0;
@@ -106,7 +131,20 @@ namespace Firefly
 			vMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			vMemoryBarrier.image = m_vImage;
 
-			vMemoryBarrier.subresourceRange.aspectMask = VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
+			if (m_CurrentLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ||
+				m_CurrentLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL ||
+				m_CurrentLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL ||
+				newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ||
+				newLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL ||
+				newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+			{
+				vMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+				if (hasStencilComponent())
+					vMemoryBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+			}
+			else
+				vMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 
 			vMemoryBarrier.subresourceRange.baseMipLevel = 0;
 			vMemoryBarrier.subresourceRange.levelCount = 1;
@@ -215,8 +253,11 @@ namespace Firefly
 		 */
 		void terminate() override
 		{
+			// Terminate the sampler if created.
+			if (m_vSampler != VK_NULL_HANDLE)
+				getEngine()->getDeviceTable().vkDestroySampler(getEngine()->getLogicalDevice(), m_vSampler, nullptr);
+
 			getEngine()->getDeviceTable().vkDestroyImageView(getEngine()->getLogicalDevice(), m_vImageView, nullptr);
-			getEngine()->getDeviceTable().vkDestroySampler(getEngine()->getLogicalDevice(), m_vSampler, nullptr);
 			vmaDestroyImage(getEngine()->getAllocator(), m_vImage, m_Allocation);
 			toggleTerminated();
 		}
@@ -229,11 +270,13 @@ namespace Firefly
 		 * @param format The image format.
 		 * @param type The image type.
 		 * @param layers The image layers. Default is 1.
+		 * @param usageFlags The image usage flags. Default is sampled | transfer source | transfer destination.
 		 * @return The image pointer.
 		 */
-		static std::shared_ptr<Image> create(const std::shared_ptr<Engine>& pEngine, const VkExtent3D extent, const VkFormat format, const ImageType type, const uint32_t layers = 1)
+		static std::shared_ptr<Image> create(const std::shared_ptr<Engine>& pEngine, const VkExtent3D extent, const VkFormat format, const ImageType type, const uint32_t layers = 1,
+			const VkImageUsageFlags usageFlags = VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 		{
-			return std::make_shared<Image>(pEngine, extent, format, type, layers);
+			return std::make_shared<Image>(pEngine, extent, format, type, layers, usageFlags);
 		}
 
 		/**
@@ -586,7 +629,7 @@ namespace Firefly
 			vCreateInfo.pQueueFamilyIndices = nullptr;
 			vCreateInfo.samples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
 			vCreateInfo.tiling = VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
-			vCreateInfo.usage = VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			vCreateInfo.usage = m_UsageFlags;
 			vCreateInfo.mipLevels = 1;
 
 			if (m_Type == ImageType::CubeMap)
@@ -614,7 +657,7 @@ namespace Firefly
 			vCreateInfo.subresourceRange.baseArrayLayer = 0;
 			vCreateInfo.subresourceRange.levelCount = 1;
 			vCreateInfo.subresourceRange.baseMipLevel = 0;
-			vCreateInfo.subresourceRange.aspectMask = VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
+			vCreateInfo.subresourceRange.aspectMask = getImageAspectFlags();
 			vCreateInfo.components.r = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
 			vCreateInfo.components.g = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
 			vCreateInfo.components.b = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -702,6 +745,34 @@ namespace Firefly
 			return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 		}
 
+		/**
+		 * Check if our format has a stencil component.
+		 *
+		 * @return Boolean stating if we do or not.
+		 */
+		bool hasStencilComponent() const
+		{
+			return m_Format == VK_FORMAT_D32_SFLOAT_S8_UINT || m_Format == VK_FORMAT_D24_UNORM_S8_UINT;
+		}
+
+		/**
+		 * Get the required aspect flags.
+		 *
+		 * @return The image aspect flags.
+		 */
+		VkImageAspectFlags getImageAspectFlags() const
+		{
+			if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+				return VkImageAspectFlagBits::VK_IMAGE_ASPECT_DEPTH_BIT;
+
+			else if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ||
+				m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT ||
+				m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_STORAGE_BIT)
+				return VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
+
+			return 0;
+		}
+
 	private:
 		VkExtent3D m_Extent;
 
@@ -715,5 +786,6 @@ namespace Firefly
 		VkFormat m_Format = VkFormat::VK_FORMAT_UNDEFINED;
 		ImageType m_Type = ImageType::TwoDimension;
 		uint32_t m_Layers = 0;
+		VkImageUsageFlags m_UsageFlags = 0;
 	};
 }

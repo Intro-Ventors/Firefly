@@ -169,10 +169,10 @@ namespace Firefly
 		}
 
 	private:
-		uint64_t m_Size = 0;
+		const uint64_t m_Size = 0;
 		VmaAllocation m_Allocation = nullptr;
 		VkBuffer m_vBuffer = VK_NULL_HANDLE;
-		BufferType m_Type = BufferType::Unknown;
+		const BufferType m_Type = BufferType::Unknown;
 		VmaMemoryUsage m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_UNKNOWN;
 		bool m_bIsMapped = false;
 	};

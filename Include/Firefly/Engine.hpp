@@ -208,6 +208,41 @@ namespace Firefly
 		 */
 		VkPhysicalDeviceProperties getPhysicalDeviceProperties() const { return m_Properties; }
 
+		/**
+		 * Find a supported format from a given list.
+		 *
+		 * @param candidates The candidate formats.
+		 * @param tiling The image tiling.
+		 * @param features The image tiling features.
+		 * @return The supported format.
+		 */
+		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) const
+		{
+			for (const auto format : candidates) {
+				VkFormatProperties props;
+				vkGetPhysicalDeviceFormatProperties(getPhysicalDevice(), format, &props);
+
+				if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+					return format;
+				else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+					return format;
+			}
+
+			throw BackendError("Failed to find supported format!");
+		}
+
+		/**
+		 * Find the best supported depth format.
+		 *
+		 * @return The depth format.
+		 */
+		VkFormat findBestDepthFormat() const
+		{
+			return findSupportedFormat(
+				{ VkFormat::VK_FORMAT_D32_SFLOAT, VkFormat::VK_FORMAT_D32_SFLOAT_S8_UINT,VkFormat::VK_FORMAT_D24_UNORM_S8_UINT },
+				VkImageTiling::VK_IMAGE_TILING_OPTIMAL, VkFormatFeatureFlagBits::VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+		}
+
 	private:
 		/**
 		 * Setup the physical device.
@@ -516,7 +551,7 @@ namespace Firefly
 
 			VkCommandPoolCreateInfo vCreateInfo = {};
 			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			vCreateInfo.flags = 0;
+			vCreateInfo.flags = VkCommandPoolCreateFlagBits::VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 			vCreateInfo.pNext = VK_NULL_HANDLE;
 			vCreateInfo.queueFamilyIndex = queue.getFamily().value();
 

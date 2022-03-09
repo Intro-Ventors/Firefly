@@ -98,6 +98,6 @@ namespace Firefly
 	private:
 		std::optional<uint32_t> m_QueueFamily = {};
 		VkQueue m_vQueue = VK_NULL_HANDLE;
-		VkQueueFlagBits m_vFlags;
+		const VkQueueFlagBits m_vFlags;
 	};
 }

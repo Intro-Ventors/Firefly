@@ -8,6 +8,7 @@
 #include "Firefly/Buffer.hpp"
 #include "Firefly/Image.hpp"
 #include "Firefly/Shader.hpp"
+#include "Firefly/Graphics/RenderTarget.hpp"
 
 int main()
 {
@@ -26,6 +27,9 @@ int main()
 
 		auto pShader = Firefly::Shader::create(pGraphics, "E:\\Dynamik\\Game Repository\\assets\\assets\\Cube\\vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
 		pShader->terminate();
+
+		auto pRenderTarget = Firefly::RenderTarget::create(pGraphics, { 512, 512, 1 }, 1);
+		pRenderTarget->terminate();
 	}
 	catch (const Firefly::BackendError& e)
 	{

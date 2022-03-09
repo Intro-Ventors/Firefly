@@ -541,6 +541,6 @@ namespace Firefly
 		VkShaderModule m_vShaderModule = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_vDescriptorSetLayout = VK_NULL_HANDLE;
 
-		VkShaderStageFlags m_Flags = VkShaderStageFlagBits::VK_SHADER_STAGE_ALL;
+		const VkShaderStageFlags m_Flags = VkShaderStageFlagBits::VK_SHADER_STAGE_ALL;
 	};
 }

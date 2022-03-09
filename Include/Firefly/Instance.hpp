@@ -226,7 +226,7 @@ namespace Firefly
 
 		VkInstance m_vInstance = VK_NULL_HANDLE;
 		VkDebugUtilsMessengerEXT m_vDebugUtilsMessenger = VK_NULL_HANDLE;
-		uint32_t m_VulkanVersion = 0;
+		const uint32_t m_VulkanVersion = 0;
 
 		bool m_bEnableValidation = true;
 	};
