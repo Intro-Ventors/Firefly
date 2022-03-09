@@ -14,7 +14,7 @@ int main()
 		auto pDecoder = Firefly::Decoder::create(pInstance);
 		auto pGraphics = Firefly::GraphicsEngine::create(pInstance);
 	}
-	catch (std::exception& e)
+	catch (const Firefly::BackendError& e)
 	{
 		std::cout << e.what();
 	}

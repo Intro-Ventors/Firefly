@@ -11,13 +11,16 @@ namespace Firefly
 	class Encoder final : public Engine
 	{
 	public:
+		FIREFLY_DEFAULT_COPY(Encoder);
+		FIREFLY_DEFAULT_MOVE(Encoder);
+
 		/**
 		 * Constructor.
 		 *
 		 * @param pInstance The instance pointer to which this object is bound.
 		 * @throws std::runtime_error if the instance pointer is null.
 		 */
-		Encoder(const std::shared_ptr<Instance>& pInstance)
+		explicit Encoder(const std::shared_ptr<Instance>& pInstance)
 			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR,
 				{ VK_KHR_VIDEO_QUEUE_EXTENSION_NAME , VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME, VK_KHR_VIDEO_ENCODE_QUEUE_EXTENSION_NAME, VK_EXT_VIDEO_ENCODE_H264_EXTENSION_NAME })
 		{

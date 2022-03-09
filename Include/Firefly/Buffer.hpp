@@ -1,8 +1,11 @@
 #pragma once
 
-#include "Engine.hpp"
+#include "EngineBoundObject.hpp"
 
 namespace Firefly
 {
-
+	class Buffer final : public EngineBoundObject
+	{
+	public:
+	};
 }

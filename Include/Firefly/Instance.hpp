@@ -45,40 +45,15 @@ namespace Firefly
 	}
 
 	/**
-	 * Create debug messenger structure.
-	 * This utility function will generate the VkDebugUtilsMessengerCreateInfoEXT structure.
-	 *
-	 * @retrurn The created structure.
-	 */
-	inline VkDebugUtilsMessengerCreateInfoEXT CreateDebugMessengerCreateInfo()
-	{
-		VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
-		createInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		createInfo.pNext = VK_NULL_HANDLE;
-		createInfo.pUserData = VK_NULL_HANDLE;
-		createInfo.flags = 0;
-		createInfo.pfnUserCallback = DebugCallback;
-
-		createInfo.messageSeverity
-			= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-			| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-			| VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-
-		createInfo.messageType
-			= VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-			| VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-			| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-
-		return createInfo;
-	}
-
-	/**
 	 * RCHAC Instance.
 	 * This object contains the main instance of the codec engine.
 	 */
 	class Instance final : public std::enable_shared_from_this<Instance>
 	{
 	public:
+		FIREFLY_DEFAULT_COPY(Instance);
+		FIREFLY_DEFAULT_MOVE(Instance);
+
 		/**
 		 * Constructor.
 		 *
@@ -86,11 +61,11 @@ namespace Firefly
 		 * @param vulkanAPIVersion The Vulkan API version to use.
 		 * @param usedForGraphics Whether or not this instance is used for graphics.
 		 */
-		Instance(bool enableValidation, const uint32_t vulkanAPIVersion, bool usedForGraphics)
-			: m_bEnableValidation(enableValidation)
+		explicit Instance(bool enableValidation, const uint32_t vulkanAPIVersion, bool usedForGraphics)
+			: m_VulkanVersion(vulkanAPIVersion), m_bEnableValidation(enableValidation)
 		{
 			// Initialize volk.
-			volkInitialize();
+			Utility::ValidateResult(volkInitialize(), "Failed to initialize volk!");
 
 			// Setup the application info structure.
 			VkApplicationInfo vApplicationInfo = {};
@@ -120,7 +95,7 @@ namespace Firefly
 				m_ValidationLayers.emplace_back("VK_LAYER_KHRONOS_validation");
 
 				// Create the debug messenger.
-				vDebugCreateInfo = CreateDebugMessengerCreateInfo();
+				vDebugCreateInfo = createDebugMessengerCreateInfo();
 
 				vCreateInfo.pNext = &vDebugCreateInfo;
 				vCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
@@ -143,7 +118,7 @@ namespace Firefly
 			// Create the debug utils messenger if validation is enabled.
 			if (m_bEnableValidation)
 			{
-				VkDebugUtilsMessengerCreateInfoEXT vCreateInfo = CreateDebugMessengerCreateInfo();
+				VkDebugUtilsMessengerCreateInfoEXT vCreateInfo = createDebugMessengerCreateInfo();
 
 				const auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkCreateDebugUtilsMessengerEXT"));
 				Utility::ValidateResult(func(m_vInstance, &vCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
@@ -190,6 +165,13 @@ namespace Firefly
 		bool isValidationEnabled() const { return m_bEnableValidation; }
 
 		/**
+		 * Get the Vulkan version used by this instance.
+		 *
+		 * @return The version.
+		 */
+		uint32_t getVulkanVersion() const { return m_VulkanVersion; }
+
+		/**
 		 * Get the Vulkan instance.
 		 *
 		 * @return The Vulkan instance.
@@ -211,9 +193,40 @@ namespace Firefly
 		std::vector<const char*> getValidationLayers() const { return m_ValidationLayers; }
 
 	private:
+		/**
+		 * Create debug messenger structure.
+		 * This utility function will generate the VkDebugUtilsMessengerCreateInfoEXT structure.
+		 *
+		 * @retrurn The created structure.
+		 */
+		inline VkDebugUtilsMessengerCreateInfoEXT createDebugMessengerCreateInfo() const
+		{
+			VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
+			createInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+			createInfo.pNext = VK_NULL_HANDLE;
+			createInfo.pUserData = VK_NULL_HANDLE;
+			createInfo.flags = 0;
+			createInfo.pfnUserCallback = DebugCallback;
+
+			createInfo.messageSeverity
+				= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+				| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+				| VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+
+			createInfo.messageType
+				= VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+				| VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+				| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+
+			return createInfo;
+		}
+
+	private:
 		std::vector<const char*> m_ValidationLayers;
+
 		VkInstance m_vInstance = VK_NULL_HANDLE;
 		VkDebugUtilsMessengerEXT m_vDebugUtilsMessenger = VK_NULL_HANDLE;
+		uint32_t m_VulkanVersion = 0;
 
 		bool m_bEnableValidation = true;
 	};
