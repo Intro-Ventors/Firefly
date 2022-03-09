@@ -7,6 +7,8 @@
 #define VOLK_IMPLEMENTATION
 #define VMA_IMPLEMENTATION
 
+#include <SPIRV-Reflect/spirv_reflect.c>
+
 #endif
 
 #include <volk/volk.h>

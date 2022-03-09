@@ -7,6 +7,7 @@
 #include "Firefly/Graphics/GraphicsEngine.hpp"
 #include "Firefly/Buffer.hpp"
 #include "Firefly/Image.hpp"
+#include "Firefly/Shader.hpp"
 
 int main()
 {
@@ -22,6 +23,9 @@ int main()
 
 		auto pImage = Firefly::Image::create(pGraphics, { 512, 512, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, Firefly::ImageType::TwoDimension, 1);
 		auto pCopyBuffer = pImage->toBuffer();
+
+		auto pShader = Firefly::Shader::create(pGraphics, "E:\\Dynamik\\Game Repository\\assets\\assets\\Cube\\vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
+		pShader->terminate();
 	}
 	catch (const Firefly::BackendError& e)
 	{

@@ -82,7 +82,8 @@ namespace Firefly
 			getEngine()->getDeviceTable().vkCmdCopyImageToBuffer(vCommandBuffer, m_vImage, m_CurrentLayout, pBuffer->getBuffer(), 1, &vImageCopy);
 
 			// Get it back to the old layout.
-			//changeImageLayout(oldlayout, vCommandBuffer);
+			if (oldlayout != VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED && oldlayout != VkImageLayout::VK_IMAGE_LAYOUT_PREINITIALIZED)
+				changeImageLayout(oldlayout, vCommandBuffer);
 
 			// Execute the commands.
 			getEngine()->executeRecordedCommands();
