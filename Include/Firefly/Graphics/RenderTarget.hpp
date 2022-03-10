@@ -2,7 +2,6 @@
 
 #include "GraphicsEngine.hpp"
 #include "Firefly/Image.hpp"
-#include "Firefly/CommandBuffer.hpp"
 
 namespace Firefly
 {
@@ -76,9 +75,9 @@ namespace Firefly
 		{
 			// Setup the clear values.
 			std::array<VkClearValue, 2> vClearColors;
-			vClearColors[0].color.float32[0] = 128.0f / 256.0f;
-			vClearColors[0].color.float32[1] = 128.0f / 256.0f;
-			vClearColors[0].color.float32[2] = 128.0f / 256.0f;
+			vClearColors[0].color.float32[0] = 0.0f;
+			vClearColors[0].color.float32[1] = 0.0f;
+			vClearColors[0].color.float32[2] = 0.0f;
 			vClearColors[0].color.float32[3] = 1.0f;
 
 			vClearColors[1].depthStencil.depth = 1.0f;

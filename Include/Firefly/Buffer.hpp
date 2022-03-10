@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EngineBoundObject.hpp"
+#include "CommandBuffer.hpp"
 
 namespace Firefly
 {
@@ -96,13 +97,74 @@ namespace Firefly
 		}
 
 		/**
+		 * Copy data from another buffer.
+		 * This is needed because some buffer types does not allow mapping memory.
+		 *
+		 * @param pBuffer The buffer to copy data from.
+		 */
+		void fromBuffer(const Buffer* pBuffer) const
+		{
+			// If the incoming buffer is nullptr, lets just skip.
+			if (!pBuffer)
+				return;
+
+			// Validate the incoming buffer size.
+			if (pBuffer->size() > m_Size)
+				throw BackendError("The source buffer size is larger than what's available!");
+
+			// Setup copy info.
+			VkBufferCopy vCopy = {};
+			vCopy.srcOffset = 0;
+			vCopy.dstOffset = 0;
+			vCopy.size = pBuffer->size();
+
+			// Copy the buffer.
+			const auto vCommandBuffer = getEngine()->beginCommandBufferRecording();
+			getEngine()->getDeviceTable().vkCmdCopyBuffer(vCommandBuffer, pBuffer->getBuffer(), m_vBuffer, 1, &vCopy);
+			getEngine()->executeRecordedCommands();
+		}
+
+		/**
+		 * Bind the buffer to the command buffer as a vertex buffer.
+		 * This is only possible if the type is Vertex.
+		 *
+		 * @param pCommandBuffer The command buffer pointer.
+		 */
+		void bindAsVertexBuffer(const CommandBuffer* pCommandBuffer)
+		{
+			// Validate the buffer type.
+			if (m_Type != BufferType::Vertex)
+				throw BackendError("Cannot bind the buffer as a Vertex buffer! The types does not match.");
+
+			// Now we can bind it.
+			std::array<VkDeviceSize, 1> offset = { 0 };
+			getEngine()->getDeviceTable().vkCmdBindVertexBuffers(pCommandBuffer->getCommandBuffer(), 0, 1, &m_vBuffer, offset.data());
+		}
+
+		/**
+		 * Bind the buffer to the command buffer as a index buffer.
+		 * This is only possible if the type is Index.
+		 *
+		 * @param pCommandBuffer The command buffer pointer.
+		 */
+		void bindAsIndexBuffer(const CommandBuffer* pCommandBuffer, const VkIndexType indexType = VkIndexType::VK_INDEX_TYPE_UINT32)
+		{
+			// Validate the buffer type.
+			if (m_Type != BufferType::Index)
+				throw BackendError("Cannot bind the buffer as a Index buffer! The types does not match.");
+
+			// Now we can bind it.
+			getEngine()->getDeviceTable().vkCmdBindIndexBuffer(pCommandBuffer->getCommandBuffer(), m_vBuffer, 0, indexType);
+		}
+
+		/**
 		 * Terminate the buffer.
 		 */
 		void terminate() override
 		{
 			// Unmap if the buffer is mapped.
 			if (m_bIsMapped)
-				ummapMemory();
+				unmapMemory();
 
 			vmaDestroyBuffer(getEngine()->getAllocator(), m_vBuffer, m_Allocation);
 			toggleTerminated();
@@ -123,7 +185,7 @@ namespace Firefly
 		/**
 		 * Unmap the mapped memory.
 		 */
-		void ummapMemory()
+		void unmapMemory()
 		{
 			// We only need to unmap if we have mapped the memory.
 			if (m_bIsMapped)

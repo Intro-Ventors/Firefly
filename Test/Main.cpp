@@ -1,46 +1,35 @@
 #include <iostream>
 
-#define FIREFLY_SETUP_THIRD_PARTY
-#include "Firefly/Instance.hpp"
-#include "Firefly/Encoder/Encoder.hpp"
-#include "Firefly/Decoder/Decoder.hpp"
-#include "Firefly/Graphics/GraphicsEngine.hpp"
-#include "Firefly/Buffer.hpp"
-#include "Firefly/Image.hpp"
-#include "Firefly/Shader.hpp"
-#include "Firefly/Graphics/RenderTarget.hpp"
-#include "Firefly/Graphics/GraphicsPipeline.hpp"
+#include "TestEngine.hpp"
+#include "ThirdParty/lodepng/lodepng.h"
+
+void SaveImage(const std::shared_ptr<Firefly::Image>& pImage)
+{
+	const auto pBuffer = pImage->toBuffer();
+
+	unsigned char* outputData = nullptr;
+	size_t outputSize = 0;
+
+	// Encode the image to PNG.
+	if (lodepng_encode_memory(&outputData, &outputSize, reinterpret_cast<unsigned char*>(pBuffer->mapMemory()), pImage->getExtent().width, pImage->getExtent().height, LCT_RGBA, 8))
+		throw std::runtime_error("Failed to encode the image to PNG!");
+
+	std::fstream imageFile("Scene.png", std::ios::out | std::ios::binary);
+
+	if (!imageFile.is_open())
+		throw std::runtime_error("Failed to open the image file!");
+
+	imageFile.write(reinterpret_cast<char*>(outputData), outputSize);
+	imageFile.close();
+}
 
 int main()
 {
 	try
 	{
-		auto pInstance = Firefly::Instance::create(true, VK_API_VERSION_1_1);
-		auto pEncoder = Firefly::Encoder::create(pInstance);
-		auto pDecoder = Firefly::Decoder::create(pInstance);
-		auto pGraphics = Firefly::GraphicsEngine::create(pInstance);
-		auto pBuffer = Firefly::Buffer::create(pGraphics, 1024, Firefly::BufferType::Staging);
-
-		auto ptr = pBuffer->mapMemory();
-
-		auto pImage = Firefly::Image::create(pGraphics, { 512, 512, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, Firefly::ImageType::TwoDimension, 1);
-		auto pCopyBuffer = pImage->toBuffer();
-
-		auto pVertexShader = Firefly::Shader::create(pGraphics, "E:\\Dynamik\\Game Repository\\assets\\assets\\Cube\\vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
-		auto pFragmentShader = Firefly::Shader::create(pGraphics, "E:\\Dynamik\\Game Repository\\assets\\assets\\Cube\\frag.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
-
-		auto pRenderTarget = Firefly::RenderTarget::create(pGraphics, { 512, 512, 1 }, 1);
-		auto pPipeline = Firefly::GraphicsPipeline::create(pGraphics, "Test", { pVertexShader, pFragmentShader }, pRenderTarget);
-
-		auto pVertexPackage = pPipeline->createPackage(pVertexShader.get());
-		auto pFragmentPackage = pPipeline->createPackage(pFragmentShader.get());
-
-		const auto pCommandBuffer = pRenderTarget->setupFrame();
-		pRenderTarget->submitFrame();
-
-		auto pImageBuffer = pRenderTarget->getColorAttachment()->toBuffer();
-		auto mappedData = pImageBuffer->mapMemory();
-		pRenderTarget->terminate();
+		auto engine = TestEngine();
+		SaveImage(engine.draw());
+		while (true) engine.draw();
 	}
 	catch (const Firefly::BackendError& e)
 	{

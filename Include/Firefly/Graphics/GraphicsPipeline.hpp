@@ -7,6 +7,15 @@
 namespace Firefly
 {
 	/**
+	 * Graphics pipeline specification structure.
+	 * This contains a few information which would be needed when creating the pipeline.
+	 */
+	struct GraphicsPipelineSpecification
+	{
+		VkFrontFace vFrontFace = VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	};
+
+	/**
 	 * Graphics pipeline object.
 	 * The graphics pipeline is used to render data to a render target and specifies all the rendering steps.
 	 */
@@ -20,9 +29,11 @@ namespace Firefly
 		 * @param pipelineName The unique name given to the pipeline. This will be used for caching.
 		 * @param pShaders The shaders used by the pipeline.
 		 * @param pRenderTarget The render target pointer to which this pipeline is bound to.
+		 * @param specification The pipeline specification.
 		 */
-		explicit GraphicsPipeline(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders, const std::shared_ptr<RenderTarget>& pRenderTarget)
-			: EngineBoundObject(pEngine), m_Name(pipelineName), m_pShaders(pShaders), m_pRenderTarget(pRenderTarget)
+		explicit GraphicsPipeline(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders,
+			const std::shared_ptr<RenderTarget>& pRenderTarget, const GraphicsPipelineSpecification& specification = GraphicsPipelineSpecification())
+			: EngineBoundObject(pEngine), m_Name(pipelineName), m_pShaders(pShaders), m_pRenderTarget(pRenderTarget), m_Specification(specification)
 		{
 			// Create the pipeline layout.
 			createPipelineLayout();
@@ -47,11 +58,13 @@ namespace Firefly
 		 * @param pipelineName The unique name given to the pipeline. This will be used for caching.
 		 * @param pShaders The shaders used by the pipeline.
 		 * @param pRenderTarget The render target pointer to which this pipeline is bound to.
+		 * @param specification The pipeline specification.
 		 * @return The graphics pipeline.
 		 */
-		static std::shared_ptr<GraphicsPipeline> create(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders, const std::shared_ptr<RenderTarget>& pRenderTarget)
+		static std::shared_ptr<GraphicsPipeline> create(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders,
+			const std::shared_ptr<RenderTarget>& pRenderTarget, const GraphicsPipelineSpecification& specification = GraphicsPipelineSpecification())
 		{
-			return std::make_shared<GraphicsPipeline>(pEngine, pipelineName, pShaders, pRenderTarget);
+			return std::make_shared<GraphicsPipeline>(pEngine, pipelineName, pShaders, pRenderTarget, specification);
 		}
 
 		/**
@@ -82,14 +95,17 @@ namespace Firefly
 		{
 			// First, bind the packages.
 			std::vector<VkDescriptorSet> vDescriptorSets;
-			vDescriptorSets.reserve(pPackages.size());
-
 			for (const auto pPackage : pPackages)
-				vDescriptorSets.emplace_back(pPackage->getDescriptorSet());
+			{
+				// We only need to include the non-nullptr packages.
+				if (pPackage)
+					vDescriptorSets.emplace_back(pPackage->getDescriptorSet());
+			}
 
-			// Bind the descriptor sets.
-			getEngine()->getDeviceTable().vkCmdBindDescriptorSets(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS,
-				m_vPipelineLayout, 0, static_cast<uint32_t>(vDescriptorSets.size()), vDescriptorSets.data(), 0, nullptr);
+			// Bind the descriptor sets if available.
+			if (vDescriptorSets.size())
+				getEngine()->getDeviceTable().vkCmdBindDescriptorSets(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS,
+					m_vPipelineLayout, 0, static_cast<uint32_t>(vDescriptorSets.size()), vDescriptorSets.data(), 0, nullptr);
 
 			// Now we can bind the pipeline.
 			getEngine()->getDeviceTable().vkCmdBindPipeline(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, m_vPipeline);
@@ -106,6 +122,10 @@ namespace Firefly
 			// Check if the shader is within this pipeline.
 			if (!doesShaderExist(pShader))
 				throw BackendError("The provided shader does not exist within the pipeline!");
+
+			// If we don't have bindings to create packages to, lets return a nullptr.
+			if (m_DescriptorPoolSizes.empty())
+				return nullptr;
 
 			// Setup pool create info.
 			VkDescriptorPoolCreateInfo vCreateInfo = {};
@@ -393,7 +413,7 @@ namespace Firefly
 			vRasterizationStateCreateInfo.depthBiasConstantFactor = 0.0f;
 			vRasterizationStateCreateInfo.depthBiasSlopeFactor = 0.0f;
 			vRasterizationStateCreateInfo.depthClampEnable = VK_FALSE;
-			vRasterizationStateCreateInfo.frontFace = VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE;
+			vRasterizationStateCreateInfo.frontFace = m_Specification.vFrontFace;
 			vRasterizationStateCreateInfo.lineWidth = 1.0f;
 			vRasterizationStateCreateInfo.polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
 			vRasterizationStateCreateInfo.rasterizerDiscardEnable = VK_FALSE;
@@ -487,5 +507,7 @@ namespace Firefly
 		VkPipelineCache m_vPipelineCache = VK_NULL_HANDLE;
 
 		VkDescriptorPool m_vDescriptorPool = VK_NULL_HANDLE;
+
+		GraphicsPipelineSpecification m_Specification = {};
 	};
 }

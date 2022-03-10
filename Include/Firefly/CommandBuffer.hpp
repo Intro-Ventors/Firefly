@@ -57,6 +57,47 @@ namespace Firefly
 		}
 
 		/**
+		 * Bind a viewport to the command buffer.
+		 * 
+		 * @param viewport The viewport to bind.
+		 */
+		void bindViewport(const VkViewport viewport) const
+		{
+			getEngine()->getDeviceTable().vkCmdSetViewport(m_vCommandBuffer, 0, 1, &viewport);
+		}
+
+		/**
+		 * Bind a scissor to the command buffer.
+		 * 
+		 * @param scissor The scissor to bind.
+		 */
+		void bindScissor(const VkRect2D scissor) const
+		{
+			getEngine()->getDeviceTable().vkCmdSetScissor(m_vCommandBuffer, 0, 1, &scissor);
+		}
+
+		/**
+		 * Issue the draw vertices call.
+		 *
+		 * @param vertexCount The number of vertices to draw.
+		 */
+		void drawVertices(const uint32_t vertexCount) const
+		{
+			getEngine()->getDeviceTable().vkCmdDraw(m_vCommandBuffer, vertexCount, 1, 0, 0);
+		}
+
+		/**
+		 * Issue the draw indices call.
+		 *
+		 * @param indexCount The number of indices to draw.
+		 * @param vertexOffset The vertex offset to draw from. Default is 0.
+		 */
+		void drawIndices(const uint32_t indexCount, const uint32_t vertexOffset = 0) const
+		{
+			getEngine()->getDeviceTable().vkCmdDrawIndexed(m_vCommandBuffer, indexCount, 1, 0, vertexOffset, 0);
+		}
+
+		/**
 		 * End command buffer recording.
 		 */
 		void end()
