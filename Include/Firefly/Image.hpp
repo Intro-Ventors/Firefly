@@ -77,6 +77,41 @@ namespace Firefly
 		}
 
 		/**
+		 * Copy data from a stagging buffer.
+		 *
+		 * @param pBuffer The buffer pointer to copy data from.
+		 */
+		void fromBuffer(const Buffer* pBuffer)
+		{
+			VkBufferImageCopy vImageCopy = {};
+			vImageCopy.imageExtent = m_Extent;
+			vImageCopy.imageOffset = {};
+			vImageCopy.imageSubresource.aspectMask = getImageAspectFlags();
+			vImageCopy.imageSubresource.baseArrayLayer = 0;
+			vImageCopy.imageSubresource.layerCount = m_Layers;
+			vImageCopy.imageSubresource.mipLevel = 0;
+			vImageCopy.bufferOffset = 0;
+			vImageCopy.bufferRowLength = m_Extent.width;
+			vImageCopy.bufferImageHeight = m_Extent.height;
+
+			const auto oldlayout = m_CurrentLayout;
+			const auto vCommandBuffer = getEngine()->beginCommandBufferRecording();
+
+			// Change the layout to transfer source
+			changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vCommandBuffer);
+
+			// Copy the image.
+			getEngine()->getDeviceTable().vkCmdCopyBufferToImage(vCommandBuffer, pBuffer->getBuffer(), m_vImage, m_CurrentLayout, 1, &vImageCopy);
+
+			// Get it back to the old layout.
+			if (oldlayout != VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED && oldlayout != VkImageLayout::VK_IMAGE_LAYOUT_PREINITIALIZED)
+				changeImageLayout(oldlayout, vCommandBuffer);
+
+			// Execute the commands.
+			getEngine()->executeRecordedCommands();
+		}
+
+		/**
 		 * Copy the whole image to a buffer.
 		 *
 		 * @return The copied buffer.

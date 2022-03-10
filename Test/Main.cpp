@@ -29,6 +29,10 @@ int main()
 		pShader->terminate();
 
 		auto pRenderTarget = Firefly::RenderTarget::create(pGraphics, { 512, 512, 1 }, 1);
+		const auto pCommandBuffer = pRenderTarget->setupFrame();
+		pRenderTarget->submitFrame();
+
+		pRenderTarget->getColorAttachment()->toBuffer();
 		pRenderTarget->terminate();
 	}
 	catch (const Firefly::BackendError& e)
