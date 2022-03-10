@@ -11,12 +11,12 @@ project "Firefly"
 	objdir "%{wks.location}/Builds/Intermediate/%{cfg.longname}"
 
 	files {
-		"**.txt",
-		"**.cpp",
-		"**.hpp",
-		"**.lua",
-		"**.txt",
-		"**.md",
+		"Firefly/**.txt",
+		"Firefly/**.cpp",
+		"Firefly/**.hpp",
+		"Firefly/**.lua",
+		"Firefly/**.txt",
+		"Firefly/**.md",
 	}
 
 	includedirs {

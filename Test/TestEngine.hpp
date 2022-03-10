@@ -4,9 +4,14 @@
 #include "Firefly/Graphics/GraphicsEngine.hpp"
 #include "Firefly/Graphics/RenderTarget.hpp"
 #include "Firefly/Graphics/GraphicsPipeline.hpp"
+#include "Firefly/Maths/Camera.hpp"
+
+#include "Renderdoc.hpp"
 
 class TestEngine final
 {
+	Firefly::Camera m_Camera = Firefly::Camera(glm::vec3(0.0f), 1280.0f / 720.0f);
+
 	std::shared_ptr<Firefly::Instance> m_Instance = nullptr;
 	std::shared_ptr<Firefly::GraphicsEngine> m_GraphicsEngine = nullptr;
 	std::shared_ptr<Firefly::RenderTarget> m_RenderTarget = nullptr;
@@ -18,8 +23,12 @@ class TestEngine final
 	std::shared_ptr<Firefly::Buffer> m_VertexBuffer = nullptr;
 	std::shared_ptr<Firefly::Buffer> m_IndexBuffer = nullptr;
 
+	std::shared_ptr<Firefly::Buffer> m_UniformBuffer = nullptr;
 	std::shared_ptr<Firefly::Image> m_Texture = nullptr;
-	std::shared_ptr<Firefly::Package> m_ResourcePackage = nullptr;
+	std::shared_ptr<Firefly::Package> m_VertexResourcePackage = nullptr;
+	std::shared_ptr<Firefly::Package> m_FragmentResourcePackage = nullptr;
+
+	Renderdoc m_RenderdocIntegration;
 
 	struct Vertex
 	{
@@ -31,14 +40,17 @@ class TestEngine final
 	uint32_t m_VertexCount = 0;
 	uint32_t m_IndexCount = 0;
 
+	bool m_bShouldCapture = false;
+
 public:
 	TestEngine();
 
-	std::shared_ptr<Firefly::Image> draw() const;
+	std::shared_ptr<Firefly::Image> draw();
+
+	Firefly::Camera& getCamera() { return m_Camera; }
+	void captureFrame() { m_bShouldCapture = true; }
 
 private:
-	void loadImage();
-
 	std::vector<Vertex> generateVertices() const;
 	std::vector<uint32_t> generateIndices() const;
 

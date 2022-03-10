@@ -3,6 +3,15 @@
 #include "TestEngine.hpp"
 #include "ThirdParty/lodepng/lodepng.h"
 
+#include <chrono>
+
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+
 void SaveImage(const std::shared_ptr<Firefly::Image>& pImage)
 {
 	const auto pBuffer = pImage->toBuffer();
@@ -27,7 +36,50 @@ int main()
 	try
 	{
 		auto engine = TestEngine();
-		SaveImage(engine.draw());
+		using Clock = std::chrono::high_resolution_clock;
+		auto oldTimePoint = Clock::now();
+
+		while (true)
+		{
+			const auto currentTime = Clock::now();
+			const auto difference = currentTime - oldTimePoint;
+
+			if (GetKeyState('W') < 0)
+			{
+				engine.getCamera().moveForward(difference.count());
+			}
+			
+			if (GetKeyState('A') < 0)
+			{
+				engine.getCamera().moveLeft(difference.count());
+			}
+			
+			if (GetKeyState('S') < 0)
+			{
+				engine.getCamera().moveBackward(difference.count());
+			}
+			
+			if (GetKeyState('D') < 0)
+			{
+				engine.getCamera().moveRight(difference.count());
+			}
+
+			if (GetKeyState('C') < 0)
+			{
+				engine.captureFrame();
+				std::cout << "Capturing set for this frame.\n";
+			}
+
+			auto image = engine.draw();
+
+			if (GetKeyState('F') < 0)
+			{
+				SaveImage(image);
+				std::cout << "Image saved.\n";
+			}
+
+			oldTimePoint = currentTime;
+		}
 	}
 	catch (const Firefly::BackendError& e)
 	{

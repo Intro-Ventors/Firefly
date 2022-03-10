@@ -108,9 +108,10 @@ namespace Firefly
 		 *
 		 * @param binding The binding to which the buffer is bound to.
 		 * @param pBuffers The buffer pointers.
+		 * @param vDescriptorType The type of the descriptor. Default is Uniform buffer.
 		 * @param arrayElement The destination array element to bind the resource to.
 		 */
-		void bindResources(const uint32_t binding, const std::vector<std::shared_ptr<Buffer>>& pBuffers, const uint32_t arrayElement = 0)
+		void bindResources(const uint32_t binding, const std::vector<std::shared_ptr<Buffer>>& pBuffers, const VkDescriptorType vDescriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, const uint32_t arrayElement = 0)
 		{
 			VkWriteDescriptorSet vWrite = {};
 			vWrite.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -118,6 +119,7 @@ namespace Firefly
 			vWrite.pImageInfo = nullptr;
 			vWrite.pTexelBufferView = nullptr;
 			vWrite.dstSet = m_vDescriptorSet;
+			vWrite.descriptorType = vDescriptorType;
 			vWrite.descriptorCount = static_cast<uint32_t>(pBuffers.size());
 			vWrite.dstArrayElement = arrayElement;
 			vWrite.dstBinding = binding;
@@ -143,9 +145,10 @@ namespace Firefly
 		 *
 		 * @param binding The binding to which the image is bound to.
 		 * @param pImapImagesge The image pointers.
+		 * @param vDescriptorType The type of the descriptor. Default is Combined Image Sampler.
 		 * @param arrayElement The destination array element to bind the resource to.
 		 */
-		void bindResources(const uint32_t binding, const std::vector<std::shared_ptr<Image>>& pImages, const uint32_t arrayElement = 0)
+		void bindResources(const uint32_t binding, const std::vector<std::shared_ptr<Image>>& pImages, const VkDescriptorType vDescriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, const uint32_t arrayElement = 0)
 		{
 			VkWriteDescriptorSet vWrite = {};
 			vWrite.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -153,7 +156,7 @@ namespace Firefly
 			vWrite.pBufferInfo = nullptr;
 			vWrite.pTexelBufferView = nullptr;
 			vWrite.dstSet = m_vDescriptorSet;
-			vWrite.descriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			vWrite.descriptorType = vDescriptorType;
 			vWrite.descriptorCount = static_cast<uint32_t>(pImages.size());
 			vWrite.dstArrayElement = arrayElement;
 			vWrite.dstBinding = binding;

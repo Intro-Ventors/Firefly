@@ -7,7 +7,12 @@ layout(location = 2) in vec2 inTexture;
 
 layout(location = 0) out vec2 outTexture;
 
+layout(set = 0, binding = 0) uniform UniformBufferObject {
+    mat4 view;
+    mat4 proj;
+} Ubo;
+
 void main() {
 	outTexture = inTexture;
-    gl_Position = vec4(inPos, 1.0f);
+    gl_Position = Ubo.proj * Ubo.view * mat4(1.0f) * vec4(inPos, 1.0f);
 }
