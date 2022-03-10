@@ -98,7 +98,7 @@ namespace Firefly
 
 		/**
 		 * Create a new shader object.
-		 * 
+		 *
 		 * @param pEngine The engine pointer.
 		 * @param path The shader source path.
 		 * @param flags The shader stage flags.
@@ -191,6 +191,13 @@ namespace Firefly
 		 * @return Output attributes.
 		 */
 		std::vector<ShaderAttribute> getOutputAttributes() const { return m_OutputAttributes; }
+
+		/**
+		 * Get he push constants.
+		 *
+		 * @return The push constants.
+		 */
+		std::vector<VkPushConstantRange> getPushConstants() const { return m_PushConstants; }
 
 	private:
 		/**
@@ -374,7 +381,7 @@ namespace Firefly
 				{
 					vPushConstantRange.size = resource->size;
 					vPushConstantRange.offset = resource->offset;
-					//mConstantRanges.emplace_back(vPushConstantRange);
+					m_PushConstants.emplace_back(vPushConstantRange);
 				}
 			}
 
@@ -537,6 +544,7 @@ namespace Firefly
 		std::unordered_map<std::string, ShaderBinding> m_Bindings;
 		std::vector<ShaderAttribute> m_InputAttributes;
 		std::vector<ShaderAttribute> m_OutputAttributes;
+		std::vector<VkPushConstantRange> m_PushConstants;
 
 		VkShaderModule m_vShaderModule = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_vDescriptorSetLayout = VK_NULL_HANDLE;

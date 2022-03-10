@@ -9,6 +9,7 @@
 #include "Firefly/Image.hpp"
 #include "Firefly/Shader.hpp"
 #include "Firefly/Graphics/RenderTarget.hpp"
+#include "Firefly/Graphics/GraphicsPipeline.hpp"
 
 int main()
 {
@@ -25,14 +26,17 @@ int main()
 		auto pImage = Firefly::Image::create(pGraphics, { 512, 512, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, Firefly::ImageType::TwoDimension, 1);
 		auto pCopyBuffer = pImage->toBuffer();
 
-		auto pShader = Firefly::Shader::create(pGraphics, "E:\\Dynamik\\Game Repository\\assets\\assets\\Cube\\vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
-		pShader->terminate();
+		auto pVertexShader = Firefly::Shader::create(pGraphics, "E:\\Dynamik\\Game Repository\\assets\\assets\\Cube\\vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
+		auto pFragmentShader = Firefly::Shader::create(pGraphics, "E:\\Dynamik\\Game Repository\\assets\\assets\\Cube\\frag.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		auto pRenderTarget = Firefly::RenderTarget::create(pGraphics, { 512, 512, 1 }, 1);
+		auto pPipeline = Firefly::GraphicsPipeline::create(pGraphics, "Test", { pVertexShader, pFragmentShader }, pRenderTarget);
+
 		const auto pCommandBuffer = pRenderTarget->setupFrame();
 		pRenderTarget->submitFrame();
 
-		pRenderTarget->getColorAttachment()->toBuffer();
+		auto pImageBuffer = pRenderTarget->getColorAttachment()->toBuffer();
+		auto mappedData = pImageBuffer->mapMemory();
 		pRenderTarget->terminate();
 	}
 	catch (const Firefly::BackendError& e)
