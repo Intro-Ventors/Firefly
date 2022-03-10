@@ -93,19 +93,45 @@ namespace Firefly
 		 */
 		void bind(const CommandBuffer* pCommandBuffer, const std::vector<Package*>& pPackages = {})
 		{
+			int32_t firstSetIndex = -1;
+
 			// First, bind the packages.
 			std::vector<VkDescriptorSet> vDescriptorSets;
 			for (const auto pPackage : pPackages)
 			{
 				// We only need to include the non-nullptr packages.
 				if (pPackage)
+				{
 					vDescriptorSets.emplace_back(pPackage->getDescriptorSet());
+
+					if (firstSetIndex == -1)
+						firstSetIndex = pPackage->getSetIndex();
+				}
 			}
 
 			// Bind the descriptor sets if available.
 			if (vDescriptorSets.size())
 				getEngine()->getDeviceTable().vkCmdBindDescriptorSets(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS,
-					m_vPipelineLayout, 0, static_cast<uint32_t>(vDescriptorSets.size()), vDescriptorSets.data(), 0, nullptr);
+					m_vPipelineLayout, firstSetIndex, static_cast<uint32_t>(vDescriptorSets.size()), vDescriptorSets.data(), 0, nullptr);
+
+			// Now we can bind the pipeline.
+			getEngine()->getDeviceTable().vkCmdBindPipeline(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, m_vPipeline);
+		}
+
+		/**
+		 * Bind the pipeline to a command buffer.
+		 *
+		 * @param pCommandBuffer The command buffer pointer.
+		 * @param pPackage The resource package to bind with it. Default is nullptr.
+		 */
+		void bind(const CommandBuffer* pCommandBuffer, const Package* pPackage = nullptr)
+		{
+			// First, bind the packages.
+			if (pPackage)
+			{
+				const auto vDescriptorSet = pPackage->getDescriptorSet();
+				getEngine()->getDeviceTable().vkCmdBindDescriptorSets(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, m_vPipelineLayout, pPackage->getSetIndex(), 1, &vDescriptorSet, 0, nullptr);
+			}
 
 			// Now we can bind the pipeline.
 			getEngine()->getDeviceTable().vkCmdBindPipeline(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, m_vPipeline);
@@ -120,7 +146,8 @@ namespace Firefly
 		std::shared_ptr<Package> createPackage(const Shader* pShader)
 		{
 			// Check if the shader is within this pipeline.
-			if (!doesShaderExist(pShader))
+			const int32_t shaderIndex = getShaderIndex(pShader);
+			if (shaderIndex == -1)
 				throw BackendError("The provided shader does not exist within the pipeline!");
 
 			// If we don't have bindings to create packages to, lets return a nullptr.
@@ -168,7 +195,7 @@ namespace Firefly
 			Utility::ValidateResult(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
 
 			// Create the new package.
-			auto pNewPackage = Package::create(std::static_pointer_cast<GraphicsEngine>(getEngine()), layout, m_vDescriptorPool, vDescriptorSet);
+			auto pNewPackage = Package::create(std::static_pointer_cast<GraphicsEngine>(getEngine()), layout, m_vDescriptorPool, vDescriptorSet, shaderIndex);
 			m_pPackages.emplace_back(pNewPackage);
 
 			getEngine()->getDeviceTable().vkDestroyDescriptorPool(getEngine()->getLogicalDevice(), vOldDescriptorPool, nullptr);
@@ -314,15 +341,15 @@ namespace Firefly
 					vBindingDescription.binding = 0;
 					vBindingDescription.inputRate = VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX;
 					vBindingDescription.stride = vAttributeDescription.offset;
+				}
 
-					// At the same time, lets also resolve the pool sizes so we don't have to waste a lot of resources later.
-					for (const auto& [name, binding] : pShader->getBindings())
-					{
-						VkDescriptorPoolSize vPoolSize = {};
-						vPoolSize.descriptorCount = binding.m_Count;
-						vPoolSize.type = binding.m_Type;
-						m_DescriptorPoolSizes.emplace_back(vPoolSize);
-					}
+				// At the same time, lets also resolve the pool sizes so we don't have to waste a lot of resources later.
+				for (const auto& [name, binding] : pShader->getBindings())
+				{
+					VkDescriptorPoolSize vPoolSize = {};
+					vPoolSize.descriptorCount = binding.m_Count;
+					vPoolSize.type = binding.m_Type;
+					m_DescriptorPoolSizes.emplace_back(vPoolSize);
 				}
 			}
 
@@ -482,16 +509,18 @@ namespace Firefly
 		 * Check if a shader exists in the pipeline.
 		 *
 		 * @param pShader The shader to check.
-		 * @return Boolean value stating if its present or not.
+		 * @return Index of the shader.
 		 */
-		bool doesShaderExist(const Shader* pShader) const
+		int32_t getShaderIndex(const Shader* pShader) const
 		{
 			// Iterate and see if the shader exists in the pipeline.
-			for (const auto& pPipelineShader : m_pShaders)
-				if (pPipelineShader.get() == pShader)
-					return true;
+			for (int32_t i = 0; i < m_pShaders.size(); i++)
+			{
+				if (m_pShaders[i].get() == pShader)
+					return i;
+			}
 
-			return false;
+			return -1;
 		}
 
 	private:

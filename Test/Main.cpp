@@ -28,7 +28,6 @@ int main()
 	{
 		auto engine = TestEngine();
 		SaveImage(engine.draw());
-		//while (true) engine.draw();
 	}
 	catch (const Firefly::BackendError& e)
 	{

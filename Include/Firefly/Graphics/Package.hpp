@@ -38,9 +38,10 @@ namespace Firefly
 		 * @param vDescriptorSetLayout The descriptor set layout.
 		 * @param vDescriptorPool The descriptor pool which the descriptor set is made with.
 		 * @param vDescriptorSet The descriptor set used by this package.
+		 * @param setIndex The descriptor set index.
 		 */
-		explicit Package(const std::shared_ptr<GraphicsEngine>& pEngine, const VkDescriptorSetLayout vDescriptorSetLayout, const VkDescriptorPool vDescriptorPool, const VkDescriptorSet vDescriptorSet)
-			: EngineBoundObject(pEngine), m_vDescriptorSetLayout(vDescriptorSetLayout), m_vDescriptorPool(vDescriptorPool), m_vDescriptorSet(vDescriptorSet)
+		explicit Package(const std::shared_ptr<GraphicsEngine>& pEngine, const VkDescriptorSetLayout vDescriptorSetLayout, const VkDescriptorPool vDescriptorPool, const VkDescriptorSet vDescriptorSet, const uint32_t setIndex)
+			: EngineBoundObject(pEngine), m_vDescriptorSetLayout(vDescriptorSetLayout), m_vDescriptorPool(vDescriptorPool), m_vDescriptorSet(vDescriptorSet), m_SetIndex(setIndex)
 		{
 		}
 
@@ -97,9 +98,9 @@ namespace Firefly
 		 * @param vDescriptorSet The descriptor set used by this package.
 		 * @return The created package.
 		 */
-		static std::shared_ptr<Package> create(const std::shared_ptr<GraphicsEngine>& pEngine, const VkDescriptorSetLayout vDescriptorSetLayout, const VkDescriptorPool vDescriptorPool, const VkDescriptorSet vDescriptorSet)
+		static std::shared_ptr<Package> create(const std::shared_ptr<GraphicsEngine>& pEngine, const VkDescriptorSetLayout vDescriptorSetLayout, const VkDescriptorPool vDescriptorPool, const VkDescriptorSet vDescriptorSet, const uint32_t setIndex)
 		{
-			return std::make_shared<Package>(pEngine, vDescriptorSetLayout, vDescriptorPool, vDescriptorSet);
+			return std::make_shared<Package>(pEngine, vDescriptorSetLayout, vDescriptorPool, vDescriptorSet, setIndex);
 		}
 
 		/**
@@ -138,13 +139,13 @@ namespace Firefly
 		}
 
 		/**
-		 * Bind an image resource to the package.
+		 * Bind an image resources to the package.
 		 *
 		 * @param binding The binding to which the image is bound to.
 		 * @param pImapImagesge The image pointers.
 		 * @param arrayElement The destination array element to bind the resource to.
 		 */
-		void bindResource(const uint32_t binding, const std::vector<std::shared_ptr<Image>>& pImages, const uint32_t arrayElement = 0)
+		void bindResources(const uint32_t binding, const std::vector<std::shared_ptr<Image>>& pImages, const uint32_t arrayElement = 0)
 		{
 			VkWriteDescriptorSet vWrite = {};
 			vWrite.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -152,6 +153,7 @@ namespace Firefly
 			vWrite.pBufferInfo = nullptr;
 			vWrite.pTexelBufferView = nullptr;
 			vWrite.dstSet = m_vDescriptorSet;
+			vWrite.descriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			vWrite.descriptorCount = static_cast<uint32_t>(pImages.size());
 			vWrite.dstArrayElement = arrayElement;
 			vWrite.dstBinding = binding;
@@ -198,11 +200,20 @@ namespace Firefly
 		 */
 		VkDescriptorSet getDescriptorSet() const { return m_vDescriptorSet; }
 
+		/**
+		 * Get the descriptor set index.
+		 *
+		 * @return The set index.
+		 */
+		uint32_t getSetIndex() const { return m_SetIndex; }
+
 	private:
 		std::unordered_map<uint32_t, ResourceBinding> m_BindingMap;
 
 		const VkDescriptorSetLayout m_vDescriptorSetLayout;
 		VkDescriptorPool m_vDescriptorPool = VK_NULL_HANDLE;
 		VkDescriptorSet m_vDescriptorSet = VK_NULL_HANDLE;
+
+		const uint32_t m_SetIndex = 0;
 	};
 }
