@@ -34,34 +34,46 @@ TestEngine::TestEngine()
 	}
 }
 
-std::shared_ptr<Firefly::Image> TestEngine::draw()
+std::shared_ptr<Firefly::Image> TestEngine::draw() const
 {
-	const auto pCommandBuffer = m_RenderTarget->setupFrame();
-
-	m_Pipeline->bind(pCommandBuffer);
-
-	m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
-	m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
-
 	VkViewport viewport = {};
-	viewport.width = static_cast<float>(m_RenderTarget->getExtent().width);
+	viewport.width = static_cast<float>(m_RenderTarget->getExtent().width) / 2;
 	viewport.height = static_cast<float>(m_RenderTarget->getExtent().height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
 
-	pCommandBuffer->bindViewport(viewport);
-
 	VkRect2D scissor = {};
-	scissor.extent.width = static_cast<uint32_t>(viewport.width);
-	scissor.extent.height = static_cast<uint32_t>(viewport.height);
+	scissor.extent.width = m_RenderTarget->getExtent().width;
+	scissor.extent.height = m_RenderTarget->getExtent().height;
 	scissor.offset.x = 0;
 	scissor.offset.y = 0;
 
-	pCommandBuffer->bindScissor(scissor);
+	const auto pCommandBuffer = m_RenderTarget->setupFrame(Firefly::CreateClearValues(Firefly::CreateColor256(0), Firefly::CreateColor256(0), Firefly::CreateColor256(0)));
 
-	pCommandBuffer->drawIndices(3);
+	// Left eye.
+	{
+		m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
+		m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
+		m_Pipeline->bind(pCommandBuffer);
+
+		pCommandBuffer->bindScissor(scissor);
+		pCommandBuffer->bindViewport(viewport);
+		pCommandBuffer->drawIndices(3);
+	}
+
+	// Right eye.
+	{
+		m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
+		m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
+		m_Pipeline->bind(pCommandBuffer);
+
+		viewport.x = viewport.width;
+		pCommandBuffer->bindViewport(viewport);
+		pCommandBuffer->bindScissor(scissor);
+		pCommandBuffer->drawIndices(3);
+	}
 
 	m_RenderTarget->submitFrame();
 
@@ -71,9 +83,9 @@ std::shared_ptr<Firefly::Image> TestEngine::draw()
 std::vector<TestEngine::Vertex> TestEngine::generateVertices() const
 {
 	return {
-		{{0.0f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-		{{0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-		{{-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}
+		{{0.0f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+		{{0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+		{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}}
 	};
 }
 

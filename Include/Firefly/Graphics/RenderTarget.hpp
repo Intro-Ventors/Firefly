@@ -6,6 +6,39 @@
 namespace Firefly
 {
 	/**
+	 * Create a color from 0 - 256.
+	 *
+	 * @param color The color.
+	 * @return The compatible color value.
+	 */
+	constexpr float CreateColor256(const float color) { return color / 256.0f; }
+
+	/**
+	 * Create clear color values from the primitives.
+	 * Make sure that the color value is compatible. We advice you to use the CreateColor256() function to get the correct value.
+	 *
+	 * @param r The red value. Default is 0.0f.
+	 * @param g The green value. Default is 0.0f.
+	 * @param b The blue value. Default is 0.0f.
+	 * @param a The alpha value. Default is 1.0f.
+	 * @param depth The depth value. Default is 1.0f.
+	 * @param stencil The stencil value. Default is 0.
+	 */
+	constexpr std::array<VkClearValue, 2> CreateClearValues(const float r = 0.0f, const float g = 0.0f, const float b = 0.0f, const float a = 1.0f, const float depth = 1.0f, const uint32_t stencil = 0)
+	{
+		std::array<VkClearValue, 2> vClearColors{};
+		vClearColors[0].color.float32[0] = r;
+		vClearColors[0].color.float32[1] = g;
+		vClearColors[0].color.float32[2] = b;
+		vClearColors[0].color.float32[3] = a;
+
+		vClearColors[1].depthStencil.depth = depth;
+		vClearColors[1].depthStencil.stencil = stencil;
+
+		return vClearColors;
+	}
+
+	/**
 	 * Render target object.
 	 * Render targets contain the rendering pipelines and the processing pipelines.
 	 */
@@ -57,11 +90,11 @@ namespace Firefly
 		 *
 		 * @return The command buffer pointer.
 		 */
-		CommandBuffer* setupFrame()
+		CommandBuffer* setupFrame(const std::array<VkClearValue, 2>& vClearColors)
 		{
 			const auto& pCommandBuffer = m_pCommandBuffers[getFrameIndex()];
 			pCommandBuffer->begin();
-			bind(pCommandBuffer.get());
+			bind(pCommandBuffer.get(), vClearColors);
 
 			return pCommandBuffer.get();
 		}
@@ -71,18 +104,8 @@ namespace Firefly
 		 *
 		 * @param pCommandBuffer The command buffer pointer to bind to.
 		 */
-		void bind(const CommandBuffer* pCommandBuffer) const
+		void bind(const CommandBuffer* pCommandBuffer, const std::array<VkClearValue, 2>& vClearColors) const
 		{
-			// Setup the clear values.
-			std::array<VkClearValue, 2> vClearColors;
-			vClearColors[0].color.float32[0] = 0.0f;
-			vClearColors[0].color.float32[1] = 0.0f;
-			vClearColors[0].color.float32[2] = 0.0f;
-			vClearColors[0].color.float32[3] = 1.0f;
-
-			vClearColors[1].depthStencil.depth = 1.0f;
-			vClearColors[1].depthStencil.stencil = 0;
-
 			// Create the begin info structure.
 			VkRenderPassBeginInfo vBeginInfo = {};
 			vBeginInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -228,10 +251,10 @@ namespace Firefly
 			vAttachmentDescriptions[1].format = m_pDepthAttachment->getFormat();
 			vAttachmentDescriptions[1].initialLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
 			vAttachmentDescriptions[1].finalLayout = VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-			vAttachmentDescriptions[1].loadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			vAttachmentDescriptions[1].loadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR;
 			vAttachmentDescriptions[1].storeOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			vAttachmentDescriptions[1].stencilLoadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR;
-			vAttachmentDescriptions[1].stencilStoreOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
+			vAttachmentDescriptions[1].stencilLoadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			vAttachmentDescriptions[1].stencilStoreOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			vAttachmentDescriptions[1].samples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
 
 			// Create the subpass dependencies.

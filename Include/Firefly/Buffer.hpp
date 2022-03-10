@@ -31,11 +31,10 @@ namespace Firefly
 		 * @param pEngine The engine pointer.
 		 * @param size The size of the buffer. Make sure that the buffer size is more than 0.
 		 * @param type The buffer type.
-		 * @param memoryUsage The buffer's memory usage specification. If the default (UNKNOWN) is set, it will automatically select the best suitable for the type.
 		 * @return The created buffer.
 		 */
-		explicit Buffer(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type, const VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_UNKNOWN)
-			: EngineBoundObject(pEngine), m_Size(size), m_Type(type), m_MemoryUsage(memoryUsage)
+		explicit Buffer(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type)
+			: EngineBoundObject(pEngine), m_Size(size), m_Type(type)
 		{
 			// Validate the inputs.
 			if (size == 0)
@@ -44,30 +43,24 @@ namespace Firefly
 			else if (type == BufferType::Unknown)
 				throw BackendError("The buffer type cannot be unknown!");
 
+			VmaAllocationCreateFlags vmaFlags = 0;
+
 			// If the memory usage is not set, we automatically select the best for the given type.
-			if (memoryUsage == VMA_MEMORY_USAGE_UNKNOWN)
+			switch (type)
 			{
-				switch (type)
-				{
-				case Firefly::BufferType::Vertex:
-					m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_COPY;
-					break;
+			case Firefly::BufferType::Vertex:
+			case Firefly::BufferType::Index:
+				m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+				break;
 
-				case Firefly::BufferType::Index:
-					m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_COPY;
-					break;
+			case Firefly::BufferType::Uniform:
+			case Firefly::BufferType::Staging:
+				m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+				vmaFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+				break;
 
-				case Firefly::BufferType::Uniform:
-					m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU;
-					break;
-
-				case Firefly::BufferType::Staging:
-					m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU;
-					break;
-
-				default:
-					throw BackendError("Invalid buffer type!");
-				}
+			default:
+				throw BackendError("Invalid buffer type!");
 			}
 
 			// Create the buffer.
@@ -83,6 +76,7 @@ namespace Firefly
 
 			VmaAllocationCreateInfo vmaAllocationCreateInfo = {};
 			vmaAllocationCreateInfo.usage = m_MemoryUsage;
+			vmaAllocationCreateInfo.flags = vmaFlags;
 
 			Utility::ValidateResult(vmaCreateBuffer(getEngine()->getAllocator(), &vCreateInfo, &vmaAllocationCreateInfo, &m_vBuffer, &m_Allocation, nullptr), "Failed to create the buffer!");
 		}
@@ -222,12 +216,11 @@ namespace Firefly
 		 * @param pEngine The engine pointer.
 		 * @param size The size of the buffer. Make sure that the buffer size is more than 0.
 		 * @param type The buffer type.
-		 * @param memoryUsage The buffer's memory usage specification. If the default (UNKNOWN) is set, it will automatically select the best suitable for the type.
 		 * @return The created buffer.
 		 */
-		static std::shared_ptr<Buffer> create(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type, const VmaMemoryUsage memoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_UNKNOWN)
+		static std::shared_ptr<Buffer> create(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type)
 		{
-			return std::make_shared<Buffer>(pEngine, size, type, memoryUsage);
+			return std::make_shared<Buffer>(pEngine, size, type);
 		}
 
 	private:

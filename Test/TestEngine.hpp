@@ -27,7 +27,7 @@ class TestEngine final
 public:
 	TestEngine();
 
-	std::shared_ptr<Firefly::Image> draw();
+	std::shared_ptr<Firefly::Image> draw() const;
 
 private:
 	std::vector<Vertex> generateVertices() const;

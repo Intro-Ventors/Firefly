@@ -6,7 +6,6 @@
 void SaveImage(const std::shared_ptr<Firefly::Image>& pImage)
 {
 	const auto pBuffer = pImage->toBuffer();
-
 	unsigned char* outputData = nullptr;
 	size_t outputSize = 0;
 
@@ -29,11 +28,15 @@ int main()
 	{
 		auto engine = TestEngine();
 		SaveImage(engine.draw());
-		while (true) engine.draw();
+		//while (true) engine.draw();
 	}
 	catch (const Firefly::BackendError& e)
 	{
-		std::cout << e.what();
+		std::cout << "Backend error: " << e.what() << std::endl;
+	}
+	catch (const std::runtime_error& e)
+	{
+		std::cout << "Runtime error: " << e.what() << std::endl;
 	}
 
 	return 0;

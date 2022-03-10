@@ -8,7 +8,7 @@ namespace Firefly
 	 * Command buffer object.
 	 * Command buffers are used to submit commands to the GPU.
 	 */
-	class CommandBuffer : public EngineBoundObject
+	class CommandBuffer final : public EngineBoundObject
 	{
 	public:
 		/**

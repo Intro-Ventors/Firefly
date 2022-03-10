@@ -12,7 +12,7 @@ namespace Firefly
 	 */
 	struct GraphicsPipelineSpecification
 	{
-		VkFrontFace vFrontFace = VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		VkFrontFace vFrontFace = VkFrontFace::VK_FRONT_FACE_CLOCKWISE;
 	};
 
 	/**
@@ -376,7 +376,7 @@ namespace Firefly
 
 			// Setup color blend state.
 			VkPipelineColorBlendAttachmentState vColorBlendAttachmentState = {};
-			vColorBlendAttachmentState.blendEnable = false;
+			vColorBlendAttachmentState.blendEnable = VK_FALSE;
 			vColorBlendAttachmentState.alphaBlendOp = VkBlendOp::VK_BLEND_OP_ADD;
 			vColorBlendAttachmentState.colorBlendOp = VkBlendOp::VK_BLEND_OP_ADD;
 			vColorBlendAttachmentState.colorWriteMask =
@@ -393,7 +393,7 @@ namespace Firefly
 			vColorBlendStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 			vColorBlendStateCreateInfo.pNext = nullptr;
 			vColorBlendStateCreateInfo.flags = 0;
-			vColorBlendStateCreateInfo.logicOp = VkLogicOp::VK_LOGIC_OP_CLEAR;
+			vColorBlendStateCreateInfo.logicOp = VkLogicOp::VK_LOGIC_OP_COPY;
 			vColorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
 			vColorBlendStateCreateInfo.blendConstants[0] = 0.0f;
 			vColorBlendStateCreateInfo.blendConstants[1] = 0.0f;
