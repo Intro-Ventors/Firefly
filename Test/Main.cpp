@@ -32,6 +32,9 @@ int main()
 		auto pRenderTarget = Firefly::RenderTarget::create(pGraphics, { 512, 512, 1 }, 1);
 		auto pPipeline = Firefly::GraphicsPipeline::create(pGraphics, "Test", { pVertexShader, pFragmentShader }, pRenderTarget);
 
+		auto pVertexPackage = pPipeline->createPackage(pVertexShader.get());
+		auto pFragmentPackage = pPipeline->createPackage(pFragmentShader.get());
+
 		const auto pCommandBuffer = pRenderTarget->setupFrame();
 		pRenderTarget->submitFrame();
 

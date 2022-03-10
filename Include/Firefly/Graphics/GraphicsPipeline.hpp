@@ -1,8 +1,8 @@
 #pragma once
 
-#include "GraphicsEngine.hpp"
 #include "RenderTarget.hpp"
 #include "Firefly/Shader.hpp"
+#include "Package.hpp"
 
 namespace Firefly
 {
@@ -59,9 +59,100 @@ namespace Firefly
 		 */
 		void terminate() override
 		{
+			// Destroy the descriptor pool if available. 
+			if (m_vDescriptorPool != VK_NULL_HANDLE)
+			{
+				// Make sure to kill it's kids before killing him ;)
+				m_pPackages.clear();
+				getEngine()->getDeviceTable().vkDestroyDescriptorPool(getEngine()->getLogicalDevice(), m_vDescriptorPool, nullptr);
+			}
+
 			getEngine()->getDeviceTable().vkDestroyPipelineLayout(getEngine()->getLogicalDevice(), m_vPipelineLayout, nullptr);
 			getEngine()->getDeviceTable().vkDestroyPipeline(getEngine()->getLogicalDevice(), m_vPipeline, nullptr);
 			toggleTerminated();
+		}
+
+		/**
+		 * Bind the pipeline to a command buffer.
+		 *
+		 * @param pCommandBuffer The command buffer pointer.
+		 * @param pPackages The resource packages to bind with it. Default is none.
+		 */
+		void bind(const CommandBuffer* pCommandBuffer, const std::vector<Package*>& pPackages = {})
+		{
+			// First, bind the packages.
+			std::vector<VkDescriptorSet> vDescriptorSets;
+			vDescriptorSets.reserve(pPackages.size());
+
+			for (const auto pPackage : pPackages)
+				vDescriptorSets.emplace_back(pPackage->getDescriptorSet());
+
+			// Bind the descriptor sets.
+			getEngine()->getDeviceTable().vkCmdBindDescriptorSets(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS,
+				m_vPipelineLayout, 0, static_cast<uint32_t>(vDescriptorSets.size()), vDescriptorSets.data(), 0, nullptr);
+
+			// Now we can bind the pipeline.
+			getEngine()->getDeviceTable().vkCmdBindPipeline(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, m_vPipeline);
+		}
+
+		/**
+		 * Create a new package.
+		 *
+		 * @param pShader The shader to which the package is bound to.
+		 * @return The created package.
+		 */
+		std::shared_ptr<Package> createPackage(const Shader* pShader)
+		{
+			// Check if the shader is within this pipeline.
+			if (!doesShaderExist(pShader))
+				throw BackendError("The provided shader does not exist within the pipeline!");
+
+			// Setup pool create info.
+			VkDescriptorPoolCreateInfo vCreateInfo = {};
+			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			vCreateInfo.flags = 0;
+			vCreateInfo.pNext = nullptr;
+			vCreateInfo.maxSets = static_cast<uint32_t>(m_pPackages.size()) + 1;
+			vCreateInfo.poolSizeCount = static_cast<uint32_t>(m_DescriptorPoolSizes.size());
+			vCreateInfo.pPoolSizes = m_DescriptorPoolSizes.data();
+
+			const auto vOldDescriptorPool = m_vDescriptorPool;
+			Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateDescriptorPool(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vDescriptorPool), "Failed to create the descriptor pool!");
+
+			// Allocate the descriptor sets.
+			VkDescriptorSetAllocateInfo vAllocateInfo = {};
+			vAllocateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			vAllocateInfo.pNext = nullptr;
+			vAllocateInfo.descriptorSetCount = 1;
+			vAllocateInfo.descriptorPool = m_vDescriptorPool;
+
+			// Allocate new descriptor sets and swap the old ones with them.
+			for (const auto& pPackage : m_pPackages)
+			{
+				const auto layout = pPackage->getDescriptorSetLayout();
+				vAllocateInfo.pSetLayouts = &layout;
+
+				// Allocate a new descriptor set.
+				VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
+				Utility::ValidateResult(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
+
+				// Swap the descriptors.
+				pPackage->swapDescriptors(m_vDescriptorPool, vDescriptorSet);
+			}
+
+			const auto layout = pShader->getDescriptorSetLayout();
+			vAllocateInfo.pSetLayouts = &layout;
+
+			// Allocate a new descriptor set.
+			VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
+			Utility::ValidateResult(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
+
+			// Create the new package.
+			auto pNewPackage = Package::create(std::static_pointer_cast<GraphicsEngine>(getEngine()), layout, m_vDescriptorPool, vDescriptorSet);
+			m_pPackages.emplace_back(pNewPackage);
+
+			getEngine()->getDeviceTable().vkDestroyDescriptorPool(getEngine()->getLogicalDevice(), vOldDescriptorPool, nullptr);
+			return pNewPackage;
 		}
 
 	private:
@@ -167,8 +258,8 @@ namespace Firefly
 
 			VkPipelineShaderStageCreateInfo vShaderStageCreateInfo = {};
 			vShaderStageCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			vShaderStageCreateInfo.flags = 0;
 			vShaderStageCreateInfo.pNext = nullptr;
+			vShaderStageCreateInfo.flags = 0;
 			vShaderStageCreateInfo.pSpecializationInfo = nullptr;
 			vShaderStageCreateInfo.pName = "main";
 
@@ -203,13 +294,22 @@ namespace Firefly
 					vBindingDescription.binding = 0;
 					vBindingDescription.inputRate = VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX;
 					vBindingDescription.stride = vAttributeDescription.offset;
+
+					// At the same time, lets also resolve the pool sizes so we don't have to waste a lot of resources later.
+					for (const auto& [name, binding] : pShader->getBindings())
+					{
+						VkDescriptorPoolSize vPoolSize = {};
+						vPoolSize.descriptorCount = binding.m_Count;
+						vPoolSize.type = binding.m_Type;
+						m_DescriptorPoolSizes.emplace_back(vPoolSize);
+					}
 				}
 			}
 
 			// Setup vertex input state.
 			VkPipelineVertexInputStateCreateInfo vVertexInputStateCreateInfo = {};
 			vVertexInputStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-			vVertexInputStateCreateInfo.pNext = VK_NULL_HANDLE;
+			vVertexInputStateCreateInfo.pNext = nullptr;
 			vVertexInputStateCreateInfo.flags = 0;
 			vVertexInputStateCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vAttributeDescriptions.size());
 			vVertexInputStateCreateInfo.pVertexAttributeDescriptions = vAttributeDescriptions.data();
@@ -219,7 +319,7 @@ namespace Firefly
 			// Setup input assembly state.
 			VkPipelineInputAssemblyStateCreateInfo vInputAssemblyStateCreateInfo = {};
 			vInputAssemblyStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-			vInputAssemblyStateCreateInfo.pNext = VK_NULL_HANDLE;
+			vInputAssemblyStateCreateInfo.pNext = nullptr;
 			vInputAssemblyStateCreateInfo.flags = 0;
 			vInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 			vInputAssemblyStateCreateInfo.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -227,7 +327,7 @@ namespace Firefly
 			// Setup tessellation state.
 			VkPipelineTessellationStateCreateInfo vTessellationStateCreateInfo = {};
 			vTessellationStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
-			vTessellationStateCreateInfo.pNext = VK_NULL_HANDLE;
+			vTessellationStateCreateInfo.pNext = nullptr;
 			vTessellationStateCreateInfo.flags = 0;
 			vTessellationStateCreateInfo.patchControlPoints = 0;
 
@@ -247,7 +347,7 @@ namespace Firefly
 
 			VkPipelineViewportStateCreateInfo vViewportStateCreateInfo = {};
 			vViewportStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-			vViewportStateCreateInfo.pNext = VK_NULL_HANDLE;
+			vViewportStateCreateInfo.pNext = nullptr;
 			vViewportStateCreateInfo.flags = 0;
 			vViewportStateCreateInfo.scissorCount = 1;
 			vViewportStateCreateInfo.pScissors = &vRect;
@@ -259,7 +359,11 @@ namespace Firefly
 			vColorBlendAttachmentState.blendEnable = false;
 			vColorBlendAttachmentState.alphaBlendOp = VkBlendOp::VK_BLEND_OP_ADD;
 			vColorBlendAttachmentState.colorBlendOp = VkBlendOp::VK_BLEND_OP_ADD;
-			vColorBlendAttachmentState.colorWriteMask = VkColorComponentFlagBits::VK_COLOR_COMPONENT_R_BIT | VkColorComponentFlagBits::VK_COLOR_COMPONENT_G_BIT | VkColorComponentFlagBits::VK_COLOR_COMPONENT_B_BIT | VkColorComponentFlagBits::VK_COLOR_COMPONENT_A_BIT;
+			vColorBlendAttachmentState.colorWriteMask =
+				VkColorComponentFlagBits::VK_COLOR_COMPONENT_R_BIT |
+				VkColorComponentFlagBits::VK_COLOR_COMPONENT_G_BIT |
+				VkColorComponentFlagBits::VK_COLOR_COMPONENT_B_BIT |
+				VkColorComponentFlagBits::VK_COLOR_COMPONENT_A_BIT;
 			vColorBlendAttachmentState.srcColorBlendFactor = VkBlendFactor::VK_BLEND_FACTOR_ZERO;
 			vColorBlendAttachmentState.srcAlphaBlendFactor = VkBlendFactor::VK_BLEND_FACTOR_ZERO;
 			vColorBlendAttachmentState.dstAlphaBlendFactor = VkBlendFactor::VK_BLEND_FACTOR_ZERO;
@@ -267,7 +371,7 @@ namespace Firefly
 
 			VkPipelineColorBlendStateCreateInfo vColorBlendStateCreateInfo = {};
 			vColorBlendStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-			vColorBlendStateCreateInfo.pNext = VK_NULL_HANDLE;
+			vColorBlendStateCreateInfo.pNext = nullptr;
 			vColorBlendStateCreateInfo.flags = 0;
 			vColorBlendStateCreateInfo.logicOp = VkLogicOp::VK_LOGIC_OP_CLEAR;
 			vColorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
@@ -281,7 +385,7 @@ namespace Firefly
 			// Setup rasterization state.
 			VkPipelineRasterizationStateCreateInfo vRasterizationStateCreateInfo = {};
 			vRasterizationStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-			vRasterizationStateCreateInfo.pNext = VK_NULL_HANDLE;
+			vRasterizationStateCreateInfo.pNext = nullptr;
 			vRasterizationStateCreateInfo.flags = 0;
 			vRasterizationStateCreateInfo.cullMode = VkCullModeFlagBits::VK_CULL_MODE_BACK_BIT;
 			vRasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
@@ -297,7 +401,7 @@ namespace Firefly
 			// Setup multisample state.
 			VkPipelineMultisampleStateCreateInfo vMultisampleStateCreateInfo = {};
 			vMultisampleStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-			vMultisampleStateCreateInfo.pNext = VK_NULL_HANDLE;
+			vMultisampleStateCreateInfo.pNext = nullptr;
 			vMultisampleStateCreateInfo.flags = 0;
 			vMultisampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
 			vMultisampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
@@ -309,9 +413,10 @@ namespace Firefly
 			// Setup depth stencil state.
 			VkPipelineDepthStencilStateCreateInfo vDepthStencilStateCreateInfo = {};
 			vDepthStencilStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-			vDepthStencilStateCreateInfo.pNext = VK_NULL_HANDLE;
+			vDepthStencilStateCreateInfo.pNext = nullptr;
 			vDepthStencilStateCreateInfo.flags = 0;
-			vDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+			vDepthStencilStateCreateInfo.back.compareOp = VkCompareOp::VK_COMPARE_OP_ALWAYS;
+			vDepthStencilStateCreateInfo.front.compareOp = VkCompareOp::VK_COMPARE_OP_NEVER;
 			vDepthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
 			vDepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
 			vDepthStencilStateCreateInfo.depthCompareOp = VkCompareOp::VK_COMPARE_OP_LESS_OR_EQUAL;
@@ -323,7 +428,7 @@ namespace Firefly
 
 			VkPipelineDynamicStateCreateInfo vDynamicStateCreateInfo = {};
 			vDynamicStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-			vDynamicStateCreateInfo.pNext = VK_NULL_HANDLE;
+			vDynamicStateCreateInfo.pNext = nullptr;
 			vDynamicStateCreateInfo.flags = 0;
 			vDynamicStateCreateInfo.dynamicStateCount = 2;
 			vDynamicStateCreateInfo.pDynamicStates = vDynamicStates.data();
@@ -331,7 +436,7 @@ namespace Firefly
 			// Setup pipeline create info.
 			VkGraphicsPipelineCreateInfo vCreateInfo = {};
 			vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-			vCreateInfo.pNext = VK_NULL_HANDLE;
+			vCreateInfo.pNext = nullptr;
 			vCreateInfo.flags = 0;
 			vCreateInfo.stageCount = static_cast<uint32_t>(vShaderStageCreateInfos.size());
 			vCreateInfo.pStages = vShaderStageCreateInfos.data();
@@ -353,14 +458,34 @@ namespace Firefly
 			Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateGraphicsPipelines(getEngine()->getLogicalDevice(), m_vPipelineCache, 1, &vCreateInfo, nullptr, &m_vPipeline), "Failed to create the graphics pipeline!");
 		}
 
-	private:
-		std::string m_Name;
-		std::vector<std::shared_ptr<Shader>> m_pShaders;
+		/**
+		 * Check if a shader exists in the pipeline.
+		 *
+		 * @param pShader The shader to check.
+		 * @return Boolean value stating if its present or not.
+		 */
+		bool doesShaderExist(const Shader* pShader) const
+		{
+			// Iterate and see if the shader exists in the pipeline.
+			for (const auto& pPipelineShader : m_pShaders)
+				if (pPipelineShader.get() == pShader)
+					return true;
 
-		std::shared_ptr<RenderTarget> m_pRenderTarget = nullptr;
+			return false;
+		}
+
+	private:
+		const std::string m_Name;
+		const std::vector<std::shared_ptr<Shader>> m_pShaders;
+		std::vector<VkDescriptorPoolSize> m_DescriptorPoolSizes;
+		std::vector<std::shared_ptr<Package>> m_pPackages;
+
+		const std::shared_ptr<RenderTarget> m_pRenderTarget = nullptr;
 
 		VkPipelineLayout m_vPipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_vPipeline = VK_NULL_HANDLE;
 		VkPipelineCache m_vPipelineCache = VK_NULL_HANDLE;
+
+		VkDescriptorPool m_vDescriptorPool = VK_NULL_HANDLE;
 	};
 }
