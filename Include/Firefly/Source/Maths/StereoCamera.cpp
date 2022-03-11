@@ -25,7 +25,7 @@ namespace Firefly
 		float bottom = -wd2;
 
 		// Recalculate the vectors.
-		glm::vec3 front;
+		auto front = glm::vec3(0);
 		front.x = cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
 		front.y = sin(glm::radians(m_Pitch));
 		front.z = sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));

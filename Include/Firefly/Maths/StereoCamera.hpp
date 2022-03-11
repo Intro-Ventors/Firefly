@@ -33,8 +33,8 @@ namespace Firefly
 		void copyToBuffer(Buffer* pLeftEyeBuffer, Buffer* pRightEyeBuffer) const;
 
 	public:
-		CameraMatrix m_LeftEyeMatrix;
-		CameraMatrix m_RightEyeMatrix;
+		CameraMatrix m_LeftEyeMatrix = {};
+		CameraMatrix m_RightEyeMatrix = {};
 
 		float m_EyeSeperation = 0.08f;
 		float m_FocalLength = 0.5f;
