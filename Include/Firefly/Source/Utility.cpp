@@ -1,5 +1,7 @@
 #include "Firefly/Utility.hpp"
 
+#include <iostream>
+
 namespace /* anonymous */
 {
 	/**
@@ -66,11 +68,17 @@ namespace Firefly
 			if (result != VkResult::VK_SUCCESS)
 				throw BackendError(VkResultToString(result).data() + string);
 		}
-		
+
 		void ValidateResult(const VkResult result, const std::string& string, const std::string_view& file, const uint64_t line)
 		{
 			if (result != VkResult::VK_SUCCESS)
 				throw BackendError(VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
+		}
+
+		void Logger(const VkResult result, const std::string& string, const std::string_view& file, const uint64_t line)
+		{
+			if (result != VkResult::VK_SUCCESS)
+				std::cerr << VkResultToString(result).data() << string << " [" << file.data() << ":" << std::to_string(line) << "]\n";
 		}
 	}
 }
