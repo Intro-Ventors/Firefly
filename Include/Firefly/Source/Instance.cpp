@@ -40,8 +40,8 @@ namespace Firefly
 		std::cout << "Vulkan Validation Layer " << myMessagePreStatement << pCallbackData->pMessage << std::endl;
 		return VK_FALSE;
 	}
-	
-	Instance::Instance(bool enableValidation, const uint32_t vulkanAPIVersion, bool usedForGraphics)
+
+	Instance::Instance(bool enableValidation, const uint32_t vulkanAPIVersion)
 		: m_VulkanVersion(vulkanAPIVersion), m_bEnableValidation(enableValidation)
 	{
 		// Initialize volk.
@@ -63,9 +63,6 @@ namespace Firefly
 
 		// Get the required extensions.
 		std::vector<const char*> extensions = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
-
-		if (usedForGraphics)
-			extensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
 		// Setup debug info if required.
 		VkDebugUtilsMessengerCreateInfoEXT vDebugCreateInfo = {};
@@ -120,12 +117,12 @@ namespace Firefly
 		// Destroy the Vulkan instance.
 		vkDestroyInstance(m_vInstance, nullptr);
 	}
-	
-	std::shared_ptr<Instance> Instance::create(bool enableValidation, const uint32_t vulkanAPIVersion, bool usedForGraphics)
+
+	std::shared_ptr<Instance> Instance::create(bool enableValidation, const uint32_t vulkanAPIVersion)
 	{
-		return std::make_shared<Instance>(enableValidation, vulkanAPIVersion, usedForGraphics);
+		return std::make_shared<Instance>(enableValidation, vulkanAPIVersion);
 	}
-	
+
 	VkDebugUtilsMessengerCreateInfoEXT Instance::createDebugMessengerCreateInfo() const
 	{
 		VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
