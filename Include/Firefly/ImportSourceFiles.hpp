@@ -45,4 +45,3 @@
 #include <tinyobjloader/tiny_obj_loader.h>
 
 #include <SPIRV-Reflect/spirv_reflect.c>
-#include <lodepng/lodepng.cpp>
