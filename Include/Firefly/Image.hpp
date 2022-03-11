@@ -709,7 +709,7 @@ namespace Firefly
 		 */
 		void createSampler()
 		{
-			VkSamplerAddressMode addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			VkSamplerAddressMode addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
 			if (m_Type == ImageType::CubeMap)	// TODO
 				addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

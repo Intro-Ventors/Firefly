@@ -39,7 +39,8 @@ int main()
 		using Clock = std::chrono::high_resolution_clock;
 		auto oldTimePoint = Clock::now();
 
-		while (true)
+		bool shouldRun = true;
+		while (shouldRun)
 		{
 			const auto currentTime = Clock::now();
 			const auto difference = currentTime - oldTimePoint;
@@ -47,36 +48,86 @@ int main()
 			if (GetKeyState('W') < 0)
 			{
 				engine.getCamera().moveForward(difference.count());
+				std::cout << "Camera moved forward.\n";
 			}
-			
+			else if (GetKeyState('S') < 0)
+			{
+				engine.getCamera().moveBackward(difference.count());
+				std::cout << "Camera moved backwards.\n";
+			}
+
 			if (GetKeyState('A') < 0)
 			{
 				engine.getCamera().moveLeft(difference.count());
+				std::cout << "Camera moved to the left.\n";
 			}
-			
-			if (GetKeyState('S') < 0)
-			{
-				engine.getCamera().moveBackward(difference.count());
-			}
-			
-			if (GetKeyState('D') < 0)
+			else if (GetKeyState('D') < 0)
 			{
 				engine.getCamera().moveRight(difference.count());
+				std::cout << "Camera moved to the right.\n";
 			}
+
+			if (GetKeyState(' ') < 0)
+			{
+				if (GetKeyState(VK_LSHIFT) < 0)
+				{
+					engine.getCamera().moveDown(difference.count());
+					std::cout << "Camera moved down.\n";
+				}
+				else
+				{
+					engine.getCamera().moveUp(difference.count());
+					std::cout << "Camera moved up.\n";
+				}
+			}
+
+			if (GetKeyState(VK_UP) < 0)
+			{
+				engine.getCamera().rotateUp(difference.count());
+				std::cout << "Camera rotated up.\n";
+			}
+			else if (GetKeyState(VK_DOWN) < 0)
+			{
+				engine.getCamera().rotateDown(difference.count());
+				std::cout << "Camera rotated down.\n";
+			}
+
+			if (GetKeyState(VK_LEFT) < 0)
+			{
+				engine.getCamera().rotateLeft(difference.count());
+				std::cout << "Camera rotated left.\n";
+			}
+			else if (GetKeyState(VK_RIGHT) < 0)
+			{
+				engine.getCamera().rotateRight(difference.count());
+				std::cout << "Camera rotated right.\n";
+			}
+
+			auto image = engine.draw();
 
 			if (GetKeyState('C') < 0)
 			{
 				engine.captureFrame();
 				std::cout << "Capturing set for this frame.\n";
 			}
-
-			auto image = engine.draw();
-
-			if (GetKeyState('F') < 0)
+			else if (GetKeyState('F') < 0)
 			{
 				SaveImage(image);
 				std::cout << "Image saved.\n";
 			}
+
+
+			if (GetKeyState('X') < 0)
+			{
+				shouldRun = false;
+			}
+
+			const auto pBuffer = image->toBuffer();
+			cv::Mat imageMat = cv::Mat(image->getExtent().height, image->getExtent().width, CV_8UC4, pBuffer->mapMemory());
+			pBuffer->unmapMemory();
+
+			cv::pollKey();
+			cv::imshow("Firefly", imageMat);
 
 			oldTimePoint = currentTime;
 		}

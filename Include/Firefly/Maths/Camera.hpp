@@ -66,6 +66,26 @@ namespace Firefly
 		}
 
 		/**
+		 * Move the camera up.
+		 *
+		 * @param delta The time delta.
+		 */
+		void moveUp(const uint64_t delta)
+		{
+			m_Position += m_Up * (static_cast<float>(delta) / m_DeltaReductionFactor) * m_MovementBias;
+		}
+
+		/**
+		 * Move the camera down.
+		 *
+		 * @param delta The time delta.
+		 */
+		void moveDown(const uint64_t delta)
+		{
+			m_Position -= m_Up * (static_cast<float>(delta) / m_DeltaReductionFactor) * m_MovementBias;
+		}
+
+		/**
 		 * Rotate the camera up.
 		 *
 		 * @param delta The time delta.
@@ -147,7 +167,7 @@ namespace Firefly
 		float m_FieldOfView = 60.0f;
 		float m_AspectRatio = 0.0f;
 		float m_FarPlane = 256.0f;
-		float m_NearPlane = 1.0f;
+		float m_NearPlane = 0.001f;
 
 		float m_Yaw = 90.0f;
 		float m_Pitch = 0.0f;

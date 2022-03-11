@@ -239,7 +239,7 @@ namespace Firefly
 		VkFormat findBestDepthFormat() const
 		{
 			return findSupportedFormat(
-				{ VkFormat::VK_FORMAT_D32_SFLOAT, VkFormat::VK_FORMAT_D32_SFLOAT_S8_UINT,VkFormat::VK_FORMAT_D24_UNORM_S8_UINT },
+				{ VkFormat::VK_FORMAT_D32_SFLOAT_S8_UINT, VkFormat::VK_FORMAT_D24_UNORM_S8_UINT, VkFormat::VK_FORMAT_D32_SFLOAT },
 				VkImageTiling::VK_IMAGE_TILING_OPTIMAL, VkFormatFeatureFlagBits::VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 		}
 

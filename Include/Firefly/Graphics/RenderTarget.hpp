@@ -50,16 +50,17 @@ namespace Firefly
 		 *
 		 * @param pEngine The engine pointer.
 		 * @param extent The frame buffer extent.
+		 * @param vColorFormat The color format to use.
 		 * @param frameCount The number of frame buffers to use. Default is 2.
 		 */
-		explicit RenderTarget(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const uint8_t frameCount = 2)
+		explicit RenderTarget(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount = 2)
 			: EngineBoundObject(pEngine), m_Extent(extent), m_FrameCount(frameCount)
 		{
 			m_vFrameBuffers.resize(frameCount);
 			m_pCommandBuffers.reserve(frameCount);
 
 			// Create the attachments.
-			m_pColorAttachment = Image::create(pEngine, extent, VkFormat::VK_FORMAT_R8G8B8A8_SRGB, ImageType::TwoDimension, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+			m_pColorAttachment = Image::create(pEngine, extent, vColorFormat, ImageType::TwoDimension, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 			m_pDepthAttachment = Image::create(pEngine, extent, getEngine()->findBestDepthFormat(), ImageType::TwoDimension, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
 			// Create the render pass.
@@ -149,12 +150,13 @@ namespace Firefly
 		 *
 		 * @param pEngine The engine pointer.
 		 * @param extent The frame buffer extent.
+		 * @param vColorFormat The color format to use.
 		 * @param frameCount The number of frame buffers to use. Default is 2.
 		 * @return The render target pointer.
 		 */
-		static std::shared_ptr<RenderTarget> create(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const uint8_t frameCount = 2)
+		static std::shared_ptr<RenderTarget> create(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount = 2)
 		{
-			return std::make_shared<RenderTarget>(pEngine, extent, frameCount);
+			return std::make_shared<RenderTarget>(pEngine, extent, vColorFormat, frameCount);
 		}
 
 		/**

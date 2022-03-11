@@ -12,7 +12,9 @@ namespace Firefly
 	 */
 	struct GraphicsPipelineSpecification
 	{
+		VkCullModeFlags vCullMode = VkCullModeFlagBits::VK_CULL_MODE_BACK_BIT;
 		VkFrontFace vFrontFace = VkFrontFace::VK_FRONT_FACE_CLOCKWISE;
+		VkPolygonMode vPolygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
 	};
 
 	/**
@@ -420,7 +422,7 @@ namespace Firefly
 			vColorBlendStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 			vColorBlendStateCreateInfo.pNext = nullptr;
 			vColorBlendStateCreateInfo.flags = 0;
-			vColorBlendStateCreateInfo.logicOp = VkLogicOp::VK_LOGIC_OP_COPY;
+			vColorBlendStateCreateInfo.logicOp = VkLogicOp::VK_LOGIC_OP_CLEAR;
 			vColorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
 			vColorBlendStateCreateInfo.blendConstants[0] = 0.0f;
 			vColorBlendStateCreateInfo.blendConstants[1] = 0.0f;
@@ -434,7 +436,7 @@ namespace Firefly
 			vRasterizationStateCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 			vRasterizationStateCreateInfo.pNext = nullptr;
 			vRasterizationStateCreateInfo.flags = 0;
-			vRasterizationStateCreateInfo.cullMode = VkCullModeFlagBits::VK_CULL_MODE_BACK_BIT;
+			vRasterizationStateCreateInfo.cullMode = m_Specification.vCullMode;
 			vRasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
 			vRasterizationStateCreateInfo.depthBiasClamp = 0.0f;
 			vRasterizationStateCreateInfo.depthBiasConstantFactor = 0.0f;
@@ -442,7 +444,7 @@ namespace Firefly
 			vRasterizationStateCreateInfo.depthClampEnable = VK_FALSE;
 			vRasterizationStateCreateInfo.frontFace = m_Specification.vFrontFace;
 			vRasterizationStateCreateInfo.lineWidth = 1.0f;
-			vRasterizationStateCreateInfo.polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
+			vRasterizationStateCreateInfo.polygonMode = m_Specification.vPolygonMode;
 			vRasterizationStateCreateInfo.rasterizerDiscardEnable = VK_FALSE;
 
 			// Setup multisample state.

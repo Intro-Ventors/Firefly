@@ -8,37 +8,18 @@ TestEngine::TestEngine()
 {
 	m_Instance = Firefly::Instance::create(true, VK_API_VERSION_1_1);
 	m_GraphicsEngine = Firefly::GraphicsEngine::create(m_Instance);
-	m_RenderTarget = Firefly::RenderTarget::create(m_GraphicsEngine, { 1280, 720, 1 }, 1);
+	m_RenderTarget = Firefly::RenderTarget::create(m_GraphicsEngine, { 1280, 720, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, 1);
 
 	m_VertexShader = Firefly::Shader::create(m_GraphicsEngine, "Shaders/shader.vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
 	m_FragmentShader = Firefly::Shader::create(m_GraphicsEngine, "Shaders/shader.frag.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
-	m_Pipeline = Firefly::GraphicsPipeline::create(m_GraphicsEngine, "Basic_Pipeline", { m_VertexShader, m_FragmentShader }, m_RenderTarget);
+
+	Firefly::GraphicsPipelineSpecification specification = {};
+	//specification.vFrontFace = VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	//specification.vPolygonMode = VkPolygonMode::VK_POLYGON_MODE_LINE;
+
+	m_Pipeline = Firefly::GraphicsPipeline::create(m_GraphicsEngine, "Basic_Pipeline", { m_VertexShader, m_FragmentShader }, m_RenderTarget, specification);
 	m_VertexResourcePackage = m_Pipeline->createPackage(m_VertexShader.get());
 	m_FragmentResourcePackage = m_Pipeline->createPackage(m_FragmentShader.get());
-
-	//{
-	//	const auto vertices = generateQuadVertices();
-	//	m_VertexCount = static_cast<uint32_t>(vertices.size());
-	//	auto pStagingVertexBuffer = Firefly::Buffer::create(m_GraphicsEngine, m_VertexCount * sizeof(Vertex), Firefly::BufferType::Staging);
-	//
-	//	std::copy(vertices.begin(), vertices.end(), reinterpret_cast<Vertex*>(pStagingVertexBuffer->mapMemory()));
-	//	pStagingVertexBuffer->unmapMemory();
-	//
-	//	m_VertexBuffer = Firefly::Buffer::create(m_GraphicsEngine, m_VertexCount * sizeof(Vertex), Firefly::BufferType::Vertex);
-	//	m_VertexBuffer->fromBuffer(pStagingVertexBuffer.get());
-	//}
-	//
-	//{
-	//	const auto indices = generateQuadIndices();
-	//	m_IndexCount = static_cast<uint32_t>(indices.size());
-	//	auto pStagingIndexBuffer = Firefly::Buffer::create(m_GraphicsEngine, m_IndexCount * sizeof(uint32_t), Firefly::BufferType::Staging);
-	//
-	//	std::copy(indices.begin(), indices.end(), reinterpret_cast<uint32_t*>(pStagingIndexBuffer->mapMemory()));
-	//	pStagingIndexBuffer->unmapMemory();
-	//
-	//	m_IndexBuffer = Firefly::Buffer::create(m_GraphicsEngine, m_IndexCount * sizeof(uint32_t), Firefly::BufferType::Index);
-	//	m_IndexBuffer->fromBuffer(pStagingIndexBuffer.get());
-	//}
 
 	{
 		auto model = Firefly::LoadObjModel(m_GraphicsEngine, "Assets/VikingRoom/untitled.obj");
@@ -50,8 +31,14 @@ TestEngine::TestEngine()
 		m_IndexCount = static_cast<uint32_t>(model.m_IndexCount);
 	}
 
-	m_UniformBuffer = Firefly::CameraMatrix::createBuffer(m_GraphicsEngine);
-	m_VertexResourcePackage->bindResources(0, { m_UniformBuffer });
+	m_UniformBuffer = Firefly::Buffer::create(m_GraphicsEngine, sizeof(glm::mat4), Firefly::BufferType::Uniform);
+	auto& modelMatrix = *reinterpret_cast<glm::mat4*>(m_UniformBuffer->mapMemory());
+	modelMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	m_UniformBuffer->unmapMemory();
+
+	m_CameraUniform = Firefly::CameraMatrix::createBuffer(m_GraphicsEngine);
+	m_VertexResourcePackage->bindResources(0, { m_CameraUniform });
+	m_VertexResourcePackage->bindResources(1, { m_UniformBuffer });
 
 	m_Texture = Firefly::LoadImage(m_GraphicsEngine, "Assets/VikingRoom/texture.png");
 	m_FragmentResourcePackage->bindResources(0, { m_Texture });
@@ -63,7 +50,7 @@ std::shared_ptr<Firefly::Image> TestEngine::draw()
 		m_RenderdocIntegration.beginCapture();
 
 	m_Camera.update();
-	m_Camera.copyToBuffer(m_UniformBuffer.get());
+	m_Camera.copyToBuffer(m_CameraUniform.get());
 
 	VkViewport viewport = {};
 	viewport.width = static_cast<float>(m_RenderTarget->getExtent().width) / 2;
