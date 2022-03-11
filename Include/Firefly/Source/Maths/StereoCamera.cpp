@@ -19,7 +19,8 @@ namespace Firefly
 	{
 		float wd2 = m_NearPlane * tan(glm::radians(m_FieldOfView / 2.0f));
 		float ndfl = m_NearPlane / m_FocalLength;
-		float left, right;
+		float left = 0.0f;
+		float right = 0.0f;
 		float top = wd2;
 		float bottom = -wd2;
 
