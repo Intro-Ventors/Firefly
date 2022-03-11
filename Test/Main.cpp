@@ -106,7 +106,6 @@ int main()
 				std::cout << "Image saved.\n";
 			}
 
-
 			if (GetKeyState('X') < 0)
 			{
 				shouldRun = false;

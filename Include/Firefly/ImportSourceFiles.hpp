@@ -1,7 +1,8 @@
 #pragma once
 
 /**
- * This file imports all the source files from this library and this should be included once, in a source file to compile everything down.
+ * This file imports all the source files from this library.
+ * Make sure that this file is included in ONE SOURCE FILE to compile the whole library. No additional dependencies needed.
  */
 
 #include "Source/AssetLoaders/ImageLoader.cpp"
