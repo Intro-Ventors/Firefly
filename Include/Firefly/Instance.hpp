@@ -2,8 +2,8 @@
 
 #include "Queue.hpp"
 
+#include <memory>
 #include <vector>
-#include <string>
 
 namespace Firefly
 {

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include "Firefly/Buffer.hpp"
 #include "Firefly/Graphics/GraphicsEngine.hpp"
+
+#include <glm/glm.hpp>
 
 namespace Firefly
 {

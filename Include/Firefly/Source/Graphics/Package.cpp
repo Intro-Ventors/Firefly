@@ -49,7 +49,7 @@ namespace Firefly
 		return std::make_shared<Package>(pEngine, vDescriptorSetLayout, vDescriptorPool, vDescriptorSet, setIndex);
 	}
 
-	void Package::bindResources(const uint32_t binding, const std::vector<std::shared_ptr<Buffer>>& pBuffers, const VkDescriptorType vDescriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, const uint32_t arrayElement)
+	void Package::bindResources(const uint32_t binding, const std::vector<std::shared_ptr<Buffer>>& pBuffers, const VkDescriptorType vDescriptorType, const uint32_t arrayElement)
 	{
 		VkWriteDescriptorSet vWrite = {};
 		vWrite.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -78,7 +78,7 @@ namespace Firefly
 		m_BindingMap[binding] = ResourceBinding(pBuffers, arrayElement);
 	}
 
-	void Package::bindResources(const uint32_t binding, const std::vector<std::shared_ptr<Image>>& pImages, const VkDescriptorType vDescriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, const uint32_t arrayElement)
+	void Package::bindResources(const uint32_t binding, const std::vector<std::shared_ptr<Image>>& pImages, const VkDescriptorType vDescriptorType, const uint32_t arrayElement)
 	{
 		VkWriteDescriptorSet vWrite = {};
 		vWrite.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

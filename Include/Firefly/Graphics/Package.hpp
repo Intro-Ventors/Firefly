@@ -3,6 +3,8 @@
 #include "GraphicsEngine.hpp"
 #include "Firefly/Image.hpp"
 
+#include <unordered_map>
+
 namespace Firefly
 {
 	/**

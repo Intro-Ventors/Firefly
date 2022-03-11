@@ -1,5 +1,9 @@
 #include "Firefly/Engine.hpp"
 
+#include <set>
+#include <map>
+#include <array>
+
 namespace Firefly
 {
 	Engine::Engine(const std::shared_ptr<Instance>& pInstance, VkQueueFlags flag, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features)

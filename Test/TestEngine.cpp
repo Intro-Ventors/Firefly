@@ -1,8 +1,9 @@
-#define FIREFLY_SETUP_THIRD_PARTY
 #include "TestEngine.hpp"
 
 #include "Firefly/AssetsLoaders/ImageLoader.hpp"
 #include "Firefly/AssetsLoaders/ObjLoader.hpp"
+
+#include "Firefly/ImportSourceFiles.hpp"
 
 TestEngine::TestEngine()
 {

@@ -2,11 +2,6 @@
 
 #include "Instance.hpp"
 
-#include <memory>
-#include <set>
-#include <map>
-#include <array>
-
 namespace Firefly
 {
 	/**

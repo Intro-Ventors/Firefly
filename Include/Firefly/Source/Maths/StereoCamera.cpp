@@ -1,5 +1,7 @@
 #include "Firefly/Maths/StereoCamera.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace Firefly
 {
 	StereoCamera::StereoCamera(const glm::vec3 position, const float aspectRatio)

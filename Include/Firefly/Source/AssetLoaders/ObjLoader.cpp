@@ -1,5 +1,8 @@
 #include "Firefly/AssetsLoaders/ObjLoader.hpp"
 
+#include <tinyobjloader/tiny_obj_loader.h>
+#include <unordered_map>
+
 namespace Firefly
 {
 	ObjModel LoadObjModel(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& path)

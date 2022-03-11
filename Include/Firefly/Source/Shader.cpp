@@ -1,6 +1,5 @@
 #include "Firefly/Shader.hpp"
 
-#include <SPIRV-Reflect/spirv_reflect.h>
 #include <fstream>
 
 namespace Firefly
@@ -57,7 +56,7 @@ namespace Firefly
 		toggleTerminated();
 	}
 	
-	ShaderCode Shader::loadCode(const std::filesystem::path& file) const
+	Shader::ShaderCode Shader::loadCode(const std::filesystem::path& file) const
 	{
 		// Load the shader file.
 		std::fstream shaderFile(file, std::ios::in | std::ios::binary | std::ios::ate);
@@ -89,7 +88,7 @@ namespace Firefly
 		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateShaderModule(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vShaderModule), "Failed to create the shader module!");
 	}
 	
-	LayoutBindings Shader::performReflection(const ShaderCode& code)
+	Shader::LayoutBindings Shader::performReflection(const ShaderCode& code)
 	{
 		SpvReflectShaderModule shaderModule = {};
 		uint32_t variableCount = 0;
@@ -229,7 +228,7 @@ namespace Firefly
 		return bindings;
 	}
 	
-	ShaderCode Shader::resolvePadding(const ShaderCode& code) const
+	Shader::ShaderCode Shader::resolvePadding(const ShaderCode& code) const
 	{
 		const auto finalCodeSize = code.size() / 4;
 		ShaderCode resolvedCode(code.begin(), code.begin() + finalCodeSize);

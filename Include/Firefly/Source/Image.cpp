@@ -109,7 +109,7 @@ namespace Firefly
 		return pBuffer;
 	}
 
-	void Image::changeImageLayout(const VkImageLayout newLayout, const VkCommandBuffer vCommandBuffer = VK_NULL_HANDLE)
+	void Image::changeImageLayout(const VkImageLayout newLayout, const VkCommandBuffer vCommandBuffer)
 	{
 		// Create the memory barrier.
 		VkImageMemoryBarrier vMemoryBarrier = {};

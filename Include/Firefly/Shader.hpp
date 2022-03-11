@@ -2,6 +2,7 @@
 
 #include "EngineBoundObject.hpp"
 
+#include <SPIRV-Reflect/spirv_reflect.h>
 #include <filesystem>
 #include <unordered_map>
 

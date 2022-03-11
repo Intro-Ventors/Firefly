@@ -1,5 +1,7 @@
 #include "Firefly/AssetsLoaders/ImageLoader.hpp"
 
+#include <stb/stb_image.h>
+
 namespace Firefly
 {
 	std::shared_ptr<Image> LoadImage(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& path)
