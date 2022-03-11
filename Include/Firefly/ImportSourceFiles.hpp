@@ -32,8 +32,6 @@
 #include "Source/Shader.cpp"
 #include "Source/Utility.cpp"
 
-#include <SPIRV-Reflect/spirv_reflect.c>
-
 #define VOLK_IMPLEMENTATION
 #include <volk/volk.h>
 
@@ -45,3 +43,6 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
+
+#include <SPIRV-Reflect/spirv_reflect.c>
+#include <lodepng/lodepng.cpp>
