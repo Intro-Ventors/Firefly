@@ -546,7 +546,7 @@ namespace Firefly
 		VmaAllocationCreateInfo vAllocationCreateInfo = {};
 		vAllocationCreateInfo.usage = VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY;
 
-		Utility::ValidateResult(vmaCreateImage(getEngine()->getAllocator(), &vCreateInfo, &vAllocationCreateInfo, &m_vImage, &m_Allocation, nullptr), "Failed to create the image!");
+		FIREFLY_VALIDATE(vmaCreateImage(getEngine()->getAllocator(), &vCreateInfo, &vAllocationCreateInfo, &m_vImage, &m_Allocation, nullptr), "Failed to create the image!");
 	}
 
 	void Image::createImageView()
@@ -571,7 +571,7 @@ namespace Firefly
 		if (m_Type == ImageType::CubeMap)
 			vCreateInfo.viewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateImageView(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vImageView), "Failed to create the image view!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateImageView(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vImageView), "Failed to create the image view!");
 	}
 
 	void Image::createSampler()
@@ -600,7 +600,7 @@ namespace Firefly
 		vCreateInfo.maxLod = 1;
 		vCreateInfo.mipLodBias = 0.0;
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateSampler(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vSampler), "Failed to create the image sampler!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateSampler(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vSampler), "Failed to create the image sampler!");
 	}
 
 	VkPipelineStageFlags Image::getPipelineStageFlags(VkAccessFlags flags) const

@@ -45,7 +45,7 @@ namespace Firefly
 		: m_VulkanVersion(vulkanAPIVersion), m_bEnableValidation(enableValidation)
 	{
 		// Initialize volk.
-		Utility::ValidateResult(volkInitialize(), "Failed to initialize volk!");
+		FIREFLY_VALIDATE(volkInitialize(), "Failed to initialize volk!");
 
 		// Setup the application info structure.
 		VkApplicationInfo vApplicationInfo = {};
@@ -87,7 +87,7 @@ namespace Firefly
 		}
 
 		// Create the instance.
-		Utility::ValidateResult(vkCreateInstance(&vCreateInfo, nullptr, &m_vInstance), "Failed to create the instance.");
+		FIREFLY_VALIDATE(vkCreateInstance(&vCreateInfo, nullptr, &m_vInstance), "Failed to create the instance.");
 
 		// Load the instance.
 		volkLoadInstance(m_vInstance);
@@ -98,7 +98,7 @@ namespace Firefly
 			VkDebugUtilsMessengerCreateInfoEXT vCreateInfo = createDebugMessengerCreateInfo();
 
 			const auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkCreateDebugUtilsMessengerEXT"));
-			Utility::ValidateResult(func(m_vInstance, &vCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
+			FIREFLY_VALIDATE(func(m_vInstance, &vCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
 		}
 	}
 

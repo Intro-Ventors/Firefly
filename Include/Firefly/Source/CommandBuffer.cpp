@@ -26,7 +26,7 @@ namespace Firefly
 		vBeginInfo.pNext = nullptr;
 		vBeginInfo.flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkBeginCommandBuffer(m_vCommandBuffer, &vBeginInfo), "Failed to begin command buffer recording!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkBeginCommandBuffer(m_vCommandBuffer, &vBeginInfo), "Failed to begin command buffer recording!");
 		m_bIsRecording = true;
 	}
 	
@@ -56,7 +56,7 @@ namespace Firefly
 		if (!isRecording())
 			return;
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkEndCommandBuffer(m_vCommandBuffer), "Failed to end command buffer recording!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkEndCommandBuffer(m_vCommandBuffer), "Failed to end command buffer recording!");
 		m_bIsRecording = false;
 	}
 	
@@ -90,16 +90,16 @@ namespace Firefly
 			vFenceCreateInfo.pNext = VK_NULL_HANDLE;
 			vFenceCreateInfo.flags = 0;
 
-			Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateFence(getEngine()->getLogicalDevice(), &vFenceCreateInfo, nullptr, &vFence), "Failed to create the synchronization fence!");
+			FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateFence(getEngine()->getLogicalDevice(), &vFenceCreateInfo, nullptr, &vFence), "Failed to create the synchronization fence!");
 		}
 
 		// Submit the queue.
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkQueueSubmit(queue.getQueue(), 1, &vSubmitInfo, vFence), "Failed to submit the queue!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkQueueSubmit(queue.getQueue(), 1, &vSubmitInfo, vFence), "Failed to submit the queue!");
 
 		// Destroy the fence if we created it.
 		if (shouldWait)
 		{
-			Utility::ValidateResult(getEngine()->getDeviceTable().vkWaitForFences(getEngine()->getLogicalDevice(), 1, &vFence, VK_TRUE, std::numeric_limits<uint64_t>::max()), "Failed to wait for the fence!");
+			FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkWaitForFences(getEngine()->getLogicalDevice(), 1, &vFence, VK_TRUE, std::numeric_limits<uint64_t>::max()), "Failed to wait for the fence!");
 			getEngine()->getDeviceTable().vkDestroyFence(getEngine()->getLogicalDevice(), vFence, nullptr);
 		}
 	}
@@ -120,7 +120,7 @@ namespace Firefly
 		vCreateInfo.pNext = nullptr;
 		vCreateInfo.flags = 0;
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateSemaphore(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vInFlightSemaphore), "Failed to create the in flight semaphore!");
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateSemaphore(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vRenderFinishedSemaphore), "Failed to create the render finished semaphore!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateSemaphore(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vInFlightSemaphore), "Failed to create the in flight semaphore!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateSemaphore(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vRenderFinishedSemaphore), "Failed to create the render finished semaphore!");
 	}
 }

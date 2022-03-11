@@ -99,7 +99,7 @@ namespace Firefly
 		vCreateInfo.pPoolSizes = m_DescriptorPoolSizes.data();
 
 		const auto vOldDescriptorPool = m_vDescriptorPool;
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateDescriptorPool(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vDescriptorPool), "Failed to create the descriptor pool!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateDescriptorPool(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vDescriptorPool), "Failed to create the descriptor pool!");
 
 		// Allocate the descriptor sets.
 		VkDescriptorSetAllocateInfo vAllocateInfo = {};
@@ -116,7 +116,7 @@ namespace Firefly
 
 			// Allocate a new descriptor set.
 			VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
-			Utility::ValidateResult(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
+			FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
 
 			// Swap the descriptors.
 			pPackage->swapDescriptors(m_vDescriptorPool, vDescriptorSet);
@@ -127,7 +127,7 @@ namespace Firefly
 
 		// Allocate a new descriptor set.
 		VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
 
 		// Create the new package.
 		auto pNewPackage = Package::create(std::static_pointer_cast<GraphicsEngine>(getEngine()), layout, m_vDescriptorPool, vDescriptorSet, shaderIndex);
@@ -162,7 +162,7 @@ namespace Firefly
 		vCreateInfo.pushConstantRangeCount = static_cast<uint32_t>(vPushConstants.size());
 		vCreateInfo.pPushConstantRanges = vPushConstants.data();
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreatePipelineLayout(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vPipelineLayout), "Failed to create the pipeline layout!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreatePipelineLayout(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vPipelineLayout), "Failed to create the pipeline layout!");
 	}
 	
 	VkShaderStageFlagBits GraphicsPipeline::getStageFlagBits(const Shader* pShader) const
@@ -418,7 +418,7 @@ namespace Firefly
 		vCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
 		vCreateInfo.basePipelineIndex = 0;
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateGraphicsPipelines(getEngine()->getLogicalDevice(), m_vPipelineCache, 1, &vCreateInfo, nullptr, &m_vPipeline), "Failed to create the graphics pipeline!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateGraphicsPipelines(getEngine()->getLogicalDevice(), m_vPipelineCache, 1, &vCreateInfo, nullptr, &m_vPipeline), "Failed to create the graphics pipeline!");
 	}
 	
 	int32_t GraphicsPipeline::getShaderIndex(const Shader* pShader) const

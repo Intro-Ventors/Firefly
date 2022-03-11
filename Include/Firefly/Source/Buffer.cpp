@@ -47,7 +47,7 @@ namespace Firefly
 		vmaAllocationCreateInfo.usage = m_MemoryUsage;
 		vmaAllocationCreateInfo.flags = vmaFlags;
 
-		Utility::ValidateResult(vmaCreateBuffer(getEngine()->getAllocator(), &vCreateInfo, &vmaAllocationCreateInfo, &m_vBuffer, &m_Allocation, nullptr), "Failed to create the buffer!");
+		FIREFLY_VALIDATE(vmaCreateBuffer(getEngine()->getAllocator(), &vCreateInfo, &vmaAllocationCreateInfo, &m_vBuffer, &m_Allocation, nullptr), "Failed to create the buffer!");
 	}
 
 	Buffer::~Buffer()
@@ -112,7 +112,7 @@ namespace Firefly
 	std::byte* Buffer::mapMemory()
 	{
 		std::byte* pDataPointer = nullptr;
-		Utility::ValidateResult(vmaMapMemory(getEngine()->getAllocator(), m_Allocation, reinterpret_cast<void**>(&pDataPointer)), "Failed to map the buffer memory!");
+		FIREFLY_VALIDATE(vmaMapMemory(getEngine()->getAllocator(), m_Allocation, reinterpret_cast<void**>(&pDataPointer)), "Failed to map the buffer memory!");
 
 		m_bIsMapped = true;
 		return pDataPointer;

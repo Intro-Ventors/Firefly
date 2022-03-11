@@ -59,7 +59,7 @@ namespace Firefly
 		vBeginInfo.pNext = nullptr;
 		vBeginInfo.flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-		Utility::ValidateResult(getDeviceTable().vkBeginCommandBuffer(m_vCommandBuffer, &vBeginInfo), "Failed to begin command buffer recording!");
+		FIREFLY_VALIDATE(getDeviceTable().vkBeginCommandBuffer(m_vCommandBuffer, &vBeginInfo), "Failed to begin command buffer recording!");
 
 		m_bIsCommandBufferRecording = true;
 		return m_vCommandBuffer;
@@ -71,7 +71,7 @@ namespace Firefly
 		if (!m_bIsCommandBufferRecording)
 			return;
 
-		Utility::ValidateResult(getDeviceTable().vkEndCommandBuffer(m_vCommandBuffer), "Failed to end command buffer recording!");
+		FIREFLY_VALIDATE(getDeviceTable().vkEndCommandBuffer(m_vCommandBuffer), "Failed to end command buffer recording!");
 
 		m_bIsCommandBufferRecording = false;
 	}
@@ -98,16 +98,16 @@ namespace Firefly
 			vFenceCreateInfo.pNext = VK_NULL_HANDLE;
 			vFenceCreateInfo.flags = 0;
 
-			Utility::ValidateResult(getDeviceTable().vkCreateFence(getLogicalDevice(), &vFenceCreateInfo, nullptr, &vFence), "Failed to create the synchronization fence!");
+			FIREFLY_VALIDATE(getDeviceTable().vkCreateFence(getLogicalDevice(), &vFenceCreateInfo, nullptr, &vFence), "Failed to create the synchronization fence!");
 		}
 
 		// Submit the queue.
-		Utility::ValidateResult(getDeviceTable().vkQueueSubmit(queue.getQueue(), 1, &vSubmitInfo, vFence), "Failed to submit the queue!");
+		FIREFLY_VALIDATE(getDeviceTable().vkQueueSubmit(queue.getQueue(), 1, &vSubmitInfo, vFence), "Failed to submit the queue!");
 
 		// Destroy the fence if we created it.
 		if (shouldWait)
 		{
-			Utility::ValidateResult(getDeviceTable().vkWaitForFences(getLogicalDevice(), 1, &vFence, VK_TRUE, std::numeric_limits<uint64_t>::max()), "Failed to wait for the fence!");
+			FIREFLY_VALIDATE(getDeviceTable().vkWaitForFences(getLogicalDevice(), 1, &vFence, VK_TRUE, std::numeric_limits<uint64_t>::max()), "Failed to wait for the fence!");
 			getDeviceTable().vkDestroyFence(getLogicalDevice(), vFence, nullptr);
 		}
 	}
@@ -150,14 +150,14 @@ namespace Firefly
 
 		// Enumerate physical devices.
 		uint32_t deviceCount = 0;
-		Utility::ValidateResult(vkEnumeratePhysicalDevices(vInstance, &deviceCount, nullptr), "Failed to enumerate physical devices.");
+		FIREFLY_VALIDATE(vkEnumeratePhysicalDevices(vInstance, &deviceCount, nullptr), "Failed to enumerate physical devices.");
 
 		// Throw an error if there are no physical devices available.
 		if (deviceCount == 0)
 			throw BackendError("No physical devices found!");
 
 		std::vector<VkPhysicalDevice> vCandidates(deviceCount);
-		Utility::ValidateResult(vkEnumeratePhysicalDevices(vInstance, &deviceCount, vCandidates.data()), "Failed to enumerate physical devices.");
+		FIREFLY_VALIDATE(vkEnumeratePhysicalDevices(vInstance, &deviceCount, vCandidates.data()), "Failed to enumerate physical devices.");
 
 		struct Candidate { VkPhysicalDeviceProperties m_Properties; VkPhysicalDevice m_Candidate; };
 		std::array<Candidate, 6> vPriorityMap;
@@ -309,7 +309,7 @@ namespace Firefly
 			vDeviceCreateInfo.enabledLayerCount = 0;
 
 		// Create the device.
-		Utility::ValidateResult(vkCreateDevice(m_vPhysicalDevice, &vDeviceCreateInfo, nullptr, &m_vLogicalDevice), "Failed to create the logical device!");
+		FIREFLY_VALIDATE(vkCreateDevice(m_vPhysicalDevice, &vDeviceCreateInfo, nullptr, &m_vLogicalDevice), "Failed to create the logical device!");
 
 		// Load the device table.
 		volkLoadDeviceTable(&m_DeviceTable, m_vLogicalDevice);
@@ -323,11 +323,11 @@ namespace Firefly
 	{
 		// Get the extension count.
 		uint32_t extensionCount = 0;
-		Utility::ValidateResult(vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, nullptr), "Failed to enumerate physical device extension property count!");
+		FIREFLY_VALIDATE(vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, nullptr), "Failed to enumerate physical device extension property count!");
 
 		// Load the extensions.
 		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-		Utility::ValidateResult(vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, availableExtensions.data()), "Failed to enumerate physical device extension properties!");
+		FIREFLY_VALIDATE(vkEnumerateDeviceExtensionProperties(vPhysicalDevice, nullptr, &extensionCount, availableExtensions.data()), "Failed to enumerate physical device extension properties!");
 
 		std::set<std::string_view> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
@@ -395,7 +395,7 @@ namespace Firefly
 		const VmaVulkanFunctions functions = getVulkanFunctions();
 		vmaCreateInfo.pVulkanFunctions = &functions;
 
-		Utility::ValidateResult(vmaCreateAllocator(&vmaCreateInfo, &m_vAllocator), "Failed to create the allocator!");
+		FIREFLY_VALIDATE(vmaCreateAllocator(&vmaCreateInfo, &m_vAllocator), "Failed to create the allocator!");
 	}
 	
 	void Engine::destroyAllocator()
@@ -413,7 +413,7 @@ namespace Firefly
 		vCreateInfo.pNext = VK_NULL_HANDLE;
 		vCreateInfo.queueFamilyIndex = queue.getFamily().value();
 
-		Utility::ValidateResult(getDeviceTable().vkCreateCommandPool(getLogicalDevice(), &vCreateInfo, nullptr, &m_vCommandPool), "Failed to create the command pool!");
+		FIREFLY_VALIDATE(getDeviceTable().vkCreateCommandPool(getLogicalDevice(), &vCreateInfo, nullptr, &m_vCommandPool), "Failed to create the command pool!");
 	}
 	
 	void Engine::destroyCommandPool()
@@ -430,7 +430,7 @@ namespace Firefly
 		vAllocateInfo.commandPool = m_vCommandPool;
 		vAllocateInfo.commandBufferCount = 1;
 
-		Utility::ValidateResult(getDeviceTable().vkAllocateCommandBuffers(getLogicalDevice(), &vAllocateInfo, &m_vCommandBuffer), "Failed to allocate command buffer!");
+		FIREFLY_VALIDATE(getDeviceTable().vkAllocateCommandBuffers(getLogicalDevice(), &vAllocateInfo, &m_vCommandBuffer), "Failed to allocate command buffer!");
 	}
 	
 	void Engine::freeCommandBuffer()

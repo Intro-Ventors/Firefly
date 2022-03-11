@@ -170,7 +170,7 @@ namespace Firefly
 		vCreateInfo.subpassCount = 1;
 		vCreateInfo.pSubpasses = &vSubpassDescription;
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateRenderPass(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vRenderPass), "Failed to create render pass!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateRenderPass(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vRenderPass), "Failed to create render pass!");
 	}
 	
 	void RenderTarget::createFrameBuffers()
@@ -193,7 +193,7 @@ namespace Firefly
 			vImageViews[1] = m_pDepthAttachment->getImageView();
 
 			vCreateInfo.pAttachments = vImageViews.data();
-			Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateFramebuffer(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vFrameBuffers[i]), "Failed to create the frame buffer!");
+			FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateFramebuffer(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vFrameBuffers[i]), "Failed to create the frame buffer!");
 		}
 	}
 	
@@ -207,7 +207,7 @@ namespace Firefly
 		vCreateInfo.pNext = VK_NULL_HANDLE;
 		vCreateInfo.queueFamilyIndex = queue.getFamily().value();
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateCommandPool(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vCommandPool), "Failed to create the command pool!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateCommandPool(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vCommandPool), "Failed to create the command pool!");
 	}
 	
 	void RenderTarget::allocateCommandBuffers()
@@ -221,7 +221,7 @@ namespace Firefly
 		vAllocateInfo.commandBufferCount = m_FrameCount;
 
 		std::vector<VkCommandBuffer> vCommandBuffers(m_FrameCount);
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkAllocateCommandBuffers(getEngine()->getLogicalDevice(), &vAllocateInfo, vCommandBuffers.data()), "Failed to allocate command buffer!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkAllocateCommandBuffers(getEngine()->getLogicalDevice(), &vAllocateInfo, vCommandBuffers.data()), "Failed to allocate command buffer!");
 
 		// Create the command buffers.
 		for (const auto vCommandBuffer : vCommandBuffers)

@@ -85,7 +85,7 @@ namespace Firefly
 		vCreateInfo.codeSize = code.size();
 		vCreateInfo.pCode = code.data();
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateShaderModule(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vShaderModule), "Failed to create the shader module!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateShaderModule(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vShaderModule), "Failed to create the shader module!");
 	}
 	
 	Shader::LayoutBindings Shader::performReflection(const ShaderCode& code)
@@ -355,6 +355,6 @@ namespace Firefly
 		vCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 		vCreateInfo.pBindings = bindings.data();
 
-		Utility::ValidateResult(getEngine()->getDeviceTable().vkCreateDescriptorSetLayout(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vDescriptorSetLayout), "Failed to create descriptor set layout!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateDescriptorSetLayout(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vDescriptorSetLayout), "Failed to create descriptor set layout!");
 	}
 }
