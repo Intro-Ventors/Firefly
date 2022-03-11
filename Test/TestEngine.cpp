@@ -18,7 +18,8 @@ TestEngine::TestEngine()
 	//specification.vPolygonMode = VkPolygonMode::VK_POLYGON_MODE_LINE;
 
 	m_Pipeline = Firefly::GraphicsPipeline::create(m_GraphicsEngine, "Basic_Pipeline", { m_VertexShader, m_FragmentShader }, m_RenderTarget, specification);
-	m_VertexResourcePackage = m_Pipeline->createPackage(m_VertexShader.get());
+	m_VertexResourcePackageLeft = m_Pipeline->createPackage(m_VertexShader.get());
+	m_VertexResourcePackageRight = m_Pipeline->createPackage(m_VertexShader.get());
 	m_FragmentResourcePackage = m_Pipeline->createPackage(m_FragmentShader.get());
 
 	{
@@ -33,12 +34,16 @@ TestEngine::TestEngine()
 
 	m_UniformBuffer = Firefly::Buffer::create(m_GraphicsEngine, sizeof(glm::mat4), Firefly::BufferType::Uniform);
 	auto& modelMatrix = *reinterpret_cast<glm::mat4*>(m_UniformBuffer->mapMemory());
-	modelMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	modelMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	m_UniformBuffer->unmapMemory();
 
-	m_CameraUniform = Firefly::CameraMatrix::createBuffer(m_GraphicsEngine);
-	m_VertexResourcePackage->bindResources(0, { m_CameraUniform });
-	m_VertexResourcePackage->bindResources(1, { m_UniformBuffer });
+	m_LeftEyeUniform = Firefly::CameraMatrix::createBuffer(m_GraphicsEngine);
+	m_RightEyeUniform = Firefly::CameraMatrix::createBuffer(m_GraphicsEngine);
+
+	m_VertexResourcePackageLeft->bindResources(0, { m_LeftEyeUniform });
+	m_VertexResourcePackageLeft->bindResources(1, { m_UniformBuffer });	
+	m_VertexResourcePackageRight->bindResources(0, { m_RightEyeUniform });
+	m_VertexResourcePackageRight->bindResources(1, { m_UniformBuffer });
 
 	m_Texture = Firefly::LoadImage(m_GraphicsEngine, "Assets/VikingRoom/texture.png");
 	m_FragmentResourcePackage->bindResources(0, { m_Texture });
@@ -50,7 +55,7 @@ std::shared_ptr<Firefly::Image> TestEngine::draw()
 		m_RenderdocIntegration.beginCapture();
 
 	m_Camera.update();
-	m_Camera.copyToBuffer(m_CameraUniform.get());
+	m_Camera.copyToBuffer(m_LeftEyeUniform.get(), m_RightEyeUniform.get());
 
 	VkViewport viewport = {};
 	viewport.width = static_cast<float>(m_RenderTarget->getExtent().width) / 2;
@@ -72,7 +77,7 @@ std::shared_ptr<Firefly::Image> TestEngine::draw()
 	{
 		m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
 		m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
-		m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackage.get(), m_FragmentResourcePackage.get() });
+		m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackageLeft.get(), m_FragmentResourcePackage.get() });
 
 		pCommandBuffer->bindScissor(scissor);
 		pCommandBuffer->bindViewport(viewport);
@@ -83,7 +88,7 @@ std::shared_ptr<Firefly::Image> TestEngine::draw()
 	{
 		m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
 		m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
-		m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackage.get(), m_FragmentResourcePackage.get() });
+		m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackageRight.get(), m_FragmentResourcePackage.get() });
 
 		viewport.x = viewport.width;
 		pCommandBuffer->bindViewport(viewport);

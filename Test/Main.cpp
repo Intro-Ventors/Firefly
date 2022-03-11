@@ -81,26 +81,13 @@ int main()
 				}
 			}
 
-			if (GetKeyState(VK_UP) < 0)
+			if (GetKeyState('R') < 0)
 			{
-				engine.getCamera().rotateUp(difference.count());
-				std::cout << "Camera rotated up.\n";
+				engine.getCamera().m_EyeSeperation += 0.0001f;
 			}
-			else if (GetKeyState(VK_DOWN) < 0)
+			else if (GetKeyState('T') < 0)
 			{
-				engine.getCamera().rotateDown(difference.count());
-				std::cout << "Camera rotated down.\n";
-			}
-
-			if (GetKeyState(VK_LEFT) < 0)
-			{
-				engine.getCamera().rotateLeft(difference.count());
-				std::cout << "Camera rotated left.\n";
-			}
-			else if (GetKeyState(VK_RIGHT) < 0)
-			{
-				engine.getCamera().rotateRight(difference.count());
-				std::cout << "Camera rotated right.\n";
+				engine.getCamera().m_EyeSeperation -= 0.0001f;
 			}
 
 			auto image = engine.draw();

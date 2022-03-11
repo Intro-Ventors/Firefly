@@ -4,13 +4,14 @@
 #include "Firefly/Graphics/GraphicsEngine.hpp"
 #include "Firefly/Graphics/RenderTarget.hpp"
 #include "Firefly/Graphics/GraphicsPipeline.hpp"
-#include "Firefly/Maths/Camera.hpp"
+#include "Firefly/Maths/MonoCamera.hpp"
+#include "Firefly/Maths/StereoCamera.hpp"
 
 #include "Renderdoc.hpp"
 
 class TestEngine final
 {
-	Firefly::Camera m_Camera = Firefly::Camera(glm::vec3(0.0f), (1280.0f / 2) / 720.0f);
+	Firefly::StereoCamera m_Camera = Firefly::StereoCamera(glm::vec3(0.0f), (1280.0f / 2) / 720.0f);
 
 	std::shared_ptr<Firefly::Instance> m_Instance = nullptr;
 	std::shared_ptr<Firefly::GraphicsEngine> m_GraphicsEngine = nullptr;
@@ -23,10 +24,14 @@ class TestEngine final
 	std::shared_ptr<Firefly::Buffer> m_VertexBuffer = nullptr;
 	std::shared_ptr<Firefly::Buffer> m_IndexBuffer = nullptr;
 
-	std::shared_ptr<Firefly::Buffer> m_CameraUniform = nullptr;
+	std::shared_ptr<Firefly::Buffer> m_LeftEyeUniform = nullptr;
+	std::shared_ptr<Firefly::Buffer> m_RightEyeUniform = nullptr;
+
 	std::shared_ptr<Firefly::Buffer> m_UniformBuffer = nullptr;
 	std::shared_ptr<Firefly::Image> m_Texture = nullptr;
-	std::shared_ptr<Firefly::Package> m_VertexResourcePackage = nullptr;
+
+	std::shared_ptr<Firefly::Package> m_VertexResourcePackageLeft = nullptr;
+	std::shared_ptr<Firefly::Package> m_VertexResourcePackageRight = nullptr;
 	std::shared_ptr<Firefly::Package> m_FragmentResourcePackage = nullptr;
 
 	Renderdoc m_RenderdocIntegration;
@@ -48,7 +53,7 @@ public:
 
 	std::shared_ptr<Firefly::Image> draw();
 
-	Firefly::Camera& getCamera() { return m_Camera; }
+	Firefly::StereoCamera& getCamera() { return m_Camera; }
 	void captureFrame() { m_bShouldCapture = true; }
 
 private:
