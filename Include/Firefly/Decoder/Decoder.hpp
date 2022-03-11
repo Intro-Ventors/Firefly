@@ -20,11 +20,7 @@ namespace Firefly
 		 * @param pInstance The instance pointer to which this object is bound.
 		 * @throws std::runtime_error if the instance pointer is null.
 		 */
-		explicit Decoder(const std::shared_ptr<Instance>& pInstance)
-			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR, 
-				{ VK_KHR_VIDEO_QUEUE_EXTENSION_NAME , VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME, VK_KHR_VIDEO_DECODE_QUEUE_EXTENSION_NAME, VK_EXT_VIDEO_DECODE_H264_EXTENSION_NAME })
-		{
-		}
+		explicit Decoder(const std::shared_ptr<Instance>& pInstance);
 
 		/**
 		 * Create a new decoder.
@@ -32,9 +28,6 @@ namespace Firefly
 		 * @param pInstance The instance pointer.
 		 * @rerurn The created decoder pointer.
 		 */
-		static std::shared_ptr<Decoder> create(const std::shared_ptr<Instance>& pInstance)
-		{
-			return std::make_shared<Decoder>(pInstance);
-		}
+		static std::shared_ptr<Decoder> create(const std::shared_ptr<Instance>& pInstance);
 	};
 }

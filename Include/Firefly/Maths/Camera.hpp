@@ -19,108 +19,77 @@ namespace Firefly
 		 * @param position The camera position in the 3D world.
 		 * @pram aspectRatio The camera's aspect ratio.
 		 */
-		explicit Camera(const glm::vec3 position, const float aspectRatio)
-			: m_Position(position), m_AspectRatio(aspectRatio) {}
+		explicit Camera(const glm::vec3 position, const float aspectRatio);
 
 		/**
 		 * Move the camera forward.
 		 *
 		 * @param delta The time delta.
 		 */
-		void moveForward(const uint64_t delta)
-		{
-			m_Position += m_Front * (static_cast<float>(delta) / m_DeltaReductionFactor) * m_MovementBias;
-		}
+		void moveForward(const uint64_t delta);
 
 		/**
 		 * Move the camera backward.
 		 *
 		 * @param delta The time delta.
 		 */
-		void moveBackward(const uint64_t delta)
-		{
-			m_Position -= m_Front * (static_cast<float>(delta) / m_DeltaReductionFactor) * m_MovementBias;
-		}
+		void moveBackward(const uint64_t delta);
 
 		/**
 		 * Move the camera to the left.
 		 *
 		 * @param delta The time delta.
 		 */
-		void moveLeft(const uint64_t delta)
-		{
-			m_Position -= m_Right * (static_cast<float>(delta) / m_DeltaReductionFactor) * m_MovementBias;
-		}
+		void moveLeft(const uint64_t delta);
 
 		/**
 		 * Move the camera to the right.
 		 *
 		 * @param delta The time delta.
 		 */
-		void moveRight(const uint64_t delta)
-		{
-			m_Position += m_Right * (static_cast<float>(delta) / m_DeltaReductionFactor) * m_MovementBias;
-		}
+		void moveRight(const uint64_t delta);
 
 		/**
 		 * Move the camera up.
 		 *
 		 * @param delta The time delta.
 		 */
-		void moveUp(const uint64_t delta)
-		{
-			m_Position += m_Up * (static_cast<float>(delta) / m_DeltaReductionFactor) * m_MovementBias;
-		}
+		void moveUp(const uint64_t delta);
 
 		/**
 		 * Move the camera down.
 		 *
 		 * @param delta The time delta.
 		 */
-		void moveDown(const uint64_t delta)
-		{
-			m_Position -= m_Up * (static_cast<float>(delta) / m_DeltaReductionFactor) * m_MovementBias;
-		}
+		void moveDown(const uint64_t delta);
 
 		/**
 		 * Rotate the camera up.
 		 *
 		 * @param delta The time delta.
 		 */
-		void rotateUp(const uint64_t delta)
-		{
-			m_Pitch += (static_cast<float>(delta) / m_DeltaReductionFactor) * m_RotationBias;
-		}
+		void rotateUp(const uint64_t delta);
 
 		/**
 		 * Rotate the camera down.
 		 *
 		 * @param delta The time delta.
 		 */
-		void rotateDown(const uint64_t delta)
-		{
-			m_Pitch -= (static_cast<float>(delta) / m_DeltaReductionFactor) * m_RotationBias;
-		}
+		void rotateDown(const uint64_t delta);
 
 		/**
 		 * Rotate the camera to the left.
 		 *
 		 * @param delta The time delta.
 		 */
-		void rotateLeft(const uint64_t delta)
-		{
-			m_Yaw += (static_cast<float>(delta) / m_DeltaReductionFactor) * m_RotationBias;
-		}
+		void rotateLeft(const uint64_t delta);
 
 		/**
 		 * Rotate the camera to the right.
 		 *
 		 * @param delta The time delta.
 		 */
-		void rotateRight(const uint64_t delta)
-		{
-			m_Yaw -= (static_cast<float>(delta) / m_DeltaReductionFactor) * m_RotationBias;
-		}
+		void rotateRight(const uint64_t delta);
 
 		/**
 		 * Update the matrices.

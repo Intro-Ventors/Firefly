@@ -15,11 +15,7 @@ namespace Firefly
 		 * @param string The output message.
 		 * @throws std::runtime_error depending on the result.
 		 */
-		inline void ValidateResult(const VkResult result, const std::string_view& string)
-		{
-			if (result != VkResult::VK_SUCCESS)
-				throw BackendError(string);
-		}
+		void ValidateResult(const VkResult result, const std::string_view& string);
 	}
 }
 

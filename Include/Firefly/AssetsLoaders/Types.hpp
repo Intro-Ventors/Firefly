@@ -25,10 +25,7 @@ namespace Firefly
 		 * @param other The other vector.
 		 * @return Boolean value stating if its equal or not.
 		 */
-		bool operator==(const ObjVertex& other) const
-		{
-			return m_Position == other.m_Position && m_Color == other.m_Color && m_TextureCoordinate == other.m_TextureCoordinate;
-		}
+		bool operator==(const ObjVertex& other) const;
 	};
 
 	/**

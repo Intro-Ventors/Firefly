@@ -18,12 +18,7 @@ namespace Firefly
 		 *
 		 * @param pEngine The engine pointer. Make sure that this pointer is not null.
 		 */
-		explicit EngineBoundObject(const std::shared_ptr<Engine>& pEngine) : m_pEngine(pEngine)
-		{
-			// Validate the engine pointer.
-			if (!pEngine)
-				throw BackendError("The engine pointer cannot be null!");
-		}
+		explicit EngineBoundObject(const std::shared_ptr<Engine>& pEngine);
 
 		/**
 		 * Default destructor.

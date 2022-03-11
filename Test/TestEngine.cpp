@@ -41,7 +41,7 @@ TestEngine::TestEngine()
 	m_RightEyeUniform = Firefly::CameraMatrix::createBuffer(m_GraphicsEngine);
 
 	m_VertexResourcePackageLeft->bindResources(0, { m_LeftEyeUniform });
-	m_VertexResourcePackageLeft->bindResources(1, { m_UniformBuffer });	
+	m_VertexResourcePackageLeft->bindResources(1, { m_UniformBuffer });
 	m_VertexResourcePackageRight->bindResources(0, { m_RightEyeUniform });
 	m_VertexResourcePackageRight->bindResources(1, { m_UniformBuffer });
 
@@ -74,27 +74,23 @@ std::shared_ptr<Firefly::Image> TestEngine::draw()
 	const auto pCommandBuffer = m_RenderTarget->setupFrame(Firefly::CreateClearValues(Firefly::CreateColor256(0), Firefly::CreateColor256(0), Firefly::CreateColor256(0)));
 
 	// Left eye.
-	{
-		m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
-		m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
-		m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackageLeft.get(), m_FragmentResourcePackage.get() });
+	m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
+	m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
+	m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackageLeft.get(), m_FragmentResourcePackage.get() });
 
-		pCommandBuffer->bindScissor(scissor);
-		pCommandBuffer->bindViewport(viewport);
-		pCommandBuffer->drawIndices(m_IndexCount);
-	}
+	pCommandBuffer->bindScissor(scissor);
+	pCommandBuffer->bindViewport(viewport);
+	pCommandBuffer->drawIndices(m_IndexCount);
 
 	// Right eye.
-	{
-		m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
-		m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
-		m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackageRight.get(), m_FragmentResourcePackage.get() });
+	m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
+	m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
+	m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackageRight.get(), m_FragmentResourcePackage.get() });
 
-		viewport.x = viewport.width;
-		pCommandBuffer->bindViewport(viewport);
-		pCommandBuffer->bindScissor(scissor);
-		pCommandBuffer->drawIndices(m_IndexCount);
-	}
+	viewport.x = viewport.width;
+	pCommandBuffer->bindViewport(viewport);
+	pCommandBuffer->bindScissor(scissor);
+	pCommandBuffer->drawIndices(m_IndexCount);
 
 	m_RenderTarget->submitFrame();
 

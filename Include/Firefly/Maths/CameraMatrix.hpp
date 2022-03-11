@@ -18,27 +18,14 @@ namespace Firefly
 		 * @param pEngine The graphics engine used to create the buffer.
 		 * @return The buffer object.
 		 */
-		static std::shared_ptr<Buffer> createBuffer(const std::shared_ptr<GraphicsEngine>& pEngine)
-		{
-			return std::make_shared<Buffer>(pEngine, sizeof(CameraMatrix), BufferType::Uniform);
-		}
+		static std::shared_ptr<Buffer> createBuffer(const std::shared_ptr<GraphicsEngine>& pEngine);
 
 		/**
 		 * Copy the matrix data to a buffer
 		 *
 		 * @param pBuffer The buffer to which the data is copied.
 		 */
-		void copyToBuffer(Buffer* pBuffer) const
-		{
-			// Validate the buffer.
-			if (pBuffer->size() != sizeof(CameraMatrix))
-				throw BackendError("The buffer size is not equal to the camera matrix size!");
-
-			// Map the memory and copy this content to it.
-			auto pMemory = reinterpret_cast<CameraMatrix*>(pBuffer->mapMemory());
-			*pMemory = *this;
-			pBuffer->unmapMemory();
-		}
+		void copyToBuffer(Buffer* pBuffer) const;
 
 	public:
 		glm::mat4 m_ViewMatrix = glm::mat4(1.0f);

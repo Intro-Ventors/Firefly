@@ -84,10 +84,12 @@ int main()
 			if (GetKeyState('R') < 0)
 			{
 				engine.getCamera().m_EyeSeperation += 0.0001f;
+				std::cout << "Eye separation updated: " << engine.getCamera().m_EyeSeperation << std::endl;
 			}
 			else if (GetKeyState('T') < 0)
 			{
 				engine.getCamera().m_EyeSeperation -= 0.0001f;
+				std::cout << "Eye separation updated: " << engine.getCamera().m_EyeSeperation << std::endl;
 			}
 
 			auto image = engine.draw();

@@ -20,10 +20,7 @@ namespace Firefly
 		 * @param pInstance The instance pointer to which this object is bound.
 		 * @throws std::runtime_error if the instance pointer is null.
 		 */
-		explicit GraphicsEngine(const std::shared_ptr<Instance>& pInstance)
-			: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT, { VK_KHR_SWAPCHAIN_EXTENSION_NAME }, getFeatures())
-		{
-		}
+		explicit GraphicsEngine(const std::shared_ptr<Instance>& pInstance);
 
 		/**
 		 * Create a new graphics engine.
@@ -31,10 +28,7 @@ namespace Firefly
 		 * @param pInstance The instance pointer.
 		 * @rerurn The created engine pointer.
 		 */
-		static std::shared_ptr<GraphicsEngine> create(const std::shared_ptr<Instance>& pInstance)
-		{
-			return std::make_shared<GraphicsEngine>(pInstance);
-		}
+		static std::shared_ptr<GraphicsEngine> create(const std::shared_ptr<Instance>& pInstance);
 
 	private:
 		/**
@@ -42,17 +36,6 @@ namespace Firefly
 		 *
 		 * @return The physical device features.
 		 */
-		VkPhysicalDeviceFeatures getFeatures() const
-		{
-			VkPhysicalDeviceFeatures vFeatures = {};
-			vFeatures.samplerAnisotropy = VK_TRUE;
-			vFeatures.sampleRateShading = VK_TRUE;
-			vFeatures.fillModeNonSolid = VK_TRUE;
-			vFeatures.logicOp = VK_TRUE;
-			vFeatures.geometryShader = VK_TRUE;
-			vFeatures.tessellationShader = VK_TRUE;
-
-			return vFeatures;
-		}
+		VkPhysicalDeviceFeatures getFeatures() const;
 	};
 }
