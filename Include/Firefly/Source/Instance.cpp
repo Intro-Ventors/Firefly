@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 
 namespace Firefly
 {
@@ -22,22 +23,29 @@ namespace Firefly
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 		void* pUserData)
 	{
-		std::string_view myMessagePreStatement = ": ";
-		static std::ofstream generalOutputFile("VulkanGeneralOutput.txt");
+		std::string myMessagePreStatement = ": ";
+		if (messageType & VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+			myMessagePreStatement += "GENERAL | ";
+		else if (messageType & VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+			myMessagePreStatement += "VALIDATION | ";
+		else if (messageType & VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+			myMessagePreStatement += "PERFORMANCE | ";
 
-		if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+		Utility::LogLevel level = Utility::LogLevel::Information;
+		switch (messageSeverity)
 		{
-			myMessagePreStatement = "(General): ";
-			generalOutputFile << "Vulkan Validation Layer " << myMessagePreStatement << pCallbackData->pMessage << std::endl;
-
-			return VK_FALSE;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+			level = Utility::LogLevel::Warning;
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+			level = Utility::LogLevel::Error;
+			break;
 		}
-		else if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-			myMessagePreStatement = "(Validation): ";
-		else if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-			myMessagePreStatement = "(Performance): ";
 
-		std::cout << "Vulkan Validation Layer " << myMessagePreStatement << pCallbackData->pMessage << std::endl;
+		std::stringstream messageStream;
+		messageStream << "Vulkan Validation Layer " << myMessagePreStatement << pCallbackData->pMessage;
+		Utility::Log(level, messageStream.str());
+
 		return VK_FALSE;
 	}
 

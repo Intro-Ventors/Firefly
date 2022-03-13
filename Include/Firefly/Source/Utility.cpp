@@ -59,6 +59,11 @@ namespace /* anonymous */
 	}
 }
 
+namespace /* anonymous */
+{
+	std::function<void(const Firefly::Utility::LogLevel, const std::string_view&)> LoggerFunction;
+}
+
 namespace Firefly
 {
 	namespace Utility
@@ -79,6 +84,18 @@ namespace Firefly
 		{
 			if (result != VkResult::VK_SUCCESS)
 				std::cerr << VkResultToString(result).data() << string << " [" << file.data() << ":" << std::to_string(line) << "]\n";
+		}
+
+		void SetLoggerMethod(const std::function<void(const LogLevel level, const std::string_view&)>& function)
+		{
+			LoggerFunction = function;
+		}
+
+		void Log(const LogLevel level, const std::string_view& message)
+		{
+			// If the user has given us a logger function, lets call it.
+			if (LoggerFunction)
+				LoggerFunction(level, message);
 		}
 	}
 }
