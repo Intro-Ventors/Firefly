@@ -196,7 +196,7 @@ namespace Firefly
 					break;
 
 				default:
-					priorityIndex = 45;
+					priorityIndex = 5;
 					break;
 				}
 
@@ -219,6 +219,9 @@ namespace Firefly
 		// Validate if a physical device was found.
 		if (m_vPhysicalDevice == VK_NULL_HANDLE)
 			throw BackendError("Unable to find suitable physical device!");
+
+		// If we found a suitable physical device, lets log it.
+		Utility::Log(Utility::LogLevel::Information, "Physical device found.");
 	}
 
 	void Engine::setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags, const VkPhysicalDeviceFeatures& features)
@@ -348,7 +351,7 @@ namespace Firefly
 	bool Engine::isPhysicalDeviceSuitable(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions, const VkQueueFlags flags) const
 	{
 		// Check if all the provided queue flags are supported.
-		for (uint32_t i = 1; i < 0x00000080; i = i << 1)
+		for (uint32_t i = 1; i < flags; i = i << 1)
 		{
 			if (i & flags && !Queue(vPhysicalDevice, static_cast<VkQueueFlagBits>(i)).isComplete())
 				return false;
