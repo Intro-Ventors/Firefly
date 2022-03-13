@@ -67,10 +67,4 @@ namespace Firefly
 #define FIREFLY_NO_COPY(name)						name(const name&) = delete;		name& operator=(const name&) = delete
 #define FIREFLY_NO_MOVE(name)						name(name&&) = delete;			name& operator=(name&&) = delete
 
-#ifdef _DEBUG
 #define FIREFLY_VALIDATE(expression, message)		::Firefly::Utility::ValidateResult(expression, message, __FILE__, __LINE__)
-
-#else
-#define FIREFLY_VALIDATE(expression, message)		expression
-
-#endif

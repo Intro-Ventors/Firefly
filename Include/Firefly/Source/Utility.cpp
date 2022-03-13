@@ -77,7 +77,17 @@ namespace Firefly
 		void ValidateResult(const VkResult result, const std::string& string, const std::string_view& file, const uint64_t line)
 		{
 			if (result != VkResult::VK_SUCCESS)
+			{
+
+#ifdef _DEBUG || NDEBUG
 				throw BackendError(VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
+
+#else 
+				log(LogLevel::Error, VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
+
+#endif // _DEBUG || NDEBUG
+
+			}
 		}
 
 		void Logger(const VkResult result, const std::string& string, const std::string_view& file, const uint64_t line)
