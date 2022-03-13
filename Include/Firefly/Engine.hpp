@@ -190,6 +190,15 @@ namespace Firefly
 		 */
 		void freeCommandBuffer();
 
+		/**
+		 * Resolve the physical device features.
+		 * This function will only enable the supported, requested features.
+		 *
+		 * @param features The user requested features.
+		 * @return The available features.
+		 */
+		VkPhysicalDeviceFeatures resolvePhysicalDeviceFeatures(const VkPhysicalDeviceFeatures& features) const;
+
 	private:
 		VkPhysicalDeviceProperties m_Properties = {};
 

@@ -17,6 +17,7 @@ namespace Firefly
 		VkPhysicalDeviceFeatures vFeatures = {};
 		vFeatures.samplerAnisotropy = VK_TRUE;
 		vFeatures.sampleRateShading = VK_TRUE;
+		vFeatures.tessellationShader = VK_TRUE;
 
 		return vFeatures;
 	}

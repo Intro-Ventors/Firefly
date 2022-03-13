@@ -31,7 +31,7 @@ namespace Firefly
 		// Allocate the command buffer.
 		allocateCommandBuffer();
 	}
-	
+
 	Engine::~Engine()
 	{
 		// Destroy the memory manager.
@@ -46,7 +46,7 @@ namespace Firefly
 		// Destroy the logical device.
 		vkDestroyDevice(m_vLogicalDevice, nullptr);
 	}
-	
+
 	VkCommandBuffer Engine::beginCommandBufferRecording()
 	{
 		// Skip if we're on the recording state.
@@ -64,7 +64,7 @@ namespace Firefly
 		m_bIsCommandBufferRecording = true;
 		return m_vCommandBuffer;
 	}
-	
+
 	void Engine::endCommandBufferRecording()
 	{
 		// Skip if we weren't recording.
@@ -75,7 +75,7 @@ namespace Firefly
 
 		m_bIsCommandBufferRecording = false;
 	}
-	
+
 	void Engine::executeRecordedCommands(bool shouldWait)
 	{
 		// End recording if we haven't.
@@ -111,7 +111,7 @@ namespace Firefly
 			getDeviceTable().vkDestroyFence(getLogicalDevice(), vFence, nullptr);
 		}
 	}
-	
+
 	Queue Engine::getQueue(const VkQueueFlagBits flag) const
 	{
 		for (const auto& queue : m_Queues)
@@ -120,7 +120,7 @@ namespace Firefly
 
 		throw BackendError("Queue not found!");
 	}
-	
+
 	VkFormat Engine::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) const
 	{
 		for (const auto format : candidates) {
@@ -135,14 +135,14 @@ namespace Firefly
 
 		throw BackendError("Failed to find supported format!");
 	}
-	
+
 	VkFormat Engine::findBestDepthFormat() const
 	{
 		return findSupportedFormat(
 			{ VkFormat::VK_FORMAT_D32_SFLOAT_S8_UINT, VkFormat::VK_FORMAT_D24_UNORM_S8_UINT, VkFormat::VK_FORMAT_D32_SFLOAT },
 			VkImageTiling::VK_IMAGE_TILING_OPTIMAL, VkFormatFeatureFlagBits::VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 	}
-	
+
 	void Engine::setupPhysicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags)
 	{
 		// Get the Vulkan instance.
@@ -222,7 +222,7 @@ namespace Firefly
 		if (m_vPhysicalDevice == VK_NULL_HANDLE)
 			throw BackendError("Unable to find suitable physical device!");
 	}
-	
+
 	void Engine::setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags, const VkPhysicalDeviceFeatures& features)
 	{
 		// Initialize the queue families.
@@ -289,12 +289,14 @@ namespace Firefly
 			vQueueCreateInfos.emplace_back(vQueueCreateInfo);
 		}
 
+		const auto vRequiredFeatures = resolvePhysicalDeviceFeatures(features);
+
 		// Device create info.
 		VkDeviceCreateInfo vDeviceCreateInfo = {};
 		vDeviceCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		vDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(vQueueCreateInfos.size());
 		vDeviceCreateInfo.pQueueCreateInfos = vQueueCreateInfos.data();
-		vDeviceCreateInfo.pEnabledFeatures = &features;
+		vDeviceCreateInfo.pEnabledFeatures = &vRequiredFeatures;
 		vDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		vDeviceCreateInfo.ppEnabledExtensionNames = extensions.data();
 
@@ -318,7 +320,7 @@ namespace Firefly
 		for (auto& queue : m_Queues)
 			getDeviceTable().vkGetDeviceQueue(m_vLogicalDevice, queue.getFamily().value(), 0, queue.getQueueAddr());
 	}
-	
+
 	bool Engine::checkDeviceExtensionSupport(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions) const
 	{
 		// Get the extension count.
@@ -339,7 +341,7 @@ namespace Firefly
 		// If the required extensions set is empty, it means that all the required extensions exist within the physical device.
 		return requiredExtensions.empty();
 	}
-	
+
 	bool Engine::isPhysicalDeviceSuitable(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions, const VkQueueFlags flags) const
 	{
 		// Check if all the provided queue flags are supported.
@@ -351,7 +353,7 @@ namespace Firefly
 
 		return checkDeviceExtensionSupport(vPhysicalDevice, deviceExtensions);
 	}
-	
+
 	VmaVulkanFunctions Engine::getVulkanFunctions() const
 	{
 		VmaVulkanFunctions functions = {};
@@ -383,7 +385,7 @@ namespace Firefly
 
 		return functions;
 	}
-	
+
 	void Engine::createAllocator()
 	{
 		VmaAllocatorCreateInfo vmaCreateInfo = {};
@@ -397,12 +399,12 @@ namespace Firefly
 
 		FIREFLY_VALIDATE(vmaCreateAllocator(&vmaCreateInfo, &m_vAllocator), "Failed to create the allocator!");
 	}
-	
+
 	void Engine::destroyAllocator()
 	{
 		vmaDestroyAllocator(m_vAllocator);
 	}
-	
+
 	void Engine::createCommandPool()
 	{
 		const auto queue = getQueue(VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
@@ -415,12 +417,12 @@ namespace Firefly
 
 		FIREFLY_VALIDATE(getDeviceTable().vkCreateCommandPool(getLogicalDevice(), &vCreateInfo, nullptr, &m_vCommandPool), "Failed to create the command pool!");
 	}
-	
+
 	void Engine::destroyCommandPool()
 	{
 		getDeviceTable().vkDestroyCommandPool(getLogicalDevice(), m_vCommandPool, nullptr);
 	}
-	
+
 	void Engine::allocateCommandBuffer()
 	{
 		VkCommandBufferAllocateInfo vAllocateInfo = {};
@@ -432,9 +434,73 @@ namespace Firefly
 
 		FIREFLY_VALIDATE(getDeviceTable().vkAllocateCommandBuffers(getLogicalDevice(), &vAllocateInfo, &m_vCommandBuffer), "Failed to allocate command buffer!");
 	}
-	
+
 	void Engine::freeCommandBuffer()
 	{
 		getDeviceTable().vkFreeCommandBuffers(getLogicalDevice(), m_vCommandPool, 1, &m_vCommandBuffer);
+	}
+
+	VkPhysicalDeviceFeatures Engine::resolvePhysicalDeviceFeatures(const VkPhysicalDeviceFeatures& features) const
+	{
+		VkPhysicalDeviceFeatures vAvailableFeatures = {};
+		vkGetPhysicalDeviceFeatures(m_vPhysicalDevice, &vAvailableFeatures);
+
+		vAvailableFeatures.robustBufferAccess &= features.robustBufferAccess;
+		vAvailableFeatures.fullDrawIndexUint32 &= features.fullDrawIndexUint32;
+		vAvailableFeatures.imageCubeArray &= features.imageCubeArray;
+		vAvailableFeatures.independentBlend &= features.independentBlend;
+		vAvailableFeatures.geometryShader &= features.geometryShader;
+		vAvailableFeatures.tessellationShader &= features.tessellationShader;
+		vAvailableFeatures.sampleRateShading &= features.sampleRateShading;
+		vAvailableFeatures.dualSrcBlend &= features.dualSrcBlend;
+		vAvailableFeatures.logicOp &= features.logicOp;
+		vAvailableFeatures.multiDrawIndirect &= features.multiDrawIndirect;
+		vAvailableFeatures.drawIndirectFirstInstance &= features.drawIndirectFirstInstance;
+		vAvailableFeatures.depthClamp &= features.depthClamp;
+		vAvailableFeatures.depthBiasClamp &= features.depthBiasClamp;
+		vAvailableFeatures.fillModeNonSolid &= features.fillModeNonSolid;
+		vAvailableFeatures.depthBounds &= features.depthBounds;
+		vAvailableFeatures.wideLines &= features.wideLines;
+		vAvailableFeatures.largePoints &= features.largePoints;
+		vAvailableFeatures.alphaToOne &= features.alphaToOne;
+		vAvailableFeatures.multiViewport &= features.multiViewport;
+		vAvailableFeatures.samplerAnisotropy &= features.samplerAnisotropy;
+		vAvailableFeatures.textureCompressionETC2 &= features.textureCompressionETC2;
+		vAvailableFeatures.textureCompressionASTC_LDR &= features.textureCompressionASTC_LDR;
+		vAvailableFeatures.textureCompressionBC &= features.textureCompressionBC;
+		vAvailableFeatures.occlusionQueryPrecise &= features.occlusionQueryPrecise;
+		vAvailableFeatures.pipelineStatisticsQuery &= features.pipelineStatisticsQuery;
+		vAvailableFeatures.vertexPipelineStoresAndAtomics &= features.vertexPipelineStoresAndAtomics;
+		vAvailableFeatures.fragmentStoresAndAtomics &= features.fragmentStoresAndAtomics;
+		vAvailableFeatures.shaderTessellationAndGeometryPointSize &= features.shaderTessellationAndGeometryPointSize;
+		vAvailableFeatures.shaderImageGatherExtended &= features.shaderImageGatherExtended;
+		vAvailableFeatures.shaderStorageImageExtendedFormats &= features.shaderStorageImageExtendedFormats;
+		vAvailableFeatures.shaderStorageImageMultisample &= features.shaderStorageImageMultisample;
+		vAvailableFeatures.shaderStorageImageReadWithoutFormat &= features.shaderStorageImageReadWithoutFormat;
+		vAvailableFeatures.shaderStorageImageWriteWithoutFormat &= features.shaderStorageImageWriteWithoutFormat;
+		vAvailableFeatures.shaderUniformBufferArrayDynamicIndexing &= features.shaderUniformBufferArrayDynamicIndexing;
+		vAvailableFeatures.shaderSampledImageArrayDynamicIndexing &= features.shaderSampledImageArrayDynamicIndexing;
+		vAvailableFeatures.shaderStorageBufferArrayDynamicIndexing &= features.shaderStorageBufferArrayDynamicIndexing;
+		vAvailableFeatures.shaderStorageImageArrayDynamicIndexing &= features.shaderStorageImageArrayDynamicIndexing;
+		vAvailableFeatures.shaderClipDistance &= features.shaderClipDistance;
+		vAvailableFeatures.shaderCullDistance &= features.shaderCullDistance;
+		vAvailableFeatures.shaderFloat64 &= features.shaderFloat64;
+		vAvailableFeatures.shaderInt64 &= features.shaderInt64;
+		vAvailableFeatures.shaderInt16 &= features.shaderInt16;
+		vAvailableFeatures.shaderResourceResidency &= features.shaderResourceResidency;
+		vAvailableFeatures.shaderResourceMinLod &= features.shaderResourceMinLod;
+		vAvailableFeatures.sparseBinding &= features.sparseBinding;
+		vAvailableFeatures.sparseResidencyBuffer &= features.sparseResidencyBuffer;
+		vAvailableFeatures.sparseResidencyImage2D &= features.sparseResidencyImage2D;
+		vAvailableFeatures.sparseResidencyImage3D &= features.sparseResidencyImage3D;
+		vAvailableFeatures.sparseResidency2Samples &= features.sparseResidency2Samples;
+		vAvailableFeatures.sparseResidency4Samples &= features.sparseResidency4Samples;
+		vAvailableFeatures.sparseResidency8Samples &= features.sparseResidency8Samples;
+		vAvailableFeatures.sparseResidency16Samples &= features.sparseResidency16Samples;
+		vAvailableFeatures.sparseResidencyAliased &= features.sparseResidencyAliased;
+		vAvailableFeatures.variableMultisampleRate &= features.variableMultisampleRate;
+		vAvailableFeatures.inheritedQueries &= features.inheritedQueries;
+
+		return vAvailableFeatures;
 	}
 }
