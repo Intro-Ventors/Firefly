@@ -26,7 +26,7 @@ namespace Firefly
 		 * @param vFlag The queue flags.
 		 * @throws std::runtime_error If no queue was found.
 		 */
-		explicit Queue(VkPhysicalDevice vPhysicalDevice, VkQueueFlagBits vFlag);
+		explicit Queue(const VkPhysicalDevice vPhysicalDevice, const VkQueueFlagBits vFlag);
 
 		/**
 		 * Check if the queue is complete.

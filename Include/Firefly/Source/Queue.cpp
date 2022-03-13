@@ -4,12 +4,16 @@
 
 namespace Firefly
 {
-	Queue::Queue(VkPhysicalDevice vPhysicalDevice, VkQueueFlagBits vFlag)
+	Queue::Queue(const VkPhysicalDevice vPhysicalDevice, const VkQueueFlagBits vFlag)
 		: m_vFlags(vFlag)
 	{
 		// Get the queue family count.
 		uint32_t queueFamilyCount = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(vPhysicalDevice, &queueFamilyCount, nullptr);
+
+		// Validate if we have queue families.
+		if (queueFamilyCount == 0)
+			throw BackendError("No queue family properties were found!");
 
 		// Get the queue family properties.
 		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
