@@ -172,38 +172,36 @@ namespace Firefly
 				vkGetPhysicalDeviceProperties(vCandidateDevice, &vPhysicalDeviceProperties);
 
 				// Sort the candidates by priority.
+				uint8_t priorityIndex = 5;
 				switch (vPhysicalDeviceProperties.deviceType)
 				{
 				case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-					vPriorityMap[0].m_Candidate = vCandidateDevice;
-					vPriorityMap[0].m_Properties = vPhysicalDeviceProperties;
+					priorityIndex = 0;
 					break;
 
 				case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-					vPriorityMap[1].m_Candidate = vCandidateDevice;
-					vPriorityMap[1].m_Properties = vPhysicalDeviceProperties;
+					priorityIndex = 1;
 					break;
 
 				case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-					vPriorityMap[2].m_Candidate = vCandidateDevice;
-					vPriorityMap[2].m_Properties = vPhysicalDeviceProperties;
+					priorityIndex = 2;
 					break;
 
 				case VK_PHYSICAL_DEVICE_TYPE_CPU:
-					vPriorityMap[3].m_Candidate = vCandidateDevice;
-					vPriorityMap[3].m_Properties = vPhysicalDeviceProperties;
+					priorityIndex = 3;
 					break;
 
 				case VK_PHYSICAL_DEVICE_TYPE_OTHER:
-					vPriorityMap[4].m_Candidate = vCandidateDevice;
-					vPriorityMap[4].m_Properties = vPhysicalDeviceProperties;
+					priorityIndex = 4;
 					break;
 
 				default:
-					vPriorityMap[5].m_Candidate = vCandidateDevice;
-					vPriorityMap[5].m_Properties = vPhysicalDeviceProperties;
+					priorityIndex = 45;
 					break;
 				}
+
+				vPriorityMap[priorityIndex].m_Candidate = vCandidateDevice;
+				vPriorityMap[priorityIndex].m_Properties = vPhysicalDeviceProperties;
 			}
 		}
 
@@ -232,8 +230,9 @@ namespace Firefly
 		if (flags & VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
-			m_Queues.emplace_back(queue);
+			Utility::Log(Utility::LogLevel::Information, "Created the transfer queue.");
 
+			m_Queues.emplace_back(queue);
 			uniqueQueueFamilies[queue.getFamily().value()]++;
 		}
 
@@ -241,8 +240,9 @@ namespace Firefly
 		if (flags & VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT);
-			m_Queues.emplace_back(queue);
+			Utility::Log(Utility::LogLevel::Information, "Created the graphics queue.");
 
+			m_Queues.emplace_back(queue);
 			uniqueQueueFamilies[queue.getFamily().value()]++;
 		}
 
@@ -250,6 +250,7 @@ namespace Firefly
 		if (flags & VkQueueFlagBits::VK_QUEUE_COMPUTE_BIT)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_COMPUTE_BIT);
+			Utility::Log(Utility::LogLevel::Information, "Created the compute queue.");
 			m_Queues.emplace_back(queue);
 
 			uniqueQueueFamilies[queue.getFamily().value()]++;
@@ -259,6 +260,7 @@ namespace Firefly
 		if (flags & VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR);
+			Utility::Log(Utility::LogLevel::Information, "Created the encode queue.");
 			m_Queues.emplace_back(queue);
 
 			uniqueQueueFamilies[queue.getFamily().value()]++;
@@ -268,8 +270,9 @@ namespace Firefly
 		else if (flags & VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR);
-			m_Queues.emplace_back(queue);
+			Utility::Log(Utility::LogLevel::Information, "Created the decode queue.");
 
+			m_Queues.emplace_back(queue);
 			uniqueQueueFamilies[queue.getFamily().value()]++;
 		}
 

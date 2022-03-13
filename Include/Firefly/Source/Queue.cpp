@@ -16,12 +16,14 @@ namespace Firefly
 		vkGetPhysicalDeviceQueueFamilyProperties(vPhysicalDevice, &queueFamilyCount, queueFamilies.data());
 
 		// Iterate over those queue family properties and find the most suitable one.
-		for (uint32_t family = 0; family < queueFamilyCount; family++)
+		for (uint32_t index = 0; index < queueFamilyCount; index++)
 		{
+			const auto& family = queueFamilies[index];
+
 			// Check if the queue flag contains what we want. If so, we can assign the queue family and return from the function.
-			if (queueFamilies[family].queueCount > 0 && queueFamilies[family].queueFlags & vFlag)
+			if (family.queueCount > 0 && family.queueFlags & vFlag)
 			{
-				m_QueueFamily = family;
+				m_QueueFamily = index;
 				return;
 			}
 		}

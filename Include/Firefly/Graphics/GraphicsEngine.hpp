@@ -11,7 +11,6 @@ namespace Firefly
 	class GraphicsEngine final : public Engine
 	{
 	public:
-		FIREFLY_DEFAULT_COPY(GraphicsEngine);
 		FIREFLY_DEFAULT_MOVE(GraphicsEngine);
 
 		/**
