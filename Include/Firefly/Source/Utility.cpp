@@ -83,7 +83,7 @@ namespace Firefly
 				throw BackendError(VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
 
 #else 
-				log(LogLevel::Error, VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
+				Log(LogLevel::Error, VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
 
 #endif // _DEBUG || NDEBUG
 
