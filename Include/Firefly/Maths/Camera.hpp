@@ -15,9 +15,10 @@ namespace Firefly
 		 * Constructor.
 		 *
 		 * @param position The camera position in the 3D world.
-		 * @pram aspectRatio The camera's aspect ratio.
+		 * @param aspectRatio The camera's aspect ratio.
+		 * @param fieldOfView The camera's field of view. Default is 60.0f.
 		 */
-		explicit Camera(const glm::vec3 position, const float aspectRatio);
+		explicit Camera(const glm::vec3 position, const float aspectRatio, const float fieldOfView = 60.0f);
 
 		/**
 		 * Move the camera forward.

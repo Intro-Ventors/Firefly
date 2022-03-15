@@ -44,7 +44,7 @@ namespace Firefly
 
 		std::stringstream messageStream;
 		messageStream << "Vulkan Validation Layer " << myMessagePreStatement << pCallbackData->pMessage;
-		Utility::Log(level, messageStream.str());
+		Utility::Logger::log(level, messageStream.str());
 
 		return VK_FALSE;
 	}

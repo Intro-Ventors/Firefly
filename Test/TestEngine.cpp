@@ -13,7 +13,7 @@ void Logger(const Firefly::Utility::LogLevel level, const std::string_view& mess
 TestEngine::TestEngine()
 {
 	// Set the logger to log data.
-	Firefly::Utility::SetLoggerMethod(Logger);
+	Firefly::Utility::Logger::setLoggerMethod(Logger);
 
 	m_Instance = Firefly::Instance::create(true, VK_API_VERSION_1_1);
 	m_GraphicsEngine = Firefly::GraphicsEngine::create(m_Instance);
@@ -112,7 +112,7 @@ std::shared_ptr<Firefly::Image> TestEngine::draw()
 	return m_RenderTarget->getColorAttachment();
 }
 
-std::vector<TestEngine::Vertex> TestEngine::generateVertices() const
+std::vector<TestEngine::Vertex> TestEngine::generateTriangleVertices() const
 {
 	return {
 		{{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
@@ -121,7 +121,7 @@ std::vector<TestEngine::Vertex> TestEngine::generateVertices() const
 	};
 }
 
-std::vector<uint32_t> TestEngine::generateIndices() const
+std::vector<uint32_t> TestEngine::generateTriangleIndices() const
 {
 	return { 0, 1, 2 };
 }
@@ -142,4 +142,14 @@ std::vector<uint32_t> TestEngine::generateQuadIndices() const
 		0, 1, 2,
 		2, 3, 0
 	};
+}
+
+std::vector<TestEngine::Vertex> TestEngine::generateCubeVertices() const
+{
+	return std::vector<Vertex>();
+}
+
+std::vector<uint32_t> TestEngine::generateCubeIndices() const
+{
+	return std::vector<uint32_t>();
 }

@@ -5,6 +5,12 @@
 
 #include <functional>
 
+#define FIREFLY_DEFAULT_COPY(name)					name(const name&) = default;	name& operator=(const name&) = default
+#define FIREFLY_DEFAULT_MOVE(name)					name(name&&) = default;			name& operator=(name&&) = default
+
+#define FIREFLY_NO_COPY(name)						name(const name&) = delete;		name& operator=(const name&) = delete
+#define FIREFLY_NO_MOVE(name)						name(name&&) = delete;			name& operator=(name&&) = delete
+
 namespace Firefly
 {
 	namespace Utility
@@ -19,6 +25,41 @@ namespace Firefly
 			Warning,
 			Error,
 			Fatal
+		};
+
+		/**
+		 * Logger class.
+		 * This class is a singleton, and is used to log messages using a logger function.
+		 */
+		class Logger
+		{
+			Logger() = default;
+			FIREFLY_NO_COPY(Logger);
+			FIREFLY_NO_MOVE(Logger);
+
+			std::function<void(const Firefly::Utility::LogLevel, const std::string_view&)> m_Function;
+
+			/**
+			 * Get the logger instance.
+			 *
+			 * @return The logger instance reference.
+			 */
+			static Logger& getInstance();
+		public:
+			/**
+			 * Set the logger method to use.
+			 *
+			 * @param function The logger function.
+			 */
+			static void setLoggerMethod(const std::function<void(const Firefly::Utility::LogLevel level, const std::string_view&)>& function);
+
+			/**
+			 * Log a message.
+			 *
+			 * @param level The log level.
+			 * @param message The message to be logged.
+			 */
+			static void log(const Firefly::Utility::LogLevel level, const std::string_view& message);
 		};
 
 		/**
@@ -42,29 +83,7 @@ namespace Firefly
 		 * @throws std::runtime_error depending on the result.
 		 */
 		void ValidateResult(const VkResult result, const std::string& string, const std::string_view& file, const uint64_t line);
-
-		/**
-		 * Set the logger method.
-		 * This method will be called when the log function is called.
-		 *
-		 * @parm function The log function.
-		 */
-		void SetLoggerMethod(const std::function<void(const LogLevel level, const std::string_view&)>& function);
-
-		/**
-		 * Log a message.
-		 *
-		 * @param level The message level.
-		 * @param message The output message.
-		 */
-		void Log(const LogLevel level, const std::string_view& message);
 	}
 }
-
-#define FIREFLY_DEFAULT_COPY(name)					name(const name&) = default;	name& operator=(const name&) = default
-#define FIREFLY_DEFAULT_MOVE(name)					name(name&&) = default;			name& operator=(name&&) = default
-
-#define FIREFLY_NO_COPY(name)						name(const name&) = delete;		name& operator=(const name&) = delete
-#define FIREFLY_NO_MOVE(name)						name(name&&) = delete;			name& operator=(name&&) = delete
 
 #define FIREFLY_VALIDATE(expression, message)		::Firefly::Utility::ValidateResult(expression, message, __FILE__, __LINE__)

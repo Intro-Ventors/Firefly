@@ -2,11 +2,11 @@
 
 namespace Firefly
 {
-	Camera::Camera(const glm::vec3 position, const float aspectRatio)
-		: m_Position(position), m_AspectRatio(aspectRatio) 
+	Camera::Camera(const glm::vec3 position, const float aspectRatio, const float fieldOfView)
+		: m_Position(position), m_AspectRatio(aspectRatio), m_FieldOfView(fieldOfView)
 	{
 	}
-	
+
 	void Camera::moveForward(const uint64_t delta)
 	{
 		m_Position += m_Front * (static_cast<float>(delta) / m_DeltaReductionFactor) * m_MovementBias;

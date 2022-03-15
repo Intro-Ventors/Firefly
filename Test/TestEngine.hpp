@@ -57,9 +57,12 @@ public:
 	void captureFrame() { m_bShouldCapture = true; }
 
 private:
-	std::vector<Vertex> generateVertices() const;
-	std::vector<uint32_t> generateIndices() const;
+	std::vector<Vertex> generateTriangleVertices() const;
+	std::vector<uint32_t> generateTriangleIndices() const;
 
 	std::vector<Vertex> generateQuadVertices() const;
 	std::vector<uint32_t> generateQuadIndices() const;
+
+	std::vector<Vertex> generateCubeVertices() const;
+	std::vector<uint32_t> generateCubeIndices() const;
 };

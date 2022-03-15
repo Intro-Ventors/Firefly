@@ -5,14 +5,8 @@
 namespace Firefly
 {
 	StereoCamera::StereoCamera(const glm::vec3 position, const float aspectRatio)
-		: Camera(position, aspectRatio)
+		: Camera(position, aspectRatio, 90.0f)
 	{
-		m_LeftEyeMatrix.m_ProjectionMatrix = glm::perspective(glm::radians(m_FieldOfView), m_AspectRatio, m_NearPlane, m_FarPlane);
-		m_LeftEyeMatrix.m_ProjectionMatrix[1][1] *= -1.0f;
-
-		m_RightEyeMatrix = m_LeftEyeMatrix;
-
-		m_FieldOfView = 90.0f;
 	}
 
 	void StereoCamera::update()

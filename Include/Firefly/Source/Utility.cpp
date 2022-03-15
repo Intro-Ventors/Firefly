@@ -57,17 +57,55 @@ namespace /* anonymous */
 
 		return "{UNKNOWN} ";
 	}
-}
 
-namespace /* anonymous */
-{
-	std::function<void(const Firefly::Utility::LogLevel, const std::string_view&)> LoggerFunction;
+	std::string_view LogLevelToString(const Firefly::Utility::LogLevel level)
+	{
+		switch (level)
+		{
+		case Firefly::Utility::LogLevel::Information:
+			return "Level: Information";
+
+		case Firefly::Utility::LogLevel::Warning:
+			return "Level: Warning";
+
+		case Firefly::Utility::LogLevel::Error:
+			return "Level: Error";
+
+		case Firefly::Utility::LogLevel::Fatal:
+			return "Level: Fatal";
+		}
+
+		return "Level: Unknown";
+	}
 }
 
 namespace Firefly
 {
 	namespace Utility
 	{
+		Logger& Logger::getInstance()
+		{
+			static Logger logger;
+			return logger;
+		}
+
+		void Logger::setLoggerMethod(const std::function<void(const Firefly::Utility::LogLevel level, const std::string_view&)>& function)
+		{
+			getInstance().m_Function = function;
+		}
+
+		void Logger::log(const Firefly::Utility::LogLevel level, const std::string_view& message)
+		{
+			try
+			{
+				getInstance().m_Function(level, message);
+			}
+			catch (const std::bad_function_call&)
+			{
+				std::cout << "[DEFAULT LOGGER]" << LogLevelToString(level) << ": " << message << std::endl;
+			}
+		}
+
 		void ValidateResult(const VkResult result, const std::string& string)
 		{
 			if (result != VkResult::VK_SUCCESS)
@@ -79,33 +117,15 @@ namespace Firefly
 			if (result != VkResult::VK_SUCCESS)
 			{
 
-#ifdef _DEBUG || NDEBUG
+#if defined(_DEBUG) || defined(NDEBUG)
 				throw BackendError(VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
 
 #else 
-				Log(LogLevel::Error, VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
+				Logger::log(LogLevel::Error, VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
 
 #endif // _DEBUG || NDEBUG
 
 			}
-		}
-
-		void Logger(const VkResult result, const std::string& string, const std::string_view& file, const uint64_t line)
-		{
-			if (result != VkResult::VK_SUCCESS)
-				std::cerr << VkResultToString(result).data() << string << " [" << file.data() << ":" << std::to_string(line) << "]\n";
-		}
-
-		void SetLoggerMethod(const std::function<void(const LogLevel level, const std::string_view&)>& function)
-		{
-			LoggerFunction = function;
-		}
-
-		void Log(const LogLevel level, const std::string_view& message)
-		{
-			// If the user has given us a logger function, lets call it.
-			if (LoggerFunction)
-				LoggerFunction(level, message);
 		}
 	}
 }
