@@ -35,7 +35,6 @@ namespace Firefly
 			FIREFLY_NO_COPY(Logger);
 			FIREFLY_NO_MOVE(Logger);
 
-			std::function<void(const Firefly::Utility::LogLevel, const std::string_view&)> m_Function;
 			using Function = void(*)(const Firefly::Utility::LogLevel, const std::string_view&);
 			Function m_Function = nullptr;
 
@@ -45,6 +44,7 @@ namespace Firefly
 			 * @return The logger instance reference.
 			 */
 			static Logger& getInstance();
+
 		public:
 			/**
 			 * Set the logger method to use.
