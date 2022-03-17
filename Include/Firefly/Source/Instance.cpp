@@ -54,6 +54,7 @@ namespace Firefly
 	{
 		// Initialize volk.
 		FIREFLY_VALIDATE(volkInitialize(), "Failed to initialize volk!");
+		Utility::Logger::log(Utility::LogLevel::Information, "Volk initialized.");
 
 		// Setup the application info structure.
 		VkApplicationInfo vApplicationInfo = {};
@@ -70,7 +71,7 @@ namespace Firefly
 		vCreateInfo.pApplicationInfo = &vApplicationInfo;
 
 		// Get the required extensions.
-		std::vector<const char*> extensions = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
+		const std::vector<const char*> extensions = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
 
 		// Setup debug info if required.
 		VkDebugUtilsMessengerCreateInfoEXT vDebugCreateInfo = {};
@@ -96,17 +97,18 @@ namespace Firefly
 
 		// Create the instance.
 		FIREFLY_VALIDATE(vkCreateInstance(&vCreateInfo, nullptr, &m_vInstance), "Failed to create the instance.");
+		Utility::Logger::log(Utility::LogLevel::Information, "Instance created.");
 
 		// Load the instance.
 		volkLoadInstance(m_vInstance);
+		Utility::Logger::log(Utility::LogLevel::Information, "Volk instance loaded.");
 
 		// Create the debug utils messenger if validation is enabled.
 		if (m_bEnableValidation)
 		{
-			VkDebugUtilsMessengerCreateInfoEXT vCreateInfo = createDebugMessengerCreateInfo();
-
 			const auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkCreateDebugUtilsMessengerEXT"));
-			FIREFLY_VALIDATE(func(m_vInstance, &vCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
+			FIREFLY_VALIDATE(func(m_vInstance, &vDebugCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
+			Utility::Logger::log(Utility::LogLevel::Information, "Debug messenger created.");
 		}
 	}
 

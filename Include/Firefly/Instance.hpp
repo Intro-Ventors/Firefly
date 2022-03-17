@@ -8,8 +8,8 @@
 namespace Firefly
 {
 	/**
-	 * RCHAC Instance.
-	 * This object contains the main instance of the codec engine.
+	 * Firefly Instance.
+	 * This object contains the main instance of the graphics and codec engines.
 	 */
 	class Instance final : public std::enable_shared_from_this<Instance>
 	{
