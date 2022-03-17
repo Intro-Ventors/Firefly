@@ -9,6 +9,13 @@ namespace Firefly
 	 * This tool is used to relay information to the renderdoc debugging tool.
 	 *
 	 * When needed, start by calling the beginCapture() method and make sure to follow it with endCapture() when you want to finish the renderdoc capture.
+	 *
+	 * Required shared libraries:
+	 * - Windows:	renderdoc.dll
+	 * - Linux:		librenderdoc.so
+	 * - Android:	libVkLayer_GLES_RenderDoc.so
+	 *
+	 * Note that only one instance of this object is needed for the whole application.
 	 */
 	class Renderdoc final
 	{

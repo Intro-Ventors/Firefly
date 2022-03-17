@@ -1,5 +1,7 @@
 #include "Firefly/Buffer.hpp"
 
+#include <array>
+
 namespace Firefly
 {
 	Buffer::Buffer(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type)
