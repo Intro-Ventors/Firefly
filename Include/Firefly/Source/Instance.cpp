@@ -50,7 +50,7 @@ namespace Firefly
 		return VK_FALSE;
 	}
 
-	Instance::Instance(bool enableValidation, const uint32_t vulkanAPIVersion)
+	Instance::Instance(const uint32_t vulkanAPIVersion, bool enableValidation)
 		: m_VulkanVersion(vulkanAPIVersion), m_bEnableValidation(enableValidation)
 	{
 		// Initialize volk.
@@ -60,9 +60,9 @@ namespace Firefly
 		// Setup the application info structure.
 		VkApplicationInfo vApplicationInfo = {};
 		vApplicationInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		vApplicationInfo.pApplicationName = "GraphicsCore";
+		vApplicationInfo.pApplicationName = "Firefly";
 		vApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-		vApplicationInfo.pEngineName = "GraphicsCore";
+		vApplicationInfo.pEngineName = "Firefly";
 		vApplicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 		vApplicationInfo.apiVersion = vulkanAPIVersion;
 
@@ -72,7 +72,7 @@ namespace Firefly
 		vCreateInfo.pApplicationInfo = &vApplicationInfo;
 
 		// Get the required extensions.
-		const std::array<const char*, 1> extensions = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
+		constexpr const char* extensions[] = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
 
 		// Setup debug info if required.
 		VkDebugUtilsMessengerCreateInfoEXT vDebugCreateInfo = {};
@@ -85,8 +85,8 @@ namespace Firefly
 			vDebugCreateInfo = createDebugMessengerCreateInfo();
 
 			vCreateInfo.pNext = &vDebugCreateInfo;
-			vCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-			vCreateInfo.ppEnabledExtensionNames = extensions.data();
+			vCreateInfo.enabledExtensionCount = 1;
+			vCreateInfo.ppEnabledExtensionNames = extensions;
 			vCreateInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
 			vCreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 		}
@@ -127,9 +127,9 @@ namespace Firefly
 		vkDestroyInstance(m_vInstance, nullptr);
 	}
 
-	std::shared_ptr<Instance> Instance::create(bool enableValidation, const uint32_t vulkanAPIVersion)
+	std::shared_ptr<Instance> Instance::create(const uint32_t vulkanAPIVersion, bool enableValidation)
 	{
-		return std::make_shared<Instance>(enableValidation, vulkanAPIVersion);
+		return std::make_shared<Instance>(vulkanAPIVersion, enableValidation);
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT Instance::createDebugMessengerCreateInfo() const

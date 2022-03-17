@@ -11,18 +11,14 @@
 
 TestEngine::TestEngine()
 {
-	m_Instance = Firefly::Instance::create(true, VK_API_VERSION_1_1);
+	m_Instance = Firefly::Instance::create(VK_API_VERSION_1_1);
 	m_GraphicsEngine = Firefly::GraphicsEngine::create(m_Instance);
 	m_RenderTarget = Firefly::RenderTarget::create(m_GraphicsEngine, { 1280, 720, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, 1);
 
 	m_VertexShader = Firefly::Shader::create(m_GraphicsEngine, "Shaders/shader.vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
 	m_FragmentShader = Firefly::Shader::create(m_GraphicsEngine, "Shaders/shader.frag.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	Firefly::GraphicsPipelineSpecification specification = {};
-	//specification.vFrontFace = VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	//specification.vPolygonMode = VkPolygonMode::VK_POLYGON_MODE_LINE;
-
-	m_Pipeline = Firefly::GraphicsPipeline::create(m_GraphicsEngine, "Basic_Pipeline", { m_VertexShader, m_FragmentShader }, m_RenderTarget, specification);
+	m_Pipeline = Firefly::GraphicsPipeline::create(m_GraphicsEngine, "Basic_Pipeline", { m_VertexShader, m_FragmentShader }, m_RenderTarget);
 	m_VertexResourcePackageLeft = m_Pipeline->createPackage(m_VertexShader.get());
 	m_VertexResourcePackageRight = m_Pipeline->createPackage(m_VertexShader.get());
 	m_FragmentResourcePackage = m_Pipeline->createPackage(m_FragmentShader.get());

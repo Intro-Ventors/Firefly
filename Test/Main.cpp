@@ -6,12 +6,16 @@
 #include <chrono>
 #include <fstream>
 
+#ifdef FIREFLY_PLATFORM_WINDOWS
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+
+#endif
 
 void SaveImage(const std::shared_ptr<Firefly::Image>& pImage)
 {

@@ -20,10 +20,10 @@ namespace Firefly
 		/**
 		 * Constructor.
 		 *
-		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds.
 		 * @param vulkanAPIVersion The Vulkan API version to use.
+		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds. Default is true.
 		 */
-		explicit Instance(bool enableValidation, const uint32_t vulkanAPIVersion);
+		explicit Instance(const uint32_t vulkanAPIVersion, bool enableValidation = true);
 
 		/**
 		 * Default destructor.
@@ -33,11 +33,11 @@ namespace Firefly
 		/**
 		 * Create a new instance.
 		 *
-		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds.
-		 * @param vulkanAPIVersion The Vulkan API version to use.
+		 * @param vulkanAPIVersion The Vulkan API version to use. Default is VK_API_VERSION_1_3.
+		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds. Default is true.
 		 * @return The created instance object pointer.
 		 */
-		static std::shared_ptr<Instance> create(bool enableValidation, const uint32_t vulkanAPIVersion = VK_API_VERSION_1_3);
+		static std::shared_ptr<Instance> create(const uint32_t vulkanAPIVersion = VK_API_VERSION_1_3, bool enableValidation = true);
 
 		/**
 		 * Check if validation is enabled.
