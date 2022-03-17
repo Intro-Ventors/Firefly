@@ -5,16 +5,12 @@
 
 #include "Firefly/ImportSourceFiles.hpp"
 
-void Logger(const Firefly::Utility::LogLevel level, const std::string_view& message)
-{
-	std::cout << message << std::endl;
-}
+#ifdef LoadImage
+#undef LoadImage
+#endif
 
 TestEngine::TestEngine()
 {
-	// Set the logger to log data.
-	Firefly::Utility::Logger::setLoggerMethod(Logger);
-
 	m_Instance = Firefly::Instance::create(true, VK_API_VERSION_1_1);
 	m_GraphicsEngine = Firefly::GraphicsEngine::create(m_Instance);
 	m_RenderTarget = Firefly::RenderTarget::create(m_GraphicsEngine, { 1280, 720, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, 1);

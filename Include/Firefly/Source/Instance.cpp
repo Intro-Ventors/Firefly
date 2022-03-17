@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <array>
 
 namespace Firefly
 {
@@ -71,7 +72,7 @@ namespace Firefly
 		vCreateInfo.pApplicationInfo = &vApplicationInfo;
 
 		// Get the required extensions.
-		const std::vector<const char*> extensions = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
+		const std::array<const char*, 1> extensions = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
 
 		// Setup debug info if required.
 		VkDebugUtilsMessengerCreateInfoEXT vDebugCreateInfo = {};
@@ -119,9 +120,7 @@ namespace Firefly
 		{
 			// Get the destroyer from the shared library.
 			const auto destroyer = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkDestroyDebugUtilsMessengerEXT"));
-
-			if (destroyer)
-				destroyer(m_vInstance, m_vDebugUtilsMessenger, nullptr);
+			destroyer(m_vInstance, m_vDebugUtilsMessenger, nullptr);
 		}
 
 		// Destroy the Vulkan instance.
@@ -143,14 +142,15 @@ namespace Firefly
 		createInfo.pfnUserCallback = DebugCallback;
 
 		createInfo.messageSeverity
-			= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-			| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-			| VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+			= VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 
 		createInfo.messageType
-			= VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-			| VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-			| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+			= VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+			| VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+			| VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
 		return createInfo;
 	}

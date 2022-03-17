@@ -26,6 +26,24 @@ namespace Firefly
 		};
 
 		/**
+		 * Log level to string converter.
+		 * Helper function to convert a log level to a string.
+		 *
+		 * @param level The log level.
+		 * @retrun The string.
+		 */
+		std::string_view LogLevelToString(const Firefly::Utility::LogLevel level);
+
+		/**
+		 * Default logger method.
+		 * This function is the default logger used by firefly.
+		 *
+		 * @param level The log message level.
+		 * @param message Message to be logged.
+		 */
+		void DefaultLogger(const Firefly::Utility::LogLevel level, const std::string_view& message);
+
+		/**
 		 * Logger class.
 		 * This class is a singleton, and is used to log messages using a logger function.
 		 */
@@ -36,7 +54,7 @@ namespace Firefly
 			FIREFLY_NO_MOVE(Logger);
 
 			using Function = void(*)(const Firefly::Utility::LogLevel, const std::string_view&);
-			Function m_Function = nullptr;
+			Function m_Function = &DefaultLogger;
 
 			/**
 			 * Get the logger instance.

@@ -20,7 +20,8 @@ project "Test"
 
 	includedirs {
 		"%{wks.location}/Include",
-		"%{wks.location}/Tests",
+		"%{wks.location}/Test",
+		"%{wks.location}/Test/ThirdParty",
 	}
 
 	libdirs {

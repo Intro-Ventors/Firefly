@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <spdlog/spdlog.h>
+
 namespace /* anonymous */
 {
 	/**
@@ -57,32 +59,51 @@ namespace /* anonymous */
 
 		return "{UNKNOWN} ";
 	}
-
-	std::string_view LogLevelToString(const Firefly::Utility::LogLevel level)
-	{
-		switch (level)
-		{
-		case Firefly::Utility::LogLevel::Information:
-			return "Level: Information";
-
-		case Firefly::Utility::LogLevel::Warning:
-			return "Level: Warning";
-
-		case Firefly::Utility::LogLevel::Error:
-			return "Level: Error";
-
-		case Firefly::Utility::LogLevel::Fatal:
-			return "Level: Fatal";
-		}
-
-		return "Level: Unknown";
-	}
 }
 
 namespace Firefly
 {
 	namespace Utility
 	{
+		std::string_view LogLevelToString(const Firefly::Utility::LogLevel level)
+		{
+			switch (level)
+			{
+			case Firefly::Utility::LogLevel::Information:
+				return "Level: Information";
+
+			case Firefly::Utility::LogLevel::Warning:
+				return "Level: Warning";
+
+			case Firefly::Utility::LogLevel::Error:
+				return "Level: Error";
+
+			case Firefly::Utility::LogLevel::Fatal:
+				return "Level: Fatal";
+			}
+
+			return "Level: Unknown";
+		}
+		
+		void DefaultLogger(const Firefly::Utility::LogLevel level, const std::string_view& message)
+		{
+			switch (level)
+			{
+			case Firefly::Utility::LogLevel::Information:
+				spdlog::info(message.data());
+				break;
+
+			case Firefly::Utility::LogLevel::Warning:
+				spdlog::warn(message.data());
+				break;
+
+			case Firefly::Utility::LogLevel::Error:
+			case Firefly::Utility::LogLevel::Fatal:
+				spdlog::error(message.data());
+				break;
+			}
+		}
+
 		Logger& Logger::getInstance()
 		{
 			static Logger logger;
@@ -91,15 +112,13 @@ namespace Firefly
 
 		void Logger::setLoggerMethod(const Function& function)
 		{
-			getInstance().m_Function = function;
+			if (function)
+				getInstance().m_Function = function;
 		}
 
 		void Logger::log(const Firefly::Utility::LogLevel level, const std::string_view& message)
 		{
-			const auto function = getInstance().m_Function;
-
-			if (function)
-				function(level, message);
+			getInstance().m_Function(level, message);
 		}
 
 		void ValidateResult(const VkResult result, const std::string& string)
