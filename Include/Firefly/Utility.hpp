@@ -3,8 +3,6 @@
 #include "Imports.hpp"
 #include "BackendError.hpp"
 
-#include <functional>
-
 #define FIREFLY_DEFAULT_COPY(name)					name(const name&) = default;	name& operator=(const name&) = default
 #define FIREFLY_DEFAULT_MOVE(name)					name(name&&) = default;			name& operator=(name&&) = default
 
@@ -38,6 +36,8 @@ namespace Firefly
 			FIREFLY_NO_MOVE(Logger);
 
 			std::function<void(const Firefly::Utility::LogLevel, const std::string_view&)> m_Function;
+			using Function = void(*)(const Firefly::Utility::LogLevel, const std::string_view&);
+			Function m_Function = nullptr;
 
 			/**
 			 * Get the logger instance.
@@ -51,7 +51,7 @@ namespace Firefly
 			 *
 			 * @param function The logger function.
 			 */
-			static void setLoggerMethod(const std::function<void(const Firefly::Utility::LogLevel level, const std::string_view&)>& function);
+			static void setLoggerMethod(const Function& function);
 
 			/**
 			 * Log a message.

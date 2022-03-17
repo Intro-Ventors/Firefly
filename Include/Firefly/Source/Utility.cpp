@@ -89,21 +89,17 @@ namespace Firefly
 			return logger;
 		}
 
-		void Logger::setLoggerMethod(const std::function<void(const Firefly::Utility::LogLevel level, const std::string_view&)>& function)
+		void Logger::setLoggerMethod(const Function& function)
 		{
 			getInstance().m_Function = function;
 		}
 
 		void Logger::log(const Firefly::Utility::LogLevel level, const std::string_view& message)
 		{
-			try
-			{
-				getInstance().m_Function(level, message);
-			}
-			catch (const std::bad_function_call&)
-			{
-				std::cout << "[DEFAULT LOGGER]" << LogLevelToString(level) << ": " << message << std::endl;
-			}
+			const auto function = getInstance().m_Function;
+
+			if (function)
+				function(level, message);
 		}
 
 		void ValidateResult(const VkResult result, const std::string& string)
