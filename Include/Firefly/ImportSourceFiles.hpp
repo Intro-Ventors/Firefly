@@ -22,6 +22,8 @@
 #include "Source/Maths/MonoCamera.cpp"
 #include "Source/Maths/StereoCamera.cpp"
 
+#include "Source/Tools/Renderdoc.cpp"
+
 #include "Source/Buffer.cpp"
 #include "Source/CommandBuffer.cpp"
 #include "Source/Engine.cpp"

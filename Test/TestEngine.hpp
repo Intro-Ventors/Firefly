@@ -6,8 +6,7 @@
 #include "Firefly/Graphics/GraphicsPipeline.hpp"
 #include "Firefly/Maths/MonoCamera.hpp"
 #include "Firefly/Maths/StereoCamera.hpp"
-
-#include "Renderdoc.hpp"
+#include "Firefly/Tools/Renderdoc.hpp"
 
 class TestEngine final
 {
@@ -34,7 +33,7 @@ class TestEngine final
 	std::shared_ptr<Firefly::Package> m_VertexResourcePackageRight = nullptr;
 	std::shared_ptr<Firefly::Package> m_FragmentResourcePackage = nullptr;
 
-	Renderdoc m_RenderdocIntegration;
+	Firefly::Renderdoc m_RenderdocIntegration;
 
 	struct Vertex
 	{
