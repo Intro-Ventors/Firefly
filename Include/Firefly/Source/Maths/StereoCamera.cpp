@@ -28,18 +28,18 @@ namespace Firefly
 		m_Up = glm::normalize(glm::cross(m_Right, m_Front));
 
 		// Left eye
-		left = -m_AspectRatio * wd2 + 0.5f * m_EyeSeperation * ndfl;
-		right = m_AspectRatio * wd2 + 0.5f * m_EyeSeperation * ndfl;
+		left = -m_AspectRatio * wd2 + 0.5f * m_EyeSeparation * ndfl;
+		right = m_AspectRatio * wd2 + 0.5f * m_EyeSeparation * ndfl;
 
 		m_LeftEyeMatrix.m_ProjectionMatrix = glm::frustum(left, right, bottom, top, m_NearPlane, m_FarPlane);
-		m_LeftEyeMatrix.m_ViewMatrix = glm::translate(glm::mat4(1.0f), m_Position - m_Right * (m_EyeSeperation / 2.0f));
+		m_LeftEyeMatrix.m_ViewMatrix = glm::translate(glm::mat4(1.0f), m_Position - m_Right * (m_EyeSeparation / 2.0f));
 
 		// Right eye
-		left = -m_AspectRatio * wd2 - 0.5f * m_EyeSeperation * ndfl;
-		right = m_AspectRatio * wd2 - 0.5f * m_EyeSeperation * ndfl;
+		left = -m_AspectRatio * wd2 - 0.5f * m_EyeSeparation * ndfl;
+		right = m_AspectRatio * wd2 - 0.5f * m_EyeSeparation * ndfl;
 
 		m_RightEyeMatrix.m_ProjectionMatrix = glm::frustum(left, right, bottom, top, m_NearPlane, m_FarPlane);
-		m_RightEyeMatrix.m_ViewMatrix = glm::translate(glm::mat4(1.0f), m_Position + m_Right * (m_EyeSeperation / 2.0f));
+		m_RightEyeMatrix.m_ViewMatrix = glm::translate(glm::mat4(1.0f), m_Position + m_Right * (m_EyeSeparation / 2.0f));
 	}
 
 	void StereoCamera::copyToBuffer(Buffer* pLeftEyeBuffer, Buffer* pRightEyeBuffer) const

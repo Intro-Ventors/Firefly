@@ -70,19 +70,19 @@ namespace Firefly
 			switch (level)
 			{
 			case Firefly::Utility::LogLevel::Information:
-				return "Level: Information";
+				return "Information";
 
 			case Firefly::Utility::LogLevel::Warning:
-				return "Level: Warning";
+				return "Warning";
 
 			case Firefly::Utility::LogLevel::Error:
-				return "Level: Error";
+				return "Error";
 
 			case Firefly::Utility::LogLevel::Fatal:
-				return "Level: Fatal";
+				return "Fatal";
 			}
 
-			return "Level: Unknown";
+			return "Unknown";
 		}
 		
 		void DefaultLogger(const Firefly::Utility::LogLevel level, const std::string_view& message)

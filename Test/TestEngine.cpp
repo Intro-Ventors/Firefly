@@ -1,3 +1,4 @@
+#define FIREFLY_ENABLE_LOGGING
 #include "TestEngine.hpp"
 
 #include "Firefly/AssetsLoaders/ImageLoader.hpp"
@@ -5,15 +6,22 @@
 
 #include "Firefly/ImportSourceFiles.hpp"
 
-#ifdef LoadImage
-#undef LoadImage
-#endif
+#include <fstream>
+
+void logger(const Firefly::Utility::LogLevel level, const std::string_view& message)
+{
+	static std::ofstream outputFile("DebugOutput.txt");
+	outputFile  << "[" << Firefly::Utility::LogLevelToString(level) << "] " << message << std::endl;
+}
 
 TestEngine::TestEngine()
 {
+	Firefly::Utility::Logger::setLoggerMethod(&logger);
+
 	m_Instance = Firefly::Instance::create(VK_API_VERSION_1_1);
 	m_GraphicsEngine = Firefly::GraphicsEngine::create(m_Instance);
 	m_RenderTarget = Firefly::RenderTarget::create(m_GraphicsEngine, { 1280, 720, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, 1);
+	m_Surface = Firefly::WindowsSurface::create(m_Instance, 1280, 720, L"Firefly");
 
 	m_VertexShader = Firefly::Shader::create(m_GraphicsEngine, "Shaders/shader.vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
 	m_FragmentShader = Firefly::Shader::create(m_GraphicsEngine, "Shaders/shader.frag.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -46,7 +54,7 @@ TestEngine::TestEngine()
 	m_VertexResourcePackageRight->bindResources(0, { m_RightEyeUniform });
 	m_VertexResourcePackageRight->bindResources(1, { m_UniformBuffer });
 
-	m_Texture = Firefly::LoadImage(m_GraphicsEngine, "Assets/VikingRoom/texture.png");
+	m_Texture = Firefly::LoadImageFromFile(m_GraphicsEngine, "Assets/VikingRoom/texture.png");
 	m_FragmentResourcePackage->bindResources(0, { m_Texture });
 }
 

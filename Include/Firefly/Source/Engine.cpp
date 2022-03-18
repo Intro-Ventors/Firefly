@@ -222,7 +222,7 @@ namespace Firefly
 			throw BackendError("Unable to find suitable physical device!");
 
 		// If we found a suitable physical device, lets log it.
-		Utility::Logger::log(Utility::LogLevel::Information, "Physical device found.");
+		FIREFLY_LOG_INFO("Physical device found.");
 	}
 
 	void Engine::setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags, const VkPhysicalDeviceFeatures& features)
@@ -234,7 +234,7 @@ namespace Firefly
 		if (flags & VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
-			Utility::Logger::log(Utility::LogLevel::Information, "Created the transfer queue.");
+			FIREFLY_LOG_INFO("Created the transfer queue.");
 
 			m_Queues.emplace_back(queue);
 			uniqueQueueFamilies[queue.getFamily().value()]++;
@@ -244,7 +244,7 @@ namespace Firefly
 		if (flags & VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT);
-			Utility::Logger::log(Utility::LogLevel::Information, "Created the graphics queue.");
+			FIREFLY_LOG_INFO("Created the graphics queue.");
 
 			m_Queues.emplace_back(queue);
 			uniqueQueueFamilies[queue.getFamily().value()]++;
@@ -254,7 +254,7 @@ namespace Firefly
 		if (flags & VkQueueFlagBits::VK_QUEUE_COMPUTE_BIT)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_COMPUTE_BIT);
-			Utility::Logger::log(Utility::LogLevel::Information, "Created the compute queue.");
+			FIREFLY_LOG_INFO("Created the compute queue.");
 			m_Queues.emplace_back(queue);
 
 			uniqueQueueFamilies[queue.getFamily().value()]++;
@@ -264,7 +264,7 @@ namespace Firefly
 		if (flags & VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_VIDEO_ENCODE_BIT_KHR);
-			Utility::Logger::log(Utility::LogLevel::Information, "Created the encode queue.");
+			FIREFLY_LOG_INFO("Created the encode queue.");
 			m_Queues.emplace_back(queue);
 
 			uniqueQueueFamilies[queue.getFamily().value()]++;
@@ -274,7 +274,7 @@ namespace Firefly
 		else if (flags & VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR)
 		{
 			const auto queue = Queue(m_vPhysicalDevice, VkQueueFlagBits::VK_QUEUE_VIDEO_DECODE_BIT_KHR);
-			Utility::Logger::log(Utility::LogLevel::Information, "Created the decode queue.");
+			FIREFLY_LOG_INFO("Created the decode queue.");
 
 			m_Queues.emplace_back(queue);
 			uniqueQueueFamilies[queue.getFamily().value()]++;

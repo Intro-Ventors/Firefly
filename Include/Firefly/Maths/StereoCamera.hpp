@@ -36,7 +36,7 @@ namespace Firefly
 		CameraMatrix m_LeftEyeMatrix = {};
 		CameraMatrix m_RightEyeMatrix = {};
 
-		float m_EyeSeperation = 0.08f;
+		float m_EyeSeparation = 0.08f;
 		float m_FocalLength = 0.5f;
 	};
 }

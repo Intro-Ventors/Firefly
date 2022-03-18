@@ -22,7 +22,7 @@ namespace Firefly
 	 * @param path The file path.
 	 * @return The created image.
 	 */
-	std::shared_ptr<Image> LoadImage(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& path);
+	std::shared_ptr<Image> LoadImageFromFile(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& path);
 
 	/**
 	 * Load an image from memory.

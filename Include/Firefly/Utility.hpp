@@ -105,3 +105,17 @@ namespace Firefly
 }
 
 #define FIREFLY_VALIDATE(expression, message)		::Firefly::Utility::ValidateResult(expression, message, __FILE__, __LINE__)
+
+#if defined(FIREFLY_ENABLE_LOGGING)
+#define FIREFLY_LOG_INFO(...)						
+#define FIREFLY_LOG_WARN(...)						
+#define FIREFLY_LOG_ERROR(...)						
+#define FIREFLY_LOG_FATAL(...)						
+
+#else
+#define FIREFLY_LOG_INFO(...)						::Firefly::Utility::Logger::log(::Firefly::Utility::LogLevel::Information, __VA_ARGS__)
+#define FIREFLY_LOG_WARN(...)						::Firefly::Utility::Logger::log(::Firefly::Utility::LogLevel::Warning, __VA_ARGS__)
+#define FIREFLY_LOG_ERROR(...)						::Firefly::Utility::Logger::log(::Firefly::Utility::LogLevel::Error, __VA_ARGS__)
+#define FIREFLY_LOG_FATAL(...)						::Firefly::Utility::Logger::log(::Firefly::Utility::LogLevel::Fatal, __VA_ARGS__)
+
+#endif

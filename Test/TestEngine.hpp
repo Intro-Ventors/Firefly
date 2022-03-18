@@ -3,6 +3,7 @@
 #include "Firefly/Instance.hpp"
 #include "Firefly/Graphics/GraphicsEngine.hpp"
 #include "Firefly/Graphics/RenderTarget.hpp"
+#include "Firefly/Graphics/Surface.hpp"
 #include "Firefly/Graphics/GraphicsPipeline.hpp"
 #include "Firefly/Maths/MonoCamera.hpp"
 #include "Firefly/Maths/StereoCamera.hpp"
@@ -15,6 +16,7 @@ class TestEngine final
 	std::shared_ptr<Firefly::Instance> m_Instance = nullptr;
 	std::shared_ptr<Firefly::GraphicsEngine> m_GraphicsEngine = nullptr;
 	std::shared_ptr<Firefly::RenderTarget> m_RenderTarget = nullptr;
+	std::shared_ptr<Firefly::Surface> m_Surface = nullptr;
 
 	std::shared_ptr<Firefly::Shader> m_VertexShader = nullptr;
 	std::shared_ptr<Firefly::Shader> m_FragmentShader = nullptr;

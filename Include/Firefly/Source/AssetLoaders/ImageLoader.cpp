@@ -4,7 +4,7 @@
 
 namespace Firefly
 {
-	std::shared_ptr<Image> LoadImage(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& path)
+	std::shared_ptr<Image> LoadImageFromFile(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& path)
 	{
 		// Load the pixel data.
 		int width = 0, height = 0, channels = 0;
