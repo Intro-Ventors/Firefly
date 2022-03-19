@@ -16,7 +16,7 @@ namespace Firefly
 	{
 #if defined(_WIN32)
 		// Load the library.
-		const auto pHandle = LoadLibraryA("renderdoc.dll");
+		const auto pHandle = LoadLibrary(L"renderdoc.dll");
 
 		// Validate the handle to check if we could load the library or not.
 		if (!pHandle)
@@ -50,7 +50,7 @@ namespace Firefly
 #endif
 
 		// Validate and setup the renderdoc API.
-		if (!GetAPI || GetAPI(eRENDERDOC_API_Version_1_4_2, (void**)&m_pRenderdocApp) != 1)
+		if (!GetAPI || GetAPI(eRENDERDOC_API_Version_1_4_2, reinterpret_cast<void**>(&m_pRenderdocApp)) != 1)
 			throw BackendError("Failed to setup RenderDoc!");
 
 		m_LibraryHandle = pHandle;

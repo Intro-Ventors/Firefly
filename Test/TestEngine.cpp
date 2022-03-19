@@ -18,7 +18,7 @@ TestEngine::TestEngine()
 {
 	Firefly::Utility::Logger::setLoggerMethod(&logger);
 
-	m_Instance = Firefly::Instance::create(VK_API_VERSION_1_1);
+	m_Instance = Firefly::Instance::create();
 	m_GraphicsEngine = Firefly::GraphicsEngine::create(m_Instance);
 	m_RenderTarget = Firefly::RenderTarget::create(m_GraphicsEngine, { 1280, 720, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, 1);
 	m_Surface = Firefly::WindowsSurface::create(m_Instance, 1280, 720, L"Firefly");

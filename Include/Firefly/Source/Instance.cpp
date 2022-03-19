@@ -50,6 +50,24 @@ namespace Firefly
 		return VK_FALSE;
 	}
 
+	Instance::Instance(bool enableValidation)
+		: m_bEnableValidation(enableValidation)
+	{
+		// Initialize volk.
+		FIREFLY_VALIDATE(volkInitialize(), "Failed to initialize volk!");
+		FIREFLY_LOG_INFO("Volk initialized.");
+
+		// Get the instance API version from the driver.
+		m_VulkanVersion = volkGetInstanceVersion();
+
+		// Create the instance.
+		createInstance();
+
+		// Create the debug utils messenger if validation is enabled.
+		if (m_bEnableValidation)
+			createDebugger();
+	}
+
 	Instance::Instance(const uint32_t vulkanAPIVersion, bool enableValidation)
 		: m_VulkanVersion(vulkanAPIVersion), m_bEnableValidation(enableValidation)
 	{
@@ -57,6 +75,40 @@ namespace Firefly
 		FIREFLY_VALIDATE(volkInitialize(), "Failed to initialize volk!");
 		FIREFLY_LOG_INFO("Volk initialized.");
 
+		// Create the instance.
+		createInstance();
+
+		// Create the debug utils messenger if validation is enabled.
+		if (m_bEnableValidation)
+			createDebugger();
+	}
+
+	Instance::~Instance()
+	{
+		// Destroy the debug utils messenger if created.
+		if (m_bEnableValidation)
+		{
+			// Get the destroyer from the shared library.
+			const auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkDestroyDebugUtilsMessengerEXT"));
+			vkDestroyDebugUtilsMessengerEXT(m_vInstance, m_vDebugUtilsMessenger, nullptr);
+		}
+
+		// Destroy the Vulkan instance.
+		vkDestroyInstance(m_vInstance, nullptr);
+	}
+
+	std::shared_ptr<Instance> Instance::create(bool enableValidation)
+	{
+		return std::make_shared<Instance>(enableValidation);
+	}
+
+	std::shared_ptr<Instance> Instance::create(const uint32_t vulkanAPIVersion, bool enableValidation)
+	{
+		return std::make_shared<Instance>(vulkanAPIVersion, enableValidation);
+	}
+
+	void Instance::createInstance()
+	{
 		// Setup the application info structure.
 		VkApplicationInfo vApplicationInfo = {};
 		vApplicationInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -64,7 +116,7 @@ namespace Firefly
 		vApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		vApplicationInfo.pEngineName = "Firefly";
 		vApplicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		vApplicationInfo.apiVersion = vulkanAPIVersion;
+		vApplicationInfo.apiVersion = m_VulkanVersion;
 
 		// Setup the instance create info structure.
 		VkInstanceCreateInfo vCreateInfo = {};
@@ -114,33 +166,14 @@ namespace Firefly
 		// Load the instance.
 		volkLoadInstance(m_vInstance);
 		FIREFLY_LOG_INFO("Volk instance loaded.");
-
-		// Create the debug utils messenger if validation is enabled.
-		if (m_bEnableValidation)
-		{
-			const auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkCreateDebugUtilsMessengerEXT"));
-			FIREFLY_VALIDATE(func(m_vInstance, &vDebugCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
-			FIREFLY_LOG_INFO("Debug messenger created.");
-		}
 	}
 
-	Instance::~Instance()
+	void Instance::createDebugger()
 	{
-		// Destroy the debug utils messenger if created.
-		if (m_bEnableValidation)
-		{
-			// Get the destroyer from the shared library.
-			const auto destroyer = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkDestroyDebugUtilsMessengerEXT"));
-			destroyer(m_vInstance, m_vDebugUtilsMessenger, nullptr);
-		}
-
-		// Destroy the Vulkan instance.
-		vkDestroyInstance(m_vInstance, nullptr);
-	}
-
-	std::shared_ptr<Instance> Instance::create(const uint32_t vulkanAPIVersion, bool enableValidation)
-	{
-		return std::make_shared<Instance>(vulkanAPIVersion, enableValidation);
+		const auto vCreateInfo = createDebugMessengerCreateInfo();
+		const auto vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkCreateDebugUtilsMessengerEXT"));
+		FIREFLY_VALIDATE(vkCreateDebugUtilsMessengerEXT(m_vInstance, &vCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
+		FIREFLY_LOG_INFO("Debug messenger created.");
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT Instance::createDebugMessengerCreateInfo() const

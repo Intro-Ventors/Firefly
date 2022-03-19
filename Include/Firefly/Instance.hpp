@@ -20,6 +20,13 @@ namespace Firefly
 		/**
 		 * Constructor.
 		 *
+		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds. Default is true.
+		 */
+		explicit Instance(bool enableValidation = true);
+
+		/**
+		 * Constructor.
+		 *
 		 * @param vulkanAPIVersion The Vulkan API version to use.
 		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds. Default is true.
 		 */
@@ -33,11 +40,19 @@ namespace Firefly
 		/**
 		 * Create a new instance.
 		 *
+		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds. Default is true.
+		 * @return The created instance object pointer.
+		 */
+		static std::shared_ptr<Instance> create(bool enableValidation = true);
+
+		/**
+		 * Create a new instance.
+		 *
 		 * @param vulkanAPIVersion The Vulkan API version to use. Default is VK_API_VERSION_1_3.
 		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds. Default is true.
 		 * @return The created instance object pointer.
 		 */
-		static std::shared_ptr<Instance> create(const uint32_t vulkanAPIVersion = VK_API_VERSION_1_3, bool enableValidation = true);
+		static std::shared_ptr<Instance> create(const uint32_t vulkanAPIVersion, bool enableValidation = true);
 
 		/**
 		 * Check if validation is enabled.
@@ -76,6 +91,16 @@ namespace Firefly
 
 	private:
 		/**
+		 * Create the Vulkan instance.
+		 */
+		void createInstance();
+
+		/**
+		 * Create the Vulkan debugger.
+		 */
+		void createDebugger();
+
+		/**
 		 * Create debug messenger structure.
 		 * This utility function will generate the VkDebugUtilsMessengerCreateInfoEXT structure.
 		 *
@@ -88,7 +113,7 @@ namespace Firefly
 
 		VkInstance m_vInstance = VK_NULL_HANDLE;
 		VkDebugUtilsMessengerEXT m_vDebugUtilsMessenger = VK_NULL_HANDLE;
-		const uint32_t m_VulkanVersion = 0;
+		uint32_t m_VulkanVersion = 0;
 
 		bool m_bEnableValidation = true;
 	};
