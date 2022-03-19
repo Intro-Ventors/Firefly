@@ -1,2 +1,2 @@
-call Tools\Windows\premake5 vs2022
+call python Scripts/Build.py
 pause
