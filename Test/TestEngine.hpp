@@ -54,6 +54,7 @@ public:
 
 	std::shared_ptr<Firefly::Image> draw();
 
+	Firefly::Surface* getSurface() { return m_Surface.get(); }
 	Firefly::StereoCamera& getCamera() { return m_Camera; }
 	void captureFrame() { m_bShouldCapture = true; }
 

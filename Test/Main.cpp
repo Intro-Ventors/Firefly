@@ -39,77 +39,98 @@ int main()
 			const auto currentTime = Clock::now();
 			const auto difference = currentTime - oldTimePoint;
 
-			//if (GetKeyState('W') < 0)
-			//{
-			//	engine.getCamera().moveForward(difference.count());
-			//	std::cout << "Camera moved forward.\n";
-			//}
-			//else if (GetKeyState('S') < 0)
-			//{
-			//	engine.getCamera().moveBackward(difference.count());
-			//	std::cout << "Camera moved backwards.\n";
-			//}
-			//
-			//if (GetKeyState('A') < 0)
-			//{
-			//	engine.getCamera().moveLeft(difference.count());
-			//	std::cout << "Camera moved to the left.\n";
-			//}
-			//else if (GetKeyState('D') < 0)
-			//{
-			//	engine.getCamera().moveRight(difference.count());
-			//	std::cout << "Camera moved to the right.\n";
-			//}
-			//
-			//if (GetKeyState(' ') < 0)
-			//{
-			//	if (GetKeyState(VK_LSHIFT) < 0)
-			//	{
-			//		engine.getCamera().moveDown(difference.count());
-			//		std::cout << "Camera moved down.\n";
-			//	}
-			//	else
-			//	{
-			//		engine.getCamera().moveUp(difference.count());
-			//		std::cout << "Camera moved up.\n";
-			//	}
-			//}
-			//
-			//if (GetKeyState('R') < 0)
-			//{
-			//	engine.getCamera().m_EyeSeparation += 0.0001f;
-			//	std::cout << "Eye separation updated: " << engine.getCamera().m_EyeSeparation << std::endl;
-			//}
-			//else if (GetKeyState('T') < 0)
-			//{
-			//	engine.getCamera().m_EyeSeparation -= 0.0001f;
-			//	std::cout << "Eye separation updated: " << engine.getCamera().m_EyeSeparation << std::endl;
-			//}
-			//
-			//auto image = engine.draw();
-			//
-			//if (GetKeyState('C') < 0)
-			//{
-			//	engine.captureFrame();
-			//	std::cout << "Capturing set for this frame.\n";
-			//}
-			//else if (GetKeyState('F') < 0)
-			//{
-			//	SaveImage(image);
-			//	std::cout << "Image saved.\n";
-			//}
-			//
-			//if (GetKeyState('X') < 0)
-			//{
-			//	shouldRun = false;
-			//}
-			//
-			//const auto pBuffer = image->toBuffer();
-			//cv::Mat imageMat = cv::Mat(image->getExtent().height, image->getExtent().width, CV_8UC4, pBuffer->mapMemory());
-			//pBuffer->unmapMemory();
-			//
-			//cv::pollKey();
-			//cv::imshow("Firefly", imageMat);
+			std::cout << std::chrono::duration_cast<std::chrono::microseconds>(difference) << std::endl;
+			auto image = engine.draw();
+
+			for (const auto input : std::move(engine.getSurface()->getKeyInputs()))
+			{
+				switch (input.getKey())
+				{
+				case Firefly::Key::W:
+					if (input.isPressed())
+					{
+						engine.getCamera().moveForward(difference.count());
+						std::cout << "Camera moved forward.\n";
+					}
+					break;
+
+				case Firefly::Key::S:
+					if (input.isPressed())
+					{
+						engine.getCamera().moveBackward(difference.count());
+						std::cout << "Camera moved backwards.\n";
+					}
+					break;
+
+				case Firefly::Key::A:
+					if (input.isPressed())
+					{
+						engine.getCamera().moveLeft(difference.count());
+						std::cout << "Camera moved to the left.\n";
+					}
+					break;
+
+				case Firefly::Key::D:
+					if (input.isPressed())
+					{
+						engine.getCamera().moveRight(difference.count());
+						std::cout << "Camera moved to the right.\n";
+					}
+					break;
+
+				case Firefly::Key::Space:
+					if (input.isPressed() && input.shiftPressed())
+					{
+						engine.getCamera().moveUp(difference.count());
+						std::cout << "Camera moved up.\n";
+					}
+					else
+					{
+						engine.getCamera().moveDown(difference.count());
+						std::cout << "Camera moved down.\n";
+					}
+					break;
+
+				case Firefly::Key::R:
+					if (input.isPressed())
+					{
+						engine.getCamera().m_EyeSeparation += 0.0001f;
+						std::cout << "Eye separation updated: " << engine.getCamera().m_EyeSeparation << std::endl;
+					}
+					break;
+
+				case Firefly::Key::T:
+					if (input.isPressed())
+					{
+						engine.getCamera().m_EyeSeparation -= 0.0001f;
+						std::cout << "Eye separation updated: " << engine.getCamera().m_EyeSeparation << std::endl;
+					}
+					break;
+
+				case Firefly::Key::C:
+					if (input.isPressed())
+					{
+						engine.captureFrame();
+						std::cout << "Capturing set for this frame.\n";
+					}
+					break;
+
+				case Firefly::Key::F:
+					if (input.isPressed())
+					{
+						SaveImage(image);
+						std::cout << "Image saved.\n";
+					}
+					break;
+
+				case Firefly::Key::X:
+					if (input.isPressed())
+					{
+						shouldRun = false;
+					}
+					break;
+				}
+			}
 
 			oldTimePoint = currentTime;
 		}
