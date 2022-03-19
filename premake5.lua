@@ -6,6 +6,18 @@ workspace "Firefly"
 		"Release"
 	}
 
+	-- Libraries
+	IncludeDir = {}
+
+	-- Binary includes directories
+	IncludeLib = {}
+	IncludeLib["GLFW"] = "%{wks.location}/ThirdParty/GLFW/build/src/Release"
+
+	-- Binaries
+	Binary = {}
+	Binary["GLFW"] = "glfw3dll"
+
+
 	filter "configurations:Debug"
 		defines { "FIREFLY_DEBUG" }
 		symbols "On"

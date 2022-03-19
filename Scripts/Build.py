@@ -8,34 +8,34 @@ import os
 import sys
 
 
-def setup_windows():
+def setup_windows() -> None:
     # Setup GLFW.
-    if os.path.exists("Include\\GLFW\\build"):
-        os.system("cd Include\\GLFW && cmake -S . -B build && cd build && cmake --build . --config Release && cmake --build . --config Debug")
+    if os.path.exists("ThirdParty\\GLFW\\build"):
+        os.system("cd ThirdParty\\GLFW && cmake -S . -B build -D BUILD_SHARED_LIBS=ON && cd build && cmake --build . --config Release && cmake --build . --config Debug")
     else:
-        os.system("cd Include\\GLFW && mkdir -p build && cmake -S . -B build && cd build && cmake --build . --config Release && cmake --build . -- config Debug")
+        os.system("cd ThirdParty\\GLFW && mkdir build && cmake -S . -B build -D BUILD_SHARED_LIBS=ON && cd build && cmake --build . --config Release && cmake --build . -- config Debug")
 
     # Build the required project files.
     os.system("call Tools\Windows\premake5 vs2022")
 
 
-def setup_linux():
+def setup_linux() -> None:
     # Setup GLFW.
-    if os.path.exists("Include/GLFW/build"):
-        os.system("cd Include/GLFW && cmake -S . -B build && cd build && cmake --build . --config Release && cmake --build . --config Debug")
+    if os.path.exists("ThirdParty/GLFW/build"):
+        os.system("cd ThirdParty/GLFW && cmake -S . -B build && cd build -D BUILD_SHARED_LIBS=ON && cmake --build . --config Release && cmake --build . --config Debug")
     else:
-        os.system("cd 'Include/GLFW' && mkdir -p build && cmake -S . -B build && cd build && cmake --build . --config Release && cmake --build . --config Debug")
+        os.system("cd ThirdParty/GLFW && mkdir build && cmake -S . -B build -D BUILD_SHARED_LIBS=ON && cd build && cmake --build . --config Release && cmake --build . --config Debug")
 
     # Build the required project files.
     os.system("call Tools\Linux\premake5 gmake2")
 
 
-def setup_macos():
+def setup_macos() -> None:
     # Setup GLFW.
-    if os.path.exists("Include/GLFW/build"):
-        os.system("cd Include/GLFW && cmake -S . -B build && cd build && cmake --build . --config Release && cmake --build . --config Debug")
+    if os.path.exists("ThirdParty/GLFW/build"):
+        os.system("cd ThirdParty/GLFW && cmake -S . -B build -D BUILD_SHARED_LIBS=ON && cd build && cmake --build . --config Release && cmake --build . --config Debug")
     else:
-        os.system("cd 'Include/GLFW' && mkdir -p build && cmake -S . -B build && cd build && cmake --build . --config Release && cmake --build . --config Debug")
+        os.system("cd ThirdParty/GLFW && mkdir build && cmake -S . -B build -D BUILD_SHARED_LIBS=ON && cd build && cmake --build . --config Release && cmake --build . --config Debug")
 
     # Build the required project files.
     os.system("call Tools\Mac\premake5 xcode4")
@@ -43,7 +43,7 @@ def setup_macos():
 
 if __name__ == "__main__":
     if sys.platform == "win32":
-        setup_windows();
+        setup_windows()
 
     elif sys.platform.startswith("linux"):
         setup_linux()

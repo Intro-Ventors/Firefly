@@ -21,7 +21,7 @@ TestEngine::TestEngine()
 	m_Instance = Firefly::Instance::create();
 	m_GraphicsEngine = Firefly::GraphicsEngine::create(m_Instance);
 	m_RenderTarget = Firefly::RenderTarget::create(m_GraphicsEngine, { 1280, 720, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, 1);
-	m_Surface = Firefly::WindowsSurface::create(m_Instance, 1280, 720, L"Firefly");
+	m_Surface = Firefly::Surface::create(m_Instance, 1280, 720, "Firefly");
 
 	m_VertexShader = Firefly::Shader::create(m_GraphicsEngine, "Shaders/shader.vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
 	m_FragmentShader = Firefly::Shader::create(m_GraphicsEngine, "Shaders/shader.frag.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -62,6 +62,8 @@ std::shared_ptr<Firefly::Image> TestEngine::draw()
 {
 	if (m_bShouldCapture)
 		m_RenderdocIntegration.beginCapture();
+
+	m_Surface->update();
 
 	m_Camera.update();
 	m_Camera.copyToBuffer(m_LeftEyeUniform.get(), m_RightEyeUniform.get());

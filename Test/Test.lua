@@ -25,9 +25,11 @@ project "Test"
 	}
 
 	libdirs {
+		"%{IncludeLib.GLFW}"
 	}
 
 	links {
+		"%{Binary.GLFW}"
 	}
 
 	filter { "toolset:msc", "configurations:Debug" }

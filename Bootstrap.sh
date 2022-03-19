@@ -1,2 +1,2 @@
 #!/bin/bash
-Tools/Linux/premake5 gmake2
+python Scripts/Build.py

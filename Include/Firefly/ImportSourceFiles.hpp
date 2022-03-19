@@ -18,11 +18,6 @@
 #include "Source/Graphics/RenderTarget.cpp"
 #include "Source/Graphics/Surface.cpp"
 
-#ifdef _WIN32
-#include "Source/Graphics/Windows/WindowsSurface.cpp"
-
-#endif
-
 #include "Source/Maths/Camera.cpp"
 #include "Source/Maths/CameraMatrix.cpp"
 #include "Source/Maths/MonoCamera.cpp"
