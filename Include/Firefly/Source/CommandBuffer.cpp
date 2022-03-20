@@ -91,8 +91,10 @@ namespace Firefly
 
 		// Bind the descriptor sets if available.
 		if (vDescriptorSets.size())
+		{
 			getEngine()->getDeviceTable().vkCmdBindDescriptorSets(m_vCommandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS,
 				pPipeline->getPipelineLayout(), firstSetIndex, static_cast<uint32_t>(vDescriptorSets.size()), vDescriptorSets.data(), 0, nullptr);
+		}
 
 		// Now we can bind the pipeline.
 		getEngine()->getDeviceTable().vkCmdBindPipeline(m_vCommandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->getPipeline());

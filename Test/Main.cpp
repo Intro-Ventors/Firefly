@@ -17,7 +17,6 @@ void SaveImage(const std::shared_ptr<Firefly::Image>& pImage)
 		throw std::runtime_error("Failed to encode the image to PNG!");
 
 	std::fstream imageFile("Scene.png", std::ios::out | std::ios::binary);
-
 	if (!imageFile.is_open())
 		throw std::runtime_error("Failed to open the image file!");
 
@@ -128,6 +127,9 @@ int main()
 					{
 						shouldRun = false;
 					}
+					break;
+
+				default:
 					break;
 				}
 			}

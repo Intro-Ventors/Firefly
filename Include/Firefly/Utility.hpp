@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * This file contains all the utility functions used by the API.
+ * Make sure to define `FIREFLY_DISABLE_LOGGING before` including this file, or any other API header files/ source files to disable logging.
+ */
+
 #include "Imports.hpp"
 #include "BackendError.hpp"
 
@@ -106,7 +111,7 @@ namespace Firefly
 
 #define FIREFLY_VALIDATE(expression, message)		::Firefly::Utility::ValidateResult(expression, message, __FILE__, __LINE__)
 
-#if defined(FIREFLY_ENABLE_LOGGING)
+#if defined(FIREFLY_DISABLE_LOGGING)
 #define FIREFLY_LOG_INFO(...)						
 #define FIREFLY_LOG_WARN(...)						
 #define FIREFLY_LOG_ERROR(...)						

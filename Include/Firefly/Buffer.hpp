@@ -1,6 +1,5 @@
 #pragma once
 
-#include "EngineBoundObject.hpp"
 #include "CommandBuffer.hpp"
 
 namespace Firefly

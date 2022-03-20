@@ -2,6 +2,20 @@
 
 namespace Firefly
 {
+	std::vector<VkClearValue> CreateClearValues(const float r /*= 0.0f*/, const float g /*= 0.0f*/, const float b /*= 0.0f*/, const float a /*= 1.0f*/, const float depth /*= 1.0f*/, const uint32_t stencil /*= 0*/)
+	{
+		std::vector<VkClearValue> vClearColors(2);
+		vClearColors[0].color.float32[0] = r;
+		vClearColors[0].color.float32[1] = g;
+		vClearColors[0].color.float32[2] = b;
+		vClearColors[0].color.float32[3] = a;
+
+		vClearColors[1].depthStencil.depth = depth;
+		vClearColors[1].depthStencil.stencil = stencil;
+
+		return vClearColors;
+	}
+
 	RenderTarget::RenderTarget(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount)
 		: EngineBoundObject(pEngine), m_Extent(extent), m_FrameCount(frameCount)
 	{

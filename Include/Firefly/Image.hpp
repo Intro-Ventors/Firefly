@@ -190,9 +190,9 @@ namespace Firefly
 		VmaAllocation m_Allocation = nullptr;
 
 		VkImageLayout m_CurrentLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
-		VkFormat m_Format = VkFormat::VK_FORMAT_UNDEFINED;
-		ImageType m_Type = ImageType::TwoDimension;
-		uint32_t m_Layers = 0;
-		VkImageUsageFlags m_UsageFlags = 0;
+		const VkFormat m_Format = VkFormat::VK_FORMAT_UNDEFINED;
+		const ImageType m_Type = ImageType::TwoDimension;
+		const uint32_t m_Layers = 0;
+		const VkImageUsageFlags m_UsageFlags = 0;
 	};
 }

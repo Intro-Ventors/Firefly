@@ -132,13 +132,13 @@ namespace Firefly
 			if (result != VkResult::VK_SUCCESS)
 			{
 
-#if defined(_DEBUG) || defined(NDEBUG)
+#ifndef FIREFLY_DISABLE_LOGGING
 				throw BackendError(VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
 
 #else 
 				Logger::log(LogLevel::Error, VkResultToString(result).data() + string + " [" + file.data() + ":" + std::to_string(line) + "]");
 
-#endif // _DEBUG || NDEBUG
+#endif // !FIREFLY_DISABLE_LOGGING
 
 			}
 		}

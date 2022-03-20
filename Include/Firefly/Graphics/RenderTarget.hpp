@@ -3,8 +3,6 @@
 #include "GraphicsEngine.hpp"
 #include "Firefly/Image.hpp"
 
-#include <array>
-
 namespace Firefly
 {
 	/**
@@ -26,19 +24,7 @@ namespace Firefly
 	 * @param depth The depth value. Default is 1.0f.
 	 * @param stencil The stencil value. Default is 0.
 	 */
-	constexpr std::vector<VkClearValue> CreateClearValues(const float r = 0.0f, const float g = 0.0f, const float b = 0.0f, const float a = 1.0f, const float depth = 1.0f, const uint32_t stencil = 0)
-	{
-		std::vector<VkClearValue> vClearColors(2);
-		vClearColors[0].color.float32[0] = r;
-		vClearColors[0].color.float32[1] = g;
-		vClearColors[0].color.float32[2] = b;
-		vClearColors[0].color.float32[3] = a;
-
-		vClearColors[1].depthStencil.depth = depth;
-		vClearColors[1].depthStencil.stencil = stencil;
-
-		return vClearColors;
-	}
+	std::vector<VkClearValue> CreateClearValues(const float r = 0.0f, const float g = 0.0f, const float b = 0.0f, const float a = 1.0f, const float depth = 1.0f, const uint32_t stencil = 0);
 
 	/**
 	 * Render target object.

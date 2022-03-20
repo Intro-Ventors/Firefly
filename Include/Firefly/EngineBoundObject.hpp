@@ -52,7 +52,7 @@ namespace Firefly
 		void toggleTerminated() { bIsTerminated = true; }
 
 	private:
-		std::shared_ptr<Engine> m_pEngine = nullptr;
+		const std::shared_ptr<Engine> m_pEngine = nullptr;
 		bool bIsTerminated = false;
 	};
 }

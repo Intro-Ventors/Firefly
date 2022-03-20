@@ -28,13 +28,5 @@ namespace Firefly
 		 * @rerurn The created engine pointer.
 		 */
 		static std::shared_ptr<GraphicsEngine> create(const std::shared_ptr<Instance>& pInstance);
-
-	private:
-		/**
-		 * Get all the required features.
-		 *
-		 * @return The physical device features.
-		 */
-		VkPhysicalDeviceFeatures getFeatures() const;
 	};
 }
