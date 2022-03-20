@@ -1,3 +1,4 @@
+[Information] Volk initialized.
 [Information] Vulkan Validation Layer : GENERAL | Checking for Driver Manifest files in Registry at SOFTWARE\Khronos\Vulkan\ImplicitLayers
 [Information] Vulkan Validation Layer : GENERAL | windows_add_json_entry: Located json file "C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\nv-vk64.json" from PnP registry: E
 [Information] Vulkan Validation Layer : GENERAL | Located json file "E:\ToolKits\Nsight Graphics\target\windows-desktop-nomad-x64\VK_LAYER_NV_nomad_release_public_2020_3_1.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ImplicitLayers"
@@ -105,7 +106,7 @@
 [Information] Vulkan Validation Layer : GENERAL | Instance Extension: VK_EXT_direct_mode_display (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.1
 [Information] Vulkan Validation Layer : GENERAL | Instance Extension: VK_EXT_swapchain_colorspace (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.4
 [Information] Vulkan Validation Layer : GENERAL | Instance Extension: VK_NV_external_memory_capabilities (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.1
-[Information] Vulkan Validation Layer : VALIDATION | Validation Information: [ UNASSIGNED-khronos-validation-createinstance-status-message ] Object 0: handle = 0x1d5d6bf0dc0, type = VK_OBJECT_TYPE_INSTANCE; | MessageID = 0xd7fa5f44 | Khronos Validation Layer Active:
+[Information] Vulkan Validation Layer : VALIDATION | Validation Information: [ UNASSIGNED-khronos-validation-createinstance-status-message ] Object 0: handle = 0x1bcc7dd5c60, type = VK_OBJECT_TYPE_INSTANCE; | MessageID = 0xd7fa5f44 | Khronos Validation Layer Active:
     Settings File: None. Default location is E:\IIT Work\SDGP\Firefly\Test\vk_layer_settings.txt.
     Current Enables: None.
     Current Disables: None.
@@ -774,5 +775,11 @@
 [Information] Vulkan Validation Layer : GENERAL | Device Extension: VK_NVX_binary_import (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.1
 [Information] Vulkan Validation Layer : GENERAL | Device Extension: VK_NVX_image_view_handle (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.2
 [Information] Vulkan Validation Layer : GENERAL | Device Extension: VK_NVX_multiview_per_view_attributes (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.1
+[Information] Instance created.
+[Information] Volk instance loaded.
+[Information] Debug messenger created.
 [Information] Vulkan Validation Layer : GENERAL | While debugging through RenderDoc, debug output through validation layers is suppressed.
 To show debug output look at the 'DebugOutputMute' capture option in RenderDoc's API, but be aware of false positives from the validation layers.
+[Information] Physical device found.
+[Information] Created the transfer queue.
+[Information] Created the graphics queue.

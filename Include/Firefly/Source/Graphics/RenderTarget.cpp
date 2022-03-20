@@ -1,5 +1,7 @@
 #include "Firefly/Graphics/RenderTarget.hpp"
 
+#include <array>
+
 namespace Firefly
 {
 	std::vector<VkClearValue> CreateClearValues(const float r /*= 0.0f*/, const float g /*= 0.0f*/, const float b /*= 0.0f*/, const float a /*= 1.0f*/, const float depth /*= 1.0f*/, const uint32_t stencil /*= 0*/)

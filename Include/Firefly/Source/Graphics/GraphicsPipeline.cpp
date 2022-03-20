@@ -1,5 +1,7 @@
 #include "Firefly/Graphics/GraphicsPipeline.hpp"
 
+#include <array>
+
 namespace Firefly
 {
 	GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders, const std::shared_ptr<RenderTarget>& pRenderTarget, const GraphicsPipelineSpecification& specification)
