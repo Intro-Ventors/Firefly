@@ -11,7 +11,7 @@
 void logger(const Firefly::Utility::LogLevel level, const std::string_view& message)
 {
 	static std::ofstream outputFile("DebugOutput.txt");
-	outputFile  << "[" << Firefly::Utility::LogLevelToString(level) << "] " << message << std::endl;
+	outputFile << "[" << Firefly::Utility::LogLevelToString(level) << "] " << message << std::endl;
 }
 
 TestEngine::TestEngine()
@@ -20,7 +20,7 @@ TestEngine::TestEngine()
 
 	m_Instance = Firefly::Instance::create();
 	m_GraphicsEngine = Firefly::GraphicsEngine::create(m_Instance);
-	m_RenderTarget = Firefly::RenderTarget::create(m_GraphicsEngine, { 1280, 720, 1 }, VkFormat::VK_FORMAT_B8G8R8A8_SRGB, 1);
+	m_RenderTarget = Firefly::RenderTarget::create(m_GraphicsEngine, { 1280, 720, 1 }, VkFormat::VK_FORMAT_R8G8B8A8_SRGB, 1);
 	m_Surface = Firefly::Surface::create(m_Instance, 1280, 720, "Firefly");
 
 	m_VertexShader = Firefly::Shader::create(m_GraphicsEngine, "Shaders/shader.vert.spv", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
@@ -84,20 +84,16 @@ std::shared_ptr<Firefly::Image> TestEngine::draw()
 
 	const auto pCommandBuffer = m_RenderTarget->setupFrame(Firefly::CreateClearValues(Firefly::CreateColor256(0), Firefly::CreateColor256(0), Firefly::CreateColor256(0)));
 
-	// Left eye.
-	m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
-	m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
-	m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackageLeft.get(), m_FragmentResourcePackage.get() });
+	pCommandBuffer->bindVertexBuffer(m_VertexBuffer.get());
+	pCommandBuffer->bindIndexBuffer(m_IndexBuffer.get());
+	pCommandBuffer->bindGraphicsPipeline(m_Pipeline.get(), { m_VertexResourcePackageLeft.get(), m_FragmentResourcePackage.get() });
 
+	// Left eye. 
 	pCommandBuffer->bindScissor(scissor);
 	pCommandBuffer->bindViewport(viewport);
 	pCommandBuffer->drawIndices(m_IndexCount);
 
 	// Right eye.
-	m_VertexBuffer->bindAsVertexBuffer(pCommandBuffer);
-	m_IndexBuffer->bindAsIndexBuffer(pCommandBuffer);
-	m_Pipeline->bind(pCommandBuffer, { m_VertexResourcePackageRight.get(), m_FragmentResourcePackage.get() });
-
 	viewport.x = viewport.width;
 	pCommandBuffer->bindViewport(viewport);
 	pCommandBuffer->bindScissor(scissor);

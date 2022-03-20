@@ -26,9 +26,9 @@ namespace Firefly
 	 * @param depth The depth value. Default is 1.0f.
 	 * @param stencil The stencil value. Default is 0.
 	 */
-	constexpr std::array<VkClearValue, 2> CreateClearValues(const float r = 0.0f, const float g = 0.0f, const float b = 0.0f, const float a = 1.0f, const float depth = 1.0f, const uint32_t stencil = 0)
+	constexpr std::vector<VkClearValue> CreateClearValues(const float r = 0.0f, const float g = 0.0f, const float b = 0.0f, const float a = 1.0f, const float depth = 1.0f, const uint32_t stencil = 0)
 	{
-		std::array<VkClearValue, 2> vClearColors{};
+		std::vector<VkClearValue> vClearColors(2);
 		vClearColors[0].color.float32[0] = r;
 		vClearColors[0].color.float32[1] = g;
 		vClearColors[0].color.float32[2] = b;
@@ -68,21 +68,7 @@ namespace Firefly
 		 *
 		 * @return The command buffer pointer.
 		 */
-		CommandBuffer* setupFrame(const std::array<VkClearValue, 2>& vClearColors);
-
-		/**
-		 * Bind the render target to the command buffer.
-		 *
-		 * @param pCommandBuffer The command buffer pointer to bind to.
-		 */
-		void bind(const CommandBuffer* pCommandBuffer, const std::array<VkClearValue, 2>& vClearColors) const;
-
-		/**
-		 * Unbind the render target from the command buffer.
-		 *
-		 * @param pCommandBuffer The command buffer pointer to unbind from.
-		 */
-		void unbind(const CommandBuffer* pCommandBuffer) const;
+		CommandBuffer* setupFrame(const std::vector<VkClearValue>& vClearColors);
 
 		/**
 		 * Submit the frame to the GPU.
@@ -134,6 +120,13 @@ namespace Firefly
 		 * @return The frame buffers.
 		 */
 		std::vector<VkFramebuffer> getFrameBuffers() const { return m_vFrameBuffers; }
+
+		/**
+		 * Get the current frame buffer.
+		 *
+		 * @return The frame buffer in the current frame index.
+		 */
+		VkFramebuffer getCurrentFrameBuffer() const { return m_vFrameBuffers[getFrameIndex()]; }
 
 		/**
 		 * Get the render pass.

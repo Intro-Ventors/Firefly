@@ -105,7 +105,7 @@
 [Information] Vulkan Validation Layer : GENERAL | Instance Extension: VK_EXT_direct_mode_display (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.1
 [Information] Vulkan Validation Layer : GENERAL | Instance Extension: VK_EXT_swapchain_colorspace (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.4
 [Information] Vulkan Validation Layer : GENERAL | Instance Extension: VK_NV_external_memory_capabilities (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.1
-[Information] Vulkan Validation Layer : VALIDATION | Validation Information: [ UNASSIGNED-khronos-validation-createinstance-status-message ] Object 0: handle = 0x1c19eba84e0, type = VK_OBJECT_TYPE_INSTANCE; | MessageID = 0xd7fa5f44 | Khronos Validation Layer Active:
+[Information] Vulkan Validation Layer : VALIDATION | Validation Information: [ UNASSIGNED-khronos-validation-createinstance-status-message ] Object 0: handle = 0x1d5d6bf0dc0, type = VK_OBJECT_TYPE_INSTANCE; | MessageID = 0xd7fa5f44 | Khronos Validation Layer Active:
     Settings File: None. Default location is E:\IIT Work\SDGP\Firefly\Test\vk_layer_settings.txt.
     Current Enables: None.
     Current Disables: None.
@@ -776,6 +776,3 @@
 [Information] Vulkan Validation Layer : GENERAL | Device Extension: VK_NVX_multiview_per_view_attributes (C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll) version 0.0.1
 [Information] Vulkan Validation Layer : GENERAL | While debugging through RenderDoc, debug output through validation layers is suppressed.
 To show debug output look at the 'DebugOutputMute' capture option in RenderDoc's API, but be aware of false positives from the validation layers.
-[Information] Vulkan Validation Layer : GENERAL | Unloading layer library C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_d0b4efaea6f58e1f\.\nvoglv64.dll
-[Information] Vulkan Validation Layer : GENERAL | Unloading layer library C:\Program Files\RenderDoc\.\renderdoc.dll
-[Information] Vulkan Validation Layer : GENERAL | Unloading layer library E:\SDKs\Vulkan\1.3.204.0\Bin\.\VkLayer_khronos_validation.dll

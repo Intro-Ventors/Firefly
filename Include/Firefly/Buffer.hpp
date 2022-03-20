@@ -41,28 +41,22 @@ namespace Firefly
 		~Buffer() override;
 
 		/**
+		 * Create a new buffer.
+		 *
+		 * @param pEngine The engine pointer.
+		 * @param size The size of the buffer. Make sure that the buffer size is more than 0.
+		 * @param type The buffer type.
+		 * @return The created buffer.
+		 */
+		static std::shared_ptr<Buffer> create(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type);
+
+		/**
 		 * Copy data from another buffer.
 		 * This is needed because some buffer types does not allow mapping memory.
 		 *
 		 * @param pBuffer The buffer to copy data from.
 		 */
 		void fromBuffer(const Buffer* pBuffer) const;
-
-		/**
-		 * Bind the buffer to the command buffer as a vertex buffer.
-		 * This is only possible if the type is Vertex.
-		 *
-		 * @param pCommandBuffer The command buffer pointer.
-		 */
-		void bindAsVertexBuffer(const CommandBuffer* pCommandBuffer);
-
-		/**
-		 * Bind the buffer to the command buffer as a index buffer.
-		 * This is only possible if the type is Index.
-		 *
-		 * @param pCommandBuffer The command buffer pointer.
-		 */
-		void bindAsIndexBuffer(const CommandBuffer* pCommandBuffer, const VkIndexType indexType = VkIndexType::VK_INDEX_TYPE_UINT32);
 
 		/**
 		 * Terminate the buffer.
@@ -101,14 +95,11 @@ namespace Firefly
 		VkBuffer getBuffer() const { return m_vBuffer; }
 
 		/**
-		 * Create a new buffer.
-		 *
-		 * @param pEngine The engine pointer.
-		 * @param size The size of the buffer. Make sure that the buffer size is more than 0.
-		 * @param type The buffer type.
-		 * @return The created buffer.
+		 * Get the buffer type.
+		 * 
+		 * @return The type.
 		 */
-		static std::shared_ptr<Buffer> create(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type);
+		BufferType getType() const { return m_Type; }
 
 	private:
 		const uint64_t m_Size = 0;

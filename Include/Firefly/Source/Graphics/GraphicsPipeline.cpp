@@ -38,46 +38,6 @@ namespace Firefly
 		toggleTerminated();
 	}
 	
-	void GraphicsPipeline::bind(const CommandBuffer* pCommandBuffer, const std::vector<Package*>& pPackages)
-	{
-		int32_t firstSetIndex = -1;
-
-		// First, bind the packages.
-		std::vector<VkDescriptorSet> vDescriptorSets;
-		for (const auto pPackage : pPackages)
-		{
-			// We only need to include the non-nullptr packages.
-			if (pPackage)
-			{
-				vDescriptorSets.emplace_back(pPackage->getDescriptorSet());
-
-				if (firstSetIndex == -1)
-					firstSetIndex = pPackage->getSetIndex();
-			}
-		}
-
-		// Bind the descriptor sets if available.
-		if (vDescriptorSets.size())
-			getEngine()->getDeviceTable().vkCmdBindDescriptorSets(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS,
-				m_vPipelineLayout, firstSetIndex, static_cast<uint32_t>(vDescriptorSets.size()), vDescriptorSets.data(), 0, nullptr);
-
-		// Now we can bind the pipeline.
-		getEngine()->getDeviceTable().vkCmdBindPipeline(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, m_vPipeline);
-	}
-	
-	void GraphicsPipeline::bind(const CommandBuffer* pCommandBuffer, const Package* pPackage)
-	{
-		// First, bind the packages.
-		if (pPackage)
-		{
-			const auto vDescriptorSet = pPackage->getDescriptorSet();
-			getEngine()->getDeviceTable().vkCmdBindDescriptorSets(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, m_vPipelineLayout, pPackage->getSetIndex(), 1, &vDescriptorSet, 0, nullptr);
-		}
-
-		// Now we can bind the pipeline.
-		getEngine()->getDeviceTable().vkCmdBindPipeline(pCommandBuffer->getCommandBuffer(), VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, m_vPipeline);
-	}
-	
 	std::shared_ptr<Package> GraphicsPipeline::createPackage(const Shader* pShader)
 	{
 		// Check if the shader is within this pipeline.

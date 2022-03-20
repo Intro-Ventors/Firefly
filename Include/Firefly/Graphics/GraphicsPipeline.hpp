@@ -60,28 +60,26 @@ namespace Firefly
 		void terminate() override;
 
 		/**
-		 * Bind the pipeline to a command buffer.
-		 *
-		 * @param pCommandBuffer The command buffer pointer.
-		 * @param pPackages The resource packages to bind with it. Default is none.
-		 */
-		void bind(const CommandBuffer* pCommandBuffer, const std::vector<Package*>& pPackages = {});
-
-		/**
-		 * Bind the pipeline to a command buffer.
-		 *
-		 * @param pCommandBuffer The command buffer pointer.
-		 * @param pPackage The resource package to bind with it. Default is nullptr.
-		 */
-		void bind(const CommandBuffer* pCommandBuffer, const Package* pPackage = nullptr);
-
-		/**
 		 * Create a new package.
 		 *
 		 * @param pShader The shader to which the package is bound to.
 		 * @return The created package.
 		 */
 		std::shared_ptr<Package> createPackage(const Shader* pShader);
+
+		/**
+		 * Get the pipeline layout.
+		 *
+		 * @return The Vulkan pipeline layout.
+		 */
+		VkPipelineLayout getPipelineLayout() const { return m_vPipelineLayout; }
+
+		/**
+		 * Get the pipeline.
+		 *
+		 * @return The Vulkan pipeline.
+		 */
+		VkPipeline getPipeline() const { return m_vPipeline; }
 
 	private:
 		/**

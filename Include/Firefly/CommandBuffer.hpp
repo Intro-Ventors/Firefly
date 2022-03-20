@@ -4,6 +4,11 @@
 
 namespace Firefly
 {
+	class RenderTarget;
+	class GraphicsPipeline;
+	class Package;
+	class Buffer;
+
 	/**
 	 * Command buffer object.
 	 * Command buffers are used to submit commands to the GPU.
@@ -35,15 +40,68 @@ namespace Firefly
 		void begin();
 
 		/**
+		 * Bind an render target to the command buffer.
+		 *
+		 * @param pRenderTarget The render target to bind.
+		 * @param vClearColors The clear color values.
+		 */
+		void bindRenderTarget(const RenderTarget* pRenderTarget, const std::vector<VkClearValue>& vClearColors) const;
+
+		/**
+		 * Unbind a render target from the command buffer.
+		 */
+		void unbindRenderTarget() const;
+
+		/**
+		 * Bind a graphics pipeline to the command buffer.
+		 *
+		 * @param pPipeline The pipeline to bind.
+		 */
+		void bindGraphicsPipeline(const GraphicsPipeline* pPipeline) const;
+
+		/**
+		 * Bind a graphics pipeline to the command buffer.
+		 *
+		 * @param pPipeline The pipeline to bind.
+		 * @param pPackage The resource package to bind with it.
+		 */
+		void bindGraphicsPipeline(const GraphicsPipeline* pPipeline, const Package* pPackage) const;
+
+		/**
+		 * Bind a graphics pipeline to the command buffer.
+		 *
+		 * @param pPipeline The pipeline to bind.
+		 * @param pPackages The resource packages to bind with it.
+		 */
+		void bindGraphicsPipeline(const GraphicsPipeline* pPipeline, const std::vector<Package*>& pPackages) const;
+
+		/**
+		 * Bind a vertex buffer to the command buffer.
+		 * Make sure that the buffer type is vertex.
+		 *
+		 * @param pVertexBuffer The buffer to bind.
+		 */
+		void bindVertexBuffer(const Buffer* pVertexBuffer) const;
+
+		/**
+		 * Bind a index buffer to the command buffer.
+		 * Make sure that the buffer type is index.
+		 *
+		 * @param pIndexBuffer The buffer to bind.
+		 * @param indexType The index type to bind.
+		 */
+		void bindIndexBuffer(const Buffer* pIndexBuffer, const VkIndexType indexType = VkIndexType::VK_INDEX_TYPE_UINT32) const;
+
+		/**
 		 * Bind a viewport to the command buffer.
-		 * 
+		 *
 		 * @param viewport The viewport to bind.
 		 */
 		void bindViewport(const VkViewport viewport) const;
 
 		/**
 		 * Bind a scissor to the command buffer.
-		 * 
+		 *
 		 * @param scissor The scissor to bind.
 		 */
 		void bindScissor(const VkRect2D scissor) const;

@@ -31,40 +31,19 @@ namespace Firefly
 			terminate();
 	}
 	
-	CommandBuffer* RenderTarget::setupFrame(const std::array<VkClearValue, 2>& vClearColors)
+	CommandBuffer* RenderTarget::setupFrame(const std::vector<VkClearValue>& vClearColors)
 	{
 		const auto& pCommandBuffer = m_pCommandBuffers[getFrameIndex()];
 		pCommandBuffer->begin();
-		bind(pCommandBuffer.get(), vClearColors);
+		pCommandBuffer->bindRenderTarget(this, vClearColors);
 
 		return pCommandBuffer.get();
-	}
-	
-	void RenderTarget::bind(const CommandBuffer* pCommandBuffer, const std::array<VkClearValue, 2>& vClearColors) const
-	{
-		// Create the begin info structure.
-		VkRenderPassBeginInfo vBeginInfo = {};
-		vBeginInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		vBeginInfo.pNext = VK_NULL_HANDLE;
-		vBeginInfo.renderPass = m_vRenderPass;
-		vBeginInfo.framebuffer = m_vFrameBuffers[getFrameIndex()];
-		vBeginInfo.clearValueCount = 2;
-		vBeginInfo.pClearValues = vClearColors.data();
-		vBeginInfo.renderArea.extent.width = m_Extent.width;
-		vBeginInfo.renderArea.extent.height = m_Extent.height;
-
-		getEngine()->getDeviceTable().vkCmdBeginRenderPass(pCommandBuffer->getCommandBuffer(), &vBeginInfo, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
-	}
-	
-	void RenderTarget::unbind(const CommandBuffer* pCommandBuffer) const
-	{
-		getEngine()->getDeviceTable().vkCmdEndRenderPass(pCommandBuffer->getCommandBuffer());
 	}
 	
 	void RenderTarget::submitFrame(const bool shouldWait)
 	{
 		auto pCommandBuffer = m_pCommandBuffers[getFrameIndex()];
-		unbind(pCommandBuffer.get());
+		pCommandBuffer->unbindRenderTarget();
 
 		pCommandBuffer->submit(shouldWait);
 		incrementFrameIndex();

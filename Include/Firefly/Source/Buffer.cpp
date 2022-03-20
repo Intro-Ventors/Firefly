@@ -57,6 +57,11 @@ namespace Firefly
 		if (!isTerminated())
 			terminate();
 	}
+
+	std::shared_ptr<Buffer> Buffer::create(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type)
+	{
+		return std::make_shared<Buffer>(pEngine, size, type);
+	}
 	
 	void Buffer::fromBuffer(const Buffer* pBuffer) const
 	{
@@ -78,27 +83,6 @@ namespace Firefly
 		const auto vCommandBuffer = getEngine()->beginCommandBufferRecording();
 		getEngine()->getDeviceTable().vkCmdCopyBuffer(vCommandBuffer, pBuffer->getBuffer(), m_vBuffer, 1, &vCopy);
 		getEngine()->executeRecordedCommands();
-	}
-	
-	void Buffer::bindAsVertexBuffer(const CommandBuffer* pCommandBuffer)
-	{
-		// Validate the buffer type.
-		if (m_Type != BufferType::Vertex)
-			throw BackendError("Cannot bind the buffer as a Vertex buffer! The types does not match.");
-
-		// Now we can bind it.
-		std::array<VkDeviceSize, 1> offset = { 0 };
-		getEngine()->getDeviceTable().vkCmdBindVertexBuffers(pCommandBuffer->getCommandBuffer(), 0, 1, &m_vBuffer, offset.data());
-	}
-	
-	void Buffer::bindAsIndexBuffer(const CommandBuffer* pCommandBuffer, const VkIndexType indexType)
-	{
-		// Validate the buffer type.
-		if (m_Type != BufferType::Index)
-			throw BackendError("Cannot bind the buffer as a Index buffer! The types does not match.");
-
-		// Now we can bind it.
-		getEngine()->getDeviceTable().vkCmdBindIndexBuffer(pCommandBuffer->getCommandBuffer(), m_vBuffer, 0, indexType);
 	}
 	
 	void Buffer::terminate()
@@ -128,10 +112,5 @@ namespace Firefly
 			vmaUnmapMemory(getEngine()->getAllocator(), m_Allocation);
 			m_bIsMapped = false;
 		}
-	}
-	
-	std::shared_ptr<Buffer> Buffer::create(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type)
-	{
-		return std::make_shared<Buffer>(pEngine, size, type);
 	}
 }
