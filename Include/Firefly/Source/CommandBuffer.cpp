@@ -2,13 +2,27 @@
 #include "Firefly/Graphics/RenderTarget.hpp"
 #include "Firefly/Graphics/GraphicsPipeline.hpp"
 
+#include <array>
+
+#ifdef max
+#undef max
+
+#endif
+
 namespace Firefly
 {
 	CommandBuffer::CommandBuffer(const std::shared_ptr<Engine>& pEngine, const VkCommandPool vCommandPool, const VkCommandBuffer vCommandBuffer)
 		: EngineBoundObject(pEngine), m_vCommandPool(vCommandPool), m_vCommandBuffer(vCommandBuffer)
 	{
 		// Create the semaphores.
-		createSemaphores();
+		// Create the semaphore create info structure.
+		VkSemaphoreCreateInfo vCreateInfo = {};
+		vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		vCreateInfo.pNext = nullptr;
+		vCreateInfo.flags = 0;
+
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateSemaphore(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vInFlightSemaphore), "Failed to create the in flight semaphore!");
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateSemaphore(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vRenderFinishedSemaphore), "Failed to create the render finished semaphore!");
 	}
 
 	std::shared_ptr<CommandBuffer> CommandBuffer::create(const std::shared_ptr<Engine>& pEngine, const VkCommandPool vCommandPool, const VkCommandBuffer vCommandBuffer)
@@ -203,17 +217,5 @@ namespace Firefly
 		getEngine()->getDeviceTable().vkDestroySemaphore(getEngine()->getLogicalDevice(), m_vInFlightSemaphore, nullptr);
 		getEngine()->getDeviceTable().vkDestroySemaphore(getEngine()->getLogicalDevice(), m_vRenderFinishedSemaphore, nullptr);
 		toggleTerminated();
-	}
-
-	void CommandBuffer::createSemaphores()
-	{
-		// Create the semaphore create info structure.
-		VkSemaphoreCreateInfo vCreateInfo = {};
-		vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		vCreateInfo.pNext = nullptr;
-		vCreateInfo.flags = 0;
-
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateSemaphore(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vInFlightSemaphore), "Failed to create the in flight semaphore!");
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateSemaphore(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vRenderFinishedSemaphore), "Failed to create the render finished semaphore!");
 	}
 }

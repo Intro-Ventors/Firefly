@@ -1,12 +1,10 @@
 #include "Firefly/Instance.hpp"
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <sstream>
-#include <array>
 
-namespace Firefly
+namespace /* anonymous */
 {
 	/**
 	 * Vulkan debug callback.
@@ -18,7 +16,7 @@ namespace Firefly
 	 * @param pUseData The user data that was provided at the time of the error.
 	 * @return A boolean value.
 	 */
-	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+	VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 		VkDebugUtilsMessageTypeFlagsEXT messageType,
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -32,42 +30,54 @@ namespace Firefly
 		else if (messageType & VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
 			myMessagePreStatement += "PERFORMANCE | ";
 
-		Utility::LogLevel level = Utility::LogLevel::Information;
+		Firefly::Utility::LogLevel level = Firefly::Utility::LogLevel::Information;
 		switch (messageSeverity)
 		{
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-			level = Utility::LogLevel::Warning;
+			level = Firefly::Utility::LogLevel::Warning;
 			break;
+
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-			level = Utility::LogLevel::Error;
+			level = Firefly::Utility::LogLevel::Error;
+			break;
+
+		default: 
 			break;
 		}
 
 		std::stringstream messageStream;
 		messageStream << "Vulkan Validation Layer " << myMessagePreStatement << pCallbackData->pMessage;
-		Utility::Logger::log(level, messageStream.str());
+		Firefly::Utility::Logger::log(level, messageStream.str());
 
 		return VK_FALSE;
 	}
 
-	Instance::Instance(bool enableValidation)
-		: m_bEnableValidation(enableValidation)
+	VkDebugUtilsMessengerCreateInfoEXT CreateDebugMessengerCreateInfo()
 	{
-		// Initialize volk.
-		FIREFLY_VALIDATE(volkInitialize(), "Failed to initialize volk!");
-		FIREFLY_LOG_INFO("Volk initialized.");
+		VkDebugUtilsMessengerCreateInfoEXT vCreateInfo = {};
+		vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+		vCreateInfo.pNext = VK_NULL_HANDLE;
+		vCreateInfo.pUserData = VK_NULL_HANDLE;
+		vCreateInfo.flags = 0;
+		vCreateInfo.pfnUserCallback = DebugCallback;
 
-		// Get the instance API version from the driver.
-		m_VulkanVersion = volkGetInstanceVersion();
+		vCreateInfo.messageSeverity
+			= VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 
-		// Create the instance.
-		createInstance();
+		vCreateInfo.messageType
+			= VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+			| VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+			| VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
-		// Create the debug utils messenger if validation is enabled.
-		if (m_bEnableValidation)
-			createDebugger();
+		return vCreateInfo;
 	}
+}
 
+namespace Firefly
+{
 	Instance::Instance(const uint32_t vulkanAPIVersion, bool enableValidation)
 		: m_VulkanVersion(vulkanAPIVersion), m_bEnableValidation(enableValidation)
 	{
@@ -75,40 +85,10 @@ namespace Firefly
 		FIREFLY_VALIDATE(volkInitialize(), "Failed to initialize volk!");
 		FIREFLY_LOG_INFO("Volk initialized.");
 
+		if (m_VulkanVersion == 0)
+			m_VulkanVersion = volkGetInstanceVersion();
+
 		// Create the instance.
-		createInstance();
-
-		// Create the debug utils messenger if validation is enabled.
-		if (m_bEnableValidation)
-			createDebugger();
-	}
-
-	Instance::~Instance()
-	{
-		// Destroy the debug utils messenger if created.
-		if (m_bEnableValidation)
-		{
-			// Get the destroyer from the shared library.
-			const auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkDestroyDebugUtilsMessengerEXT"));
-			vkDestroyDebugUtilsMessengerEXT(m_vInstance, m_vDebugUtilsMessenger, nullptr);
-		}
-
-		// Destroy the Vulkan instance.
-		vkDestroyInstance(m_vInstance, nullptr);
-	}
-
-	std::shared_ptr<Instance> Instance::create(bool enableValidation)
-	{
-		return std::make_shared<Instance>(enableValidation);
-	}
-
-	std::shared_ptr<Instance> Instance::create(const uint32_t vulkanAPIVersion, bool enableValidation)
-	{
-		return std::make_shared<Instance>(vulkanAPIVersion, enableValidation);
-	}
-
-	void Instance::createInstance()
-	{
 		// Setup the application info structure.
 		VkApplicationInfo vApplicationInfo = {};
 		vApplicationInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -145,7 +125,7 @@ namespace Firefly
 			m_ValidationLayers.emplace_back("VK_LAYER_KHRONOS_validation");
 
 			// Create the debug messenger.
-			vDebugCreateInfo = createDebugMessengerCreateInfo();
+			vDebugCreateInfo = CreateDebugMessengerCreateInfo();
 
 			vCreateInfo.pNext = &vDebugCreateInfo;
 			vCreateInfo.enabledExtensionCount = sizeof(extensions) / 8;
@@ -166,36 +146,32 @@ namespace Firefly
 		// Load the instance.
 		volkLoadInstance(m_vInstance);
 		FIREFLY_LOG_INFO("Volk instance loaded.");
+
+		// Create the debug utils messenger if validation is enabled.
+		if (m_bEnableValidation)
+		{
+			const auto vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkCreateDebugUtilsMessengerEXT"));
+			FIREFLY_VALIDATE(vkCreateDebugUtilsMessengerEXT(m_vInstance, &vDebugCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
+			FIREFLY_LOG_INFO("Debug messenger created.");
+		}
 	}
 
-	void Instance::createDebugger()
+	Instance::~Instance()
 	{
-		const auto vCreateInfo = createDebugMessengerCreateInfo();
-		const auto vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkCreateDebugUtilsMessengerEXT"));
-		FIREFLY_VALIDATE(vkCreateDebugUtilsMessengerEXT(m_vInstance, &vCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
-		FIREFLY_LOG_INFO("Debug messenger created.");
+		// Destroy the debug utils messenger if created.
+		if (m_bEnableValidation)
+		{
+			// Get the destroyer from the shared library.
+			const auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkDestroyDebugUtilsMessengerEXT"));
+			vkDestroyDebugUtilsMessengerEXT(m_vInstance, m_vDebugUtilsMessenger, nullptr);
+		}
+
+		// Destroy the Vulkan instance.
+		vkDestroyInstance(m_vInstance, nullptr);
 	}
 
-	VkDebugUtilsMessengerCreateInfoEXT Instance::createDebugMessengerCreateInfo() const
+	std::shared_ptr<Instance> Instance::create(const uint32_t vulkanAPIVersion, bool enableValidation)
 	{
-		VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
-		createInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		createInfo.pNext = VK_NULL_HANDLE;
-		createInfo.pUserData = VK_NULL_HANDLE;
-		createInfo.flags = 0;
-		createInfo.pfnUserCallback = DebugCallback;
-
-		createInfo.messageSeverity
-			= VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-			| VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-
-		createInfo.messageType
-			= VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-			| VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-			| VkDebugUtilsMessageTypeFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-
-		return createInfo;
+		return std::make_shared<Instance>(vulkanAPIVersion, enableValidation);
 	}
 }

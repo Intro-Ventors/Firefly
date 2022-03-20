@@ -37,10 +37,10 @@ namespace Firefly
 	 */
 	class Shader final : public EngineBoundObject
 	{
+	public:
 		using ShaderCode = std::vector<uint32_t>;
 		using LayoutBindings = std::vector<VkDescriptorSetLayoutBinding>;
 
-	public:
 		/**
 		 * Constructor.
 		 *
@@ -157,59 +157,6 @@ namespace Firefly
 		 * @return The push constants.
 		 */
 		std::vector<VkPushConstantRange> getPushConstants() const { return m_PushConstants; }
-
-	private:
-		/**
-		 * Load the shader code.
-		 *
-		 * @param file The file path to load the shader from.
-		 * @return The shader code.
-		 */
-		ShaderCode loadCode(const std::filesystem::path& file) const;
-
-		/**
-		 * Create the shader module.
-		 *
-		 * @param code The shader code.
-		 */
-		void createShaderModule(const ShaderCode& code);
-
-		/**
-		 * Perform reflection on the shader code.
-		 *
-		 * @retrun The layout bindings.
-		 */
-		LayoutBindings performReflection(const ShaderCode& code);
-
-		/**
-		 * Resolve shader code padding.
-		 *
-		 * @param code The shader code to resolve padding for.
-		 * @return The padding resolved code.
-		 */
-		ShaderCode resolvePadding(const ShaderCode& code) const;
-
-		/**
-		 * Validate reflection.
-		 * This will check if reflection was successful.
-		 *
-		 * @param result The reflection result.
-		 */
-		void validateReflection(SpvReflectResult result) const;
-
-		/**
-		 * Get the descriptor type from the reflection descriptor type.
-		 *
-		 * @return The Vulkan descriptor type.
-		 */
-		VkDescriptorType getVkDescriptorType(const SpvReflectDescriptorType type) const;
-
-		/**
-		 * Create the descriptor set layout binding.
-		 *
-		 * @param binding The descriptor set layout binding.
-		 */
-		void createDescriptorSetLayout(const LayoutBindings& bindings);
 
 	private:
 		std::unordered_map<std::string, ShaderBinding> m_Bindings;

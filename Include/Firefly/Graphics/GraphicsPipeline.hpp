@@ -83,32 +83,6 @@ namespace Firefly
 
 	private:
 		/**
-		 * Create the pipeline layout.
-		 */
-		void createPipelineLayout();
-
-		/**
-		 * Get the shader stage flag bits from a shader.
-		 *
-		 * @param pShader the shader pointer.
-		 * @return The shader stage flag bits.
-		 */
-		VkShaderStageFlagBits getStageFlagBits(const Shader* pShader) const;
-
-		/**
-		 * Get the Vulkan format from the input size.
-		 *
-		 * @param size The size of the data type.
-		 * @return The Vulkan format.
-		 */
-		VkFormat getFormatFromSize(const uint32_t size) const;
-
-		/**
-		 * Create the pipeline.
-		 */
-		void createPipeline();
-
-		/**
 		 * Check if a shader exists in the pipeline.
 		 *
 		 * @param pShader The shader to check.

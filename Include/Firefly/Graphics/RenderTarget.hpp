@@ -135,27 +135,6 @@ namespace Firefly
 		 */
 		uint8_t getFrameIndex() const { return m_FrameIndex; }
 
-	private:
-		/**
-		 * Create the render pass.
-		 */
-		void createRenderPass();
-
-		/**
-		 * Create the frame buffers.
-		 */
-		void createFrameBuffers();
-
-		/**
-		 * Create the command pool.
-		 */
-		void createCommandPool();
-
-		/**
-		 * Allocate command buffers.
-		 */
-		void allocateCommandBuffers();
-
 		/**
 		 * Increment the frame index.
 		 */

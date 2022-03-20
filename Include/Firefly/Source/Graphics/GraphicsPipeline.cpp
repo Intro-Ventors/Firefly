@@ -2,132 +2,9 @@
 
 #include <array>
 
-namespace Firefly
+namespace /* anonymous */
 {
-	GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders, const std::shared_ptr<RenderTarget>& pRenderTarget, const GraphicsPipelineSpecification& specification)
-		: EngineBoundObject(pEngine), m_Name(pipelineName), m_pShaders(pShaders), m_pRenderTarget(pRenderTarget), m_Specification(specification)
-	{
-		// Create the pipeline layout.
-		createPipelineLayout();
-
-		// Create the pipeline.
-		createPipeline();
-	}
-	
-	GraphicsPipeline::~GraphicsPipeline()
-	{
-		if (!isTerminated())
-			terminate();
-	}
-	
-	std::shared_ptr<GraphicsPipeline> GraphicsPipeline::create(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders, const std::shared_ptr<RenderTarget>& pRenderTarget, const GraphicsPipelineSpecification& specification)
-	{
-		return std::make_shared<GraphicsPipeline>(pEngine, pipelineName, pShaders, pRenderTarget, specification);
-	}
-	
-	void GraphicsPipeline::terminate()
-	{
-		// Destroy the descriptor pool if available. 
-		if (m_vDescriptorPool != VK_NULL_HANDLE)
-		{
-			// Make sure to kill it's kids before killing him ;)
-			m_pPackages.clear();
-			getEngine()->getDeviceTable().vkDestroyDescriptorPool(getEngine()->getLogicalDevice(), m_vDescriptorPool, nullptr);
-		}
-
-		getEngine()->getDeviceTable().vkDestroyPipelineLayout(getEngine()->getLogicalDevice(), m_vPipelineLayout, nullptr);
-		getEngine()->getDeviceTable().vkDestroyPipeline(getEngine()->getLogicalDevice(), m_vPipeline, nullptr);
-		toggleTerminated();
-	}
-	
-	std::shared_ptr<Package> GraphicsPipeline::createPackage(const Shader* pShader)
-	{
-		// Check if the shader is within this pipeline.
-		const int32_t shaderIndex = getShaderIndex(pShader);
-		if (shaderIndex == -1)
-			throw BackendError("The provided shader does not exist within the pipeline!");
-
-		// If we don't have bindings to create packages to, lets return a nullptr.
-		if (m_DescriptorPoolSizes.empty())
-			return nullptr;
-
-		// Setup pool create info.
-		VkDescriptorPoolCreateInfo vCreateInfo = {};
-		vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		vCreateInfo.flags = 0;
-		vCreateInfo.pNext = nullptr;
-		vCreateInfo.maxSets = static_cast<uint32_t>(m_pPackages.size()) + 1;
-		vCreateInfo.poolSizeCount = static_cast<uint32_t>(m_DescriptorPoolSizes.size());
-		vCreateInfo.pPoolSizes = m_DescriptorPoolSizes.data();
-
-		const auto vOldDescriptorPool = m_vDescriptorPool;
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateDescriptorPool(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vDescriptorPool), "Failed to create the descriptor pool!");
-
-		// Allocate the descriptor sets.
-		VkDescriptorSetAllocateInfo vAllocateInfo = {};
-		vAllocateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		vAllocateInfo.pNext = nullptr;
-		vAllocateInfo.descriptorSetCount = 1;
-		vAllocateInfo.descriptorPool = m_vDescriptorPool;
-
-		// Allocate new descriptor sets and swap the old ones with them.
-		for (const auto& pPackage : m_pPackages)
-		{
-			const auto layout = pPackage->getDescriptorSetLayout();
-			vAllocateInfo.pSetLayouts = &layout;
-
-			// Allocate a new descriptor set.
-			VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
-			FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
-
-			// Swap the descriptors.
-			pPackage->swapDescriptors(m_vDescriptorPool, vDescriptorSet);
-		}
-
-		const auto layout = pShader->getDescriptorSetLayout();
-		vAllocateInfo.pSetLayouts = &layout;
-
-		// Allocate a new descriptor set.
-		VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
-
-		// Create the new package.
-		auto pNewPackage = Package::create(std::static_pointer_cast<GraphicsEngine>(getEngine()), layout, m_vDescriptorPool, vDescriptorSet, shaderIndex);
-		m_pPackages.emplace_back(pNewPackage);
-
-		getEngine()->getDeviceTable().vkDestroyDescriptorPool(getEngine()->getLogicalDevice(), vOldDescriptorPool, nullptr);
-		return pNewPackage;
-	}
-	
-	void GraphicsPipeline::createPipelineLayout()
-	{
-		// Get the descriptor set layouts.
-		std::vector<VkDescriptorSetLayout> vDescriptorSetLayouts;
-		std::vector<VkPushConstantRange> vPushConstants;
-		vDescriptorSetLayouts.reserve(m_pShaders.size());
-
-		for (const auto& pShader : m_pShaders)
-		{
-			vDescriptorSetLayouts.emplace_back(pShader->getDescriptorSetLayout());
-
-			const auto& pushConstants = pShader->getPushConstants();
-			vPushConstants.insert(vPushConstants.end(), pushConstants.begin(), pushConstants.end());
-		}
-
-		// Create the pipeline layout.
-		VkPipelineLayoutCreateInfo vCreateInfo = {};
-		vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		vCreateInfo.flags = 0;
-		vCreateInfo.pNext = nullptr;
-		vCreateInfo.setLayoutCount = static_cast<uint32_t>(m_pShaders.size());
-		vCreateInfo.pSetLayouts = vDescriptorSetLayouts.data();
-		vCreateInfo.pushConstantRangeCount = static_cast<uint32_t>(vPushConstants.size());
-		vCreateInfo.pPushConstantRanges = vPushConstants.data();
-
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreatePipelineLayout(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vPipelineLayout), "Failed to create the pipeline layout!");
-	}
-	
-	VkShaderStageFlagBits GraphicsPipeline::getStageFlagBits(const Shader* pShader) const
+	VkShaderStageFlagBits GetStageFlagBits(const Firefly::Shader* pShader)
 	{
 		const auto flags = pShader->getFlags();
 
@@ -146,10 +23,10 @@ namespace Firefly
 		if (flags & VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT)
 			return VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		throw BackendError("Unsupported shader type!");
+		throw Firefly::BackendError("Unsupported shader type!");
 	}
-	
-	VkFormat GraphicsPipeline::getFormatFromSize(const uint32_t size) const
+
+	VkFormat GetFormatFromSize(const uint32_t size)
 	{
 		switch (size)
 		{
@@ -166,14 +43,45 @@ namespace Firefly
 			return VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT;
 
 		default:
-			throw BackendError("Invalid or unsupported shader attribute type!");
+			throw Firefly::BackendError("Invalid or unsupported shader attribute type!");
 		}
 
 		return VkFormat::VK_FORMAT_UNDEFINED;
 	}
-	
-	void GraphicsPipeline::createPipeline()
+}
+
+namespace Firefly
+{
+	GraphicsPipeline::GraphicsPipeline(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders, const std::shared_ptr<RenderTarget>& pRenderTarget, const GraphicsPipelineSpecification& specification)
+		: EngineBoundObject(pEngine), m_Name(pipelineName), m_pShaders(pShaders), m_pRenderTarget(pRenderTarget), m_Specification(specification)
 	{
+		// Create the pipeline layout.
+		// Get the descriptor set layouts.
+		std::vector<VkDescriptorSetLayout> vDescriptorSetLayouts;
+		std::vector<VkPushConstantRange> vPushConstants;
+		vDescriptorSetLayouts.reserve(m_pShaders.size());
+
+		for (const auto& pShader : m_pShaders)
+		{
+			vDescriptorSetLayouts.emplace_back(pShader->getDescriptorSetLayout());
+
+			const auto& pushConstants = pShader->getPushConstants();
+			vPushConstants.insert(vPushConstants.end(), pushConstants.begin(), pushConstants.end());
+		}
+
+		// Create the pipeline layout.
+		VkPipelineLayoutCreateInfo vPipelineLayoutCreateInfo = {};
+		vPipelineLayoutCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		vPipelineLayoutCreateInfo.flags = 0;
+		vPipelineLayoutCreateInfo.pNext = nullptr;
+		vPipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(m_pShaders.size());
+		vPipelineLayoutCreateInfo.pSetLayouts = vDescriptorSetLayouts.data();
+		vPipelineLayoutCreateInfo.pushConstantRangeCount = static_cast<uint32_t>(vPushConstants.size());
+		vPipelineLayoutCreateInfo.pPushConstantRanges = vPushConstants.data();
+
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreatePipelineLayout(getEngine()->getLogicalDevice(), &vPipelineLayoutCreateInfo, nullptr, &m_vPipelineLayout), "Failed to create the pipeline layout!");
+
+		// Create the pipeline.
 		// Resolve shader info.
 		std::vector<VkPipelineShaderStageCreateInfo> vShaderStageCreateInfos;
 		vShaderStageCreateInfos.reserve(m_pShaders.size());
@@ -192,7 +100,7 @@ namespace Firefly
 		for (const auto& pShader : m_pShaders)
 		{
 			vShaderStageCreateInfo.module = pShader->getShaderModule();
-			vShaderStageCreateInfo.stage = getStageFlagBits(pShader.get());
+			vShaderStageCreateInfo.stage = GetStageFlagBits(pShader.get());
 
 			vShaderStageCreateInfos.emplace_back(vShaderStageCreateInfo);
 
@@ -210,7 +118,7 @@ namespace Firefly
 				for (const auto& attribute : inputs)
 				{
 					vAttributeDescription.location = attribute.m_Location;
-					vAttributeDescription.format = getFormatFromSize(attribute.m_Size);
+					vAttributeDescription.format = GetFormatFromSize(attribute.m_Size);
 
 					vAttributeDescriptions.emplace_back(vAttributeDescription);
 					vAttributeDescription.offset += attribute.m_Size;
@@ -382,7 +290,92 @@ namespace Firefly
 
 		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateGraphicsPipelines(getEngine()->getLogicalDevice(), m_vPipelineCache, 1, &vCreateInfo, nullptr, &m_vPipeline), "Failed to create the graphics pipeline!");
 	}
-	
+
+	GraphicsPipeline::~GraphicsPipeline()
+	{
+		if (!isTerminated())
+			terminate();
+	}
+
+	std::shared_ptr<GraphicsPipeline> GraphicsPipeline::create(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders, const std::shared_ptr<RenderTarget>& pRenderTarget, const GraphicsPipelineSpecification& specification)
+	{
+		return std::make_shared<GraphicsPipeline>(pEngine, pipelineName, pShaders, pRenderTarget, specification);
+	}
+
+	void GraphicsPipeline::terminate()
+	{
+		// Destroy the descriptor pool if available. 
+		if (m_vDescriptorPool != VK_NULL_HANDLE)
+		{
+			// Make sure to kill it's kids before killing him ;)
+			m_pPackages.clear();
+			getEngine()->getDeviceTable().vkDestroyDescriptorPool(getEngine()->getLogicalDevice(), m_vDescriptorPool, nullptr);
+		}
+
+		getEngine()->getDeviceTable().vkDestroyPipelineLayout(getEngine()->getLogicalDevice(), m_vPipelineLayout, nullptr);
+		getEngine()->getDeviceTable().vkDestroyPipeline(getEngine()->getLogicalDevice(), m_vPipeline, nullptr);
+		toggleTerminated();
+	}
+
+	std::shared_ptr<Package> GraphicsPipeline::createPackage(const Shader* pShader)
+	{
+		// Check if the shader is within this pipeline.
+		const int32_t shaderIndex = getShaderIndex(pShader);
+		if (shaderIndex == -1)
+			throw BackendError("The provided shader does not exist within the pipeline!");
+
+		// If we don't have bindings to create packages to, lets return a nullptr.
+		if (m_DescriptorPoolSizes.empty())
+			return nullptr;
+
+		// Setup pool create info.
+		VkDescriptorPoolCreateInfo vCreateInfo = {};
+		vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		vCreateInfo.flags = 0;
+		vCreateInfo.pNext = nullptr;
+		vCreateInfo.maxSets = static_cast<uint32_t>(m_pPackages.size()) + 1;
+		vCreateInfo.poolSizeCount = static_cast<uint32_t>(m_DescriptorPoolSizes.size());
+		vCreateInfo.pPoolSizes = m_DescriptorPoolSizes.data();
+
+		const auto vOldDescriptorPool = m_vDescriptorPool;
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateDescriptorPool(getEngine()->getLogicalDevice(), &vCreateInfo, nullptr, &m_vDescriptorPool), "Failed to create the descriptor pool!");
+
+		// Allocate the descriptor sets.
+		VkDescriptorSetAllocateInfo vAllocateInfo = {};
+		vAllocateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		vAllocateInfo.pNext = nullptr;
+		vAllocateInfo.descriptorSetCount = 1;
+		vAllocateInfo.descriptorPool = m_vDescriptorPool;
+
+		// Allocate new descriptor sets and swap the old ones with them.
+		for (const auto& pPackage : m_pPackages)
+		{
+			const auto layout = pPackage->getDescriptorSetLayout();
+			vAllocateInfo.pSetLayouts = &layout;
+
+			// Allocate a new descriptor set.
+			VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
+			FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
+
+			// Swap the descriptors.
+			pPackage->swapDescriptors(m_vDescriptorPool, vDescriptorSet);
+		}
+
+		const auto layout = pShader->getDescriptorSetLayout();
+		vAllocateInfo.pSetLayouts = &layout;
+
+		// Allocate a new descriptor set.
+		VkDescriptorSet vDescriptorSet = VK_NULL_HANDLE;
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkAllocateDescriptorSets(getEngine()->getLogicalDevice(), &vAllocateInfo, &vDescriptorSet), "Failed to allocate descriptor set!");
+
+		// Create the new package.
+		auto pNewPackage = Package::create(std::static_pointer_cast<GraphicsEngine>(getEngine()), layout, m_vDescriptorPool, vDescriptorSet, shaderIndex);
+		m_pPackages.emplace_back(pNewPackage);
+
+		getEngine()->getDeviceTable().vkDestroyDescriptorPool(getEngine()->getLogicalDevice(), vOldDescriptorPool, nullptr);
+		return pNewPackage;
+	}
+
 	int32_t GraphicsPipeline::getShaderIndex(const Shader* pShader) const
 	{
 		// Iterate and see if the shader exists in the pipeline.

@@ -144,29 +144,6 @@ namespace Firefly
 
 	private:
 		/**
-		 * Create the image.
-		 */
-		void createImage();
-
-		/**
-		 * Create the image view.
-		 */
-		void createImageView();
-
-		/**
-		 * Create image sampler.
-		 */
-		void createSampler();
-
-		/**
-		 * Get the pipeline stage masks.
-		 *
-		 * @param flags The access flags.
-		 * @retrurn The pipeline stage flags.
-		 */
-		VkPipelineStageFlags getPipelineStageFlags(VkAccessFlags flags) const;
-
-		/**
 		 * Check if our format has a stencil component.
 		 *
 		 * @return Boolean stating if we do or not.

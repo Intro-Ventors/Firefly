@@ -11,18 +11,11 @@ namespace Firefly
 	 * Firefly Instance.
 	 * This object contains the main instance of the graphics and codec engines.
 	 */
-	class Instance final : public std::enable_shared_from_this<Instance>
+	class Instance final
 	{
 	public:
 		FIREFLY_NO_COPY(Instance);
 		FIREFLY_DEFAULT_MOVE(Instance);
-
-		/**
-		 * Constructor.
-		 *
-		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds. Default is true.
-		 */
-		explicit Instance(bool enableValidation = true);
 
 		/**
 		 * Constructor.
@@ -40,19 +33,11 @@ namespace Firefly
 		/**
 		 * Create a new instance.
 		 *
+		 * @param vulkanAPIVersion The Vulkan API version to use. Default is 0.
 		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds. Default is true.
 		 * @return The created instance object pointer.
 		 */
-		static std::shared_ptr<Instance> create(bool enableValidation = true);
-
-		/**
-		 * Create a new instance.
-		 *
-		 * @param vulkanAPIVersion The Vulkan API version to use. Default is VK_API_VERSION_1_3.
-		 * @param enableValidation Whether or not to enable validation. This can slow down the process so it is best advised not to enable this unless on debug builds. Default is true.
-		 * @return The created instance object pointer.
-		 */
-		static std::shared_ptr<Instance> create(const uint32_t vulkanAPIVersion, bool enableValidation = true);
+		static std::shared_ptr<Instance> create(const uint32_t vulkanAPIVersion = 0, bool enableValidation = true);
 
 		/**
 		 * Check if validation is enabled.
@@ -88,25 +73,6 @@ namespace Firefly
 		 * @return The validation layers.
 		 */
 		std::vector<const char*> getValidationLayers() const { return m_ValidationLayers; }
-
-	private:
-		/**
-		 * Create the Vulkan instance.
-		 */
-		void createInstance();
-
-		/**
-		 * Create the Vulkan debugger.
-		 */
-		void createDebugger();
-
-		/**
-		 * Create debug messenger structure.
-		 * This utility function will generate the VkDebugUtilsMessengerCreateInfoEXT structure.
-		 *
-		 * @retrurn The created structure.
-		 */
-		VkDebugUtilsMessengerCreateInfoEXT createDebugMessengerCreateInfo() const;
 
 	private:
 		std::vector<const char*> m_ValidationLayers;

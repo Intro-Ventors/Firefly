@@ -251,10 +251,67 @@ namespace Firefly
 			m_FullScreenMode = true;
 
 		// Setup glfw.
-		setupGLFW();
+		// Initialize glfw.
+		glfwInit();
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwSetErrorCallback(GLFWErrorCallback);
+
+		const auto pMonitor = glfwGetPrimaryMonitor();
+		const auto pMode = glfwGetVideoMode(pMonitor);
+
+		// If we need the screen in full screen, lets do so.
+		if (m_FullScreenMode)
+		{
+			glfwWindowHint(GLFW_RED_BITS, pMode->redBits);
+			glfwWindowHint(GLFW_GREEN_BITS, pMode->greenBits);
+			glfwWindowHint(GLFW_BLUE_BITS, pMode->blueBits);
+			glfwWindowHint(GLFW_REFRESH_RATE, pMode->refreshRate);
+
+			// Create the pWindow.
+			m_pWindow = glfwCreateWindow(pMode->width, pMode->height, m_Title.c_str(), pMonitor, nullptr);
+			m_Width = pMode->width;
+			m_Height = pMode->height;
+		}
+		else
+		{
+			// If the width or height is more than the supported, lets default to it.
+			if (m_Width > static_cast<uint32_t>(pMode->width) || m_Height > static_cast<uint32_t>(pMode->height))
+			{
+				// Create the pWindow.
+				m_pWindow = glfwCreateWindow(1280, 720, m_Title.c_str(), nullptr, nullptr);
+				glfwMaximizeWindow(m_pWindow);
+
+				// Get the new size and assign it to the variables.
+				int32_t width = 0, height = 0;
+				glfwGetWindowSize(m_pWindow, &width, &height);
+
+				m_Width = width;
+				m_Height = height;
+			}
+			else
+			{
+				// Else no worries, we can normally create the pWindow.
+				m_pWindow = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
+			}
+		}
+
+		// Validate the pWindow creation.
+		if (!m_pWindow)
+			throw BackendError("Failed to create display!");
+
+		// Setup the callbacks.
+		glfwSetWindowUserPointer(m_pWindow, this);
+		glfwSetKeyCallback(m_pWindow, KeyCallback);
+		glfwSetCursorPosCallback(m_pWindow, CursorPositionCallback);
+		glfwSetMouseButtonCallback(m_pWindow, MouseButtonCallback);
+		glfwSetScrollCallback(m_pWindow, MouseScrollCallback);
+		glfwSetCursorEnterCallback(m_pWindow, MouseCursorEnterCallback);
+		glfwSetDropCallback(m_pWindow, ApplicationDropPathCallback);
+		glfwSetWindowCloseCallback(m_pWindow, WindowCloseCallback);
+		glfwSetWindowSizeCallback(m_pWindow, ApplicationResizeCallback);
 
 		// Create the surface.
-		createSurface();
+		FIREFLY_VALIDATE(glfwCreateWindowSurface(getInstance()->getInstance(), m_pWindow, nullptr, &m_vSurface), "Failed to create the Vulkan surface!");
 	}
 
 	Surface::~Surface()
@@ -323,72 +380,5 @@ namespace Firefly
 	void Surface::registerMouseInput(const uint32_t button, const uint32_t action, const uint32_t mod)
 	{
 		m_MouseInputs.emplace_back(GetMouseInput(button, action, mod));
-	}
-
-	void Surface::setupGLFW()
-	{
-		// Initialize glfw.
-		glfwInit();
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwSetErrorCallback(GLFWErrorCallback);
-
-		const auto pMonitor = glfwGetPrimaryMonitor();
-		const auto pMode = glfwGetVideoMode(pMonitor);
-
-		// If we need the screen in full screen, lets do so.
-		if (m_FullScreenMode)
-		{
-			glfwWindowHint(GLFW_RED_BITS, pMode->redBits);
-			glfwWindowHint(GLFW_GREEN_BITS, pMode->greenBits);
-			glfwWindowHint(GLFW_BLUE_BITS, pMode->blueBits);
-			glfwWindowHint(GLFW_REFRESH_RATE, pMode->refreshRate);
-
-			// Create the pWindow.
-			m_pWindow = glfwCreateWindow(pMode->width, pMode->height, m_Title.c_str(), pMonitor, nullptr);
-			m_Width = pMode->width;
-			m_Height = pMode->height;
-		}
-		else
-		{
-			// If the width or height is more than the supported, lets default to it.
-			if (m_Width > static_cast<uint32_t>(pMode->width) || m_Height > static_cast<uint32_t>(pMode->height))
-			{
-				// Create the pWindow.
-				m_pWindow = glfwCreateWindow(1280, 720, m_Title.c_str(), nullptr, nullptr);
-				glfwMaximizeWindow(m_pWindow);
-
-				// Get the new size and assign it to the variables.
-				int32_t width = 0, height = 0;
-				glfwGetWindowSize(m_pWindow, &width, &height);
-
-				m_Width = width;
-				m_Height = height;
-			}
-			else
-			{
-				// Else no worries, we can normally create the pWindow.
-				m_pWindow = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
-			}
-		}
-
-		// Validate the pWindow creation.
-		if (!m_pWindow)
-			throw BackendError("Failed to create display!");
-
-		// Setup the callbacks.
-		glfwSetWindowUserPointer(m_pWindow, this);
-		glfwSetKeyCallback(m_pWindow, KeyCallback);
-		glfwSetCursorPosCallback(m_pWindow, CursorPositionCallback);
-		glfwSetMouseButtonCallback(m_pWindow, MouseButtonCallback);
-		glfwSetScrollCallback(m_pWindow, MouseScrollCallback);
-		glfwSetCursorEnterCallback(m_pWindow, MouseCursorEnterCallback);
-		glfwSetDropCallback(m_pWindow, ApplicationDropPathCallback);
-		glfwSetWindowCloseCallback(m_pWindow, WindowCloseCallback);
-		glfwSetWindowSizeCallback(m_pWindow, ApplicationResizeCallback);
-	}
-
-	void Surface::createSurface()
-	{
-		FIREFLY_VALIDATE(glfwCreateWindowSurface(getInstance()->getInstance(), m_pWindow, nullptr, &m_vSurface), "Failed to create the Vulkan surface!");
 	}
 }

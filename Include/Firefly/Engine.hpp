@@ -18,11 +18,11 @@ namespace Firefly
 		 * Constructor.
 		 *
 		 * @param pInstance The instance pointer to which this object is bound to.
-		 * @param flag The queue flag bits.
+		 * @param flags The queue flag bits.
 		 * @param extensions The device extensions to activate.
 		 * @throws std::runtime_error If the pointer is null. It could also throw this same exception if there are no physical devices.
 		 */
-		explicit Engine(const std::shared_ptr<Instance>& pInstance, VkQueueFlags flag, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features = VkPhysicalDeviceFeatures());
+		explicit Engine(const std::shared_ptr<Instance>& pInstance, VkQueueFlags flags, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features = VkPhysicalDeviceFeatures());
 
 		/**
 		 * Virtual destructor.
@@ -119,61 +119,9 @@ namespace Firefly
 
 	private:
 		/**
-		 * Setup the physical device.
-		 *
-		 * @param extensions The required extension.
-		 * @param flag The queue flag bits.
-		 */
-		void setupPhysicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags);
-
-		/**
-		 * Setup the logical device.
-		 *
-		 * @param extensions The required extension.
-		 * @param flag The queue flag bits.
-		 */
-		void setupLogicalDevice(const std::vector<const char*>& extensions, const VkQueueFlags flags, const VkPhysicalDeviceFeatures& features);
-
-		/**
-		 * Check if the device supports the required extensions.
-		 *
-		 * @param vPhysicalDevice The physical device to check.
-		 * @param deviceExtensions The device extensions to check.
-		 * @return Boolean stating if its supported or not.
-		 */
-		bool checkDeviceExtensionSupport(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions) const;
-
-		/**
-		 * Check if the physical device is suitable for use.
-		 *
-		 * @param vPhysicalDevice The physical device to check.
-		 * @param deviceExtensions The device extensions to check with.
-		 * @param flags The device flags that are needed.
-		 * @return Boolean value stating if its viable or not.
-		 */
-		bool isPhysicalDeviceSuitable(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& deviceExtensions, const VkQueueFlags flags) const;
-
-		/**
-		 * Get all the functions needed by VMA.
-		 *
-		 * @return The functions.
-		 */
-		VmaVulkanFunctions getVulkanFunctions() const;
-
-		/**
-		 * Create the VMA Allocator.
-		 */
-		void createAllocator();
-
-		/**
 		 * Destroy the VMA Allocator.
 		 */
 		void destroyAllocator();
-
-		/**
-		 * Create the command pool.
-		 */
-		void createCommandPool();
 
 		/**
 		 * Destroy a created command pool.
@@ -181,23 +129,9 @@ namespace Firefly
 		void destroyCommandPool();
 
 		/**
-		 * Allocate the command buffer.
-		 */
-		void allocateCommandBuffer();
-
-		/**
 		 * Free the command buffer.
 		 */
 		void freeCommandBuffer();
-
-		/**
-		 * Resolve the physical device features.
-		 * This function will only enable the supported, requested features.
-		 *
-		 * @param features The user requested features.
-		 * @return The available features.
-		 */
-		VkPhysicalDeviceFeatures resolvePhysicalDeviceFeatures(const VkPhysicalDeviceFeatures& features) const;
 
 	private:
 		VkPhysicalDeviceProperties m_Properties = {};

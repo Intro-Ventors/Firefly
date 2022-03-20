@@ -55,6 +55,7 @@ TestEngine::TestEngine()
 	m_VertexResourcePackageRight->bindResources(1, { m_UniformBuffer });
 
 	m_Texture = Firefly::LoadImageFromFile(m_GraphicsEngine, "Assets/VikingRoom/texture.png");
+	m_Texture->changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	m_FragmentResourcePackage->bindResources(0, { m_Texture });
 }
 
