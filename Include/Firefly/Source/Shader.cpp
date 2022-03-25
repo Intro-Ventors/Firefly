@@ -243,6 +243,8 @@ namespace Firefly
 	std::shared_ptr<Shader> Shader::create(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& file, const VkShaderStageFlags flags)
 	{
 		const auto pointer = std::make_shared<Shader>(pEngine, flags);
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
 		pointer->initialize(file);
 
 		return pointer;
@@ -251,6 +253,8 @@ namespace Firefly
 	std::shared_ptr<Shader> Shader::create(const std::shared_ptr<Engine>& pEngine, const ShaderCode& shaderCode, const VkShaderStageFlags flags)
 	{
 		const auto pointer = std::make_shared<Shader>(pEngine, flags);
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
 		pointer->initialize(shaderCode);
 
 		return pointer;

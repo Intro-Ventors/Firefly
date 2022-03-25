@@ -259,7 +259,9 @@ namespace Firefly
 
 	std::shared_ptr<Firefly::Image> Image::create(const std::shared_ptr<Engine>& pEngine, const VkExtent3D extent, const VkFormat format, const ImageType type, const uint32_t layers /*= 1*/, const VkImageUsageFlags usageFlags /*= VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT*/)
 	{
-		auto pointer = std::make_shared<Image>(pEngine, extent, format, type, layers, usageFlags);
+		const auto pointer = std::make_shared<Image>(pEngine, extent, format, type, layers, usageFlags);
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
 		pointer->initialize();
 
 		return pointer;

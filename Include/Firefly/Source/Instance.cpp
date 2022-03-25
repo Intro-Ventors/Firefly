@@ -102,7 +102,9 @@ namespace Firefly
 
 	std::shared_ptr<Instance> Instance::create(const uint32_t vulkanAPIVersion, bool enableValidation)
 	{
-		auto pointer = std::make_shared<Instance>(vulkanAPIVersion, enableValidation);
+		const auto pointer = std::make_shared<Instance>(vulkanAPIVersion, enableValidation);
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
 		pointer->initialize();
 
 		return pointer;

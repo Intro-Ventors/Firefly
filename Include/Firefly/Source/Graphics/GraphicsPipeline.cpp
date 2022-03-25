@@ -66,6 +66,8 @@ namespace Firefly
 	std::shared_ptr<GraphicsPipeline> GraphicsPipeline::create(const std::shared_ptr<GraphicsEngine>& pEngine, const std::string& pipelineName, const std::vector<std::shared_ptr<Shader>>& pShaders, const std::shared_ptr<RenderTarget>& pRenderTarget, const GraphicsPipelineSpecification& specification)
 	{
 		const auto pointer = std::make_shared<GraphicsPipeline>(pEngine, pipelineName, pShaders, pRenderTarget, specification);
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
 		pointer->initialize();
 
 		return pointer;

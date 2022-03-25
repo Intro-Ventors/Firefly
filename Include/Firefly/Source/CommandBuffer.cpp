@@ -19,7 +19,10 @@ namespace Firefly
 
 	std::shared_ptr<CommandBuffer> CommandBuffer::create(const std::shared_ptr<Engine>& pEngine, const VkCommandPool vCommandPool, const VkCommandBuffer vCommandBuffer)
 	{
-		return std::make_shared<CommandBuffer>(pEngine, vCommandPool, vCommandBuffer);
+		const auto pointer = std::make_shared<CommandBuffer>(pEngine, vCommandPool, vCommandBuffer);
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
+		return pointer;
 	}
 
 	void CommandBuffer::begin()

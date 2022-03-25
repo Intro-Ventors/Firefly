@@ -22,7 +22,9 @@ namespace Firefly
 
 	std::shared_ptr<GraphicsEngine> GraphicsEngine::create(const std::shared_ptr<Instance>& pInstance)
 	{
-		auto pointer = std::make_shared<GraphicsEngine>(pInstance);
+		const auto pointer = std::make_shared<GraphicsEngine>(pInstance);
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
 		pointer->initialize(VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT, {}, GetFeatures());
 
 		return pointer;

@@ -33,6 +33,8 @@ namespace Firefly
 	std::shared_ptr<RenderTarget> RenderTarget::create(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount)
 	{
 		const auto pointer = std::make_shared<RenderTarget>(pEngine, extent, frameCount);
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
 		pointer->initialize(vColorFormat);
 
 		return pointer;

@@ -14,6 +14,8 @@
 #define FIREFLY_NO_COPY(name)						name(const name&) = delete;		name& operator=(const name&) = delete
 #define FIREFLY_NO_MOVE(name)						name(name&&) = delete;			name& operator=(name&&) = delete
 
+#define FIREFLY_VALIDATE_OBJECT(pointer)			if(!pointer) throw ::Firefly::BackendError("Failed to create the object!")
+
 namespace Firefly
 {
 	namespace Utility

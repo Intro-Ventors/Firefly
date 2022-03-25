@@ -18,6 +18,8 @@ namespace Firefly
 	std::shared_ptr<Buffer> Buffer::create(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type)
 	{
 		const auto pointer = std::make_shared<Buffer>(pEngine, size, type);
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
 		pointer->initialize();
 
 		return pointer;

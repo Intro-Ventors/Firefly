@@ -258,6 +258,8 @@ namespace Firefly
 	std::shared_ptr<Surface> Surface::create(const std::shared_ptr<Instance>& pInstance, const uint32_t width, const uint32_t height, std::string&& title)
 	{
 		const auto pointer = std::make_shared<Surface>(pInstance, width, height, std::move(title));
+		FIREFLY_VALIDATE_OBJECT(pointer);
+
 		pointer->initialize();
 
 		return pointer;
