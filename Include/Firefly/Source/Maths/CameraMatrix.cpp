@@ -4,7 +4,7 @@ namespace Firefly
 {
 	std::shared_ptr<Buffer> CameraMatrix::createBuffer(const std::shared_ptr<GraphicsEngine>& pEngine)
 	{
-		return std::make_shared<Buffer>(pEngine, sizeof(CameraMatrix), BufferType::Uniform);
+		return Buffer::create(pEngine, sizeof(CameraMatrix), BufferType::Uniform);
 	}
 	
 	void CameraMatrix::copyToBuffer(Buffer* pBuffer) const

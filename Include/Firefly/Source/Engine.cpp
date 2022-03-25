@@ -120,17 +120,121 @@ namespace /* anonymous */
 
 namespace Firefly
 {
-	Engine::Engine(const std::shared_ptr<Instance>& pInstance, VkQueueFlags flags, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features)
+	Engine::Engine(const std::shared_ptr<Instance>& pInstance)
 		: m_pInstance(pInstance)
 	{
-		// Validate the pointer.
-		if (!m_pInstance)
-			throw BackendError("The instance pointer should not be null!");
+	}
 
-		// Make sure that we have the transfer queue.
-		flags |= VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT;
+	Engine::~Engine()
+	{
+		// Destroy the memory manager.
+		destroyAllocator();
 
-		// Create the physical device.
+		// Free the command buffers.
+		freeCommandBuffer();
+
+		// Destroy the command pool.
+		destroyCommandPool();
+
+		// Destroy the logical device.
+		vkDestroyDevice(m_vLogicalDevice, nullptr);
+	}
+
+	VkCommandBuffer Engine::beginCommandBufferRecording()
+	{
+		// Skip if we're on the recording state.
+		if (m_bIsCommandBufferRecording)
+			return m_vCommandBuffer;
+
+		// Begin recording.
+		VkCommandBufferBeginInfo vBeginInfo = {};
+		vBeginInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		vBeginInfo.pNext = nullptr;
+		vBeginInfo.flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		FIREFLY_VALIDATE(m_DeviceTable.vkBeginCommandBuffer(m_vCommandBuffer, &vBeginInfo), "Failed to begin command buffer recording!");
+
+		m_bIsCommandBufferRecording = true;
+		return m_vCommandBuffer;
+	}
+
+	void Engine::endCommandBufferRecording()
+	{
+		// Skip if we weren't recording.
+		if (!m_bIsCommandBufferRecording)
+			return;
+
+		FIREFLY_VALIDATE(m_DeviceTable.vkEndCommandBuffer(m_vCommandBuffer), "Failed to end command buffer recording!");
+
+		m_bIsCommandBufferRecording = false;
+	}
+
+	void Engine::executeRecordedCommands(bool shouldWait)
+	{
+		// End recording if we haven't.
+		endCommandBufferRecording();
+
+		const auto queue = getQueue(VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
+
+		VkSubmitInfo vSubmitInfo = {};
+		vSubmitInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		vSubmitInfo.commandBufferCount = 1;
+		vSubmitInfo.pCommandBuffers = &m_vCommandBuffer;
+
+		VkFence vFence = VK_NULL_HANDLE;
+
+		// Create the fence if we need to wait.
+		if (shouldWait)
+		{
+			VkFenceCreateInfo vFenceCreateInfo = {};
+			vFenceCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+			vFenceCreateInfo.pNext = VK_NULL_HANDLE;
+			vFenceCreateInfo.flags = 0;
+
+			FIREFLY_VALIDATE(m_DeviceTable.vkCreateFence(getLogicalDevice(), &vFenceCreateInfo, nullptr, &vFence), "Failed to create the synchronization fence!");
+		}
+
+		// Submit the queue.
+		FIREFLY_VALIDATE(m_DeviceTable.vkQueueSubmit(queue.getQueue(), 1, &vSubmitInfo, vFence), "Failed to submit the queue!");
+
+		// Destroy the fence if we created it.
+		if (shouldWait)
+		{
+			FIREFLY_VALIDATE(m_DeviceTable.vkWaitForFences(getLogicalDevice(), 1, &vFence, VK_TRUE, std::numeric_limits<uint64_t>::max()), "Failed to wait for the fence!");
+			m_DeviceTable.vkDestroyFence(getLogicalDevice(), vFence, nullptr);
+		}
+	}
+
+	Queue Engine::getQueue(const VkQueueFlagBits flag) const
+	{
+		return FindQueue(m_Queues, flag);
+	}
+
+	VkFormat Engine::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) const
+	{
+		for (const auto format : candidates)
+		{
+			VkFormatProperties props;
+			vkGetPhysicalDeviceFormatProperties(getPhysicalDevice(), format, &props);
+
+			if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+				return format;
+			else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+				return format;
+		}
+
+		throw BackendError("Failed to find supported format!");
+	}
+
+	VkFormat Engine::findBestDepthFormat() const
+	{
+		return findSupportedFormat(
+			{ VkFormat::VK_FORMAT_D32_SFLOAT_S8_UINT, VkFormat::VK_FORMAT_D24_UNORM_S8_UINT, VkFormat::VK_FORMAT_D32_SFLOAT },
+			VkImageTiling::VK_IMAGE_TILING_OPTIMAL, VkFormatFeatureFlagBits::VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	}
+
+	void Engine::selectPhysicalDevice(VkQueueFlags flags, const std::vector<const char*>& extensions)
+	{
 		// Get the Vulkan instance.
 		const auto vInstance = m_pInstance->getInstance();
 
@@ -208,8 +312,42 @@ namespace Firefly
 
 		// If we found a suitable physical device, lets log it.
 		FIREFLY_LOG_INFO("Physical device found.");
+	}
 
-		// Create the logical device.
+	VmaVulkanFunctions Engine::getVmaFunctions() const
+	{
+		VmaVulkanFunctions functions = {};
+		functions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+		functions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+
+		functions.vkAllocateMemory = m_DeviceTable.vkAllocateMemory;
+		functions.vkBindBufferMemory = m_DeviceTable.vkBindBufferMemory;
+		functions.vkBindBufferMemory2KHR = m_DeviceTable.vkBindBufferMemory2;
+		functions.vkBindImageMemory = m_DeviceTable.vkBindImageMemory;
+		functions.vkBindImageMemory2KHR = m_DeviceTable.vkBindImageMemory2;
+		functions.vkCmdCopyBuffer = m_DeviceTable.vkCmdCopyBuffer;
+		functions.vkCreateBuffer = m_DeviceTable.vkCreateBuffer;
+		functions.vkCreateImage = m_DeviceTable.vkCreateImage;
+		functions.vkDestroyBuffer = m_DeviceTable.vkDestroyBuffer;
+		functions.vkDestroyImage = m_DeviceTable.vkDestroyImage;
+		functions.vkFlushMappedMemoryRanges = m_DeviceTable.vkFlushMappedMemoryRanges;
+		functions.vkFreeMemory = m_DeviceTable.vkFreeMemory;
+		functions.vkGetBufferMemoryRequirements = m_DeviceTable.vkGetBufferMemoryRequirements;
+		functions.vkGetBufferMemoryRequirements2KHR = m_DeviceTable.vkGetBufferMemoryRequirements2;
+		functions.vkGetImageMemoryRequirements = m_DeviceTable.vkGetImageMemoryRequirements;
+		functions.vkGetImageMemoryRequirements2KHR = m_DeviceTable.vkGetImageMemoryRequirements2;
+		functions.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
+		functions.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2;
+		functions.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
+		functions.vkInvalidateMappedMemoryRanges = m_DeviceTable.vkInvalidateMappedMemoryRanges;
+		functions.vkMapMemory = m_DeviceTable.vkMapMemory;
+		functions.vkUnmapMemory = m_DeviceTable.vkUnmapMemory;
+
+		return functions;
+	}
+
+	void Engine::createLogicalDevice(VkQueueFlags flags, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features)
+	{
 		// Initialize the queue families.
 		std::map<uint32_t, uint32_t> uniqueQueueFamilies;
 
@@ -309,46 +447,24 @@ namespace Firefly
 		// Setup queues.
 		for (auto& queue : m_Queues)
 			m_DeviceTable.vkGetDeviceQueue(m_vLogicalDevice, queue.getFamily().value(), 0, queue.getQueueAddr());
+	}
 
-		// Create the memory manager's allocator.
+	void Engine::createMemoryManager()
+	{
 		VmaAllocatorCreateInfo vmaCreateInfo = {};
 		vmaCreateInfo.instance = m_pInstance->getInstance();
 		vmaCreateInfo.physicalDevice = m_vPhysicalDevice;
 		vmaCreateInfo.device = m_vLogicalDevice;
 		vmaCreateInfo.vulkanApiVersion = m_pInstance->getVulkanVersion();
 
-		VmaVulkanFunctions functions = {};
-		functions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
-		functions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
-
-		functions.vkAllocateMemory = m_DeviceTable.vkAllocateMemory;
-		functions.vkBindBufferMemory = m_DeviceTable.vkBindBufferMemory;
-		functions.vkBindBufferMemory2KHR = m_DeviceTable.vkBindBufferMemory2;
-		functions.vkBindImageMemory = m_DeviceTable.vkBindImageMemory;
-		functions.vkBindImageMemory2KHR = m_DeviceTable.vkBindImageMemory2;
-		functions.vkCmdCopyBuffer = m_DeviceTable.vkCmdCopyBuffer;
-		functions.vkCreateBuffer = m_DeviceTable.vkCreateBuffer;
-		functions.vkCreateImage = m_DeviceTable.vkCreateImage;
-		functions.vkDestroyBuffer = m_DeviceTable.vkDestroyBuffer;
-		functions.vkDestroyImage = m_DeviceTable.vkDestroyImage;
-		functions.vkFlushMappedMemoryRanges = m_DeviceTable.vkFlushMappedMemoryRanges;
-		functions.vkFreeMemory = m_DeviceTable.vkFreeMemory;
-		functions.vkGetBufferMemoryRequirements = m_DeviceTable.vkGetBufferMemoryRequirements;
-		functions.vkGetBufferMemoryRequirements2KHR = m_DeviceTable.vkGetBufferMemoryRequirements2;
-		functions.vkGetImageMemoryRequirements = m_DeviceTable.vkGetImageMemoryRequirements;
-		functions.vkGetImageMemoryRequirements2KHR = m_DeviceTable.vkGetImageMemoryRequirements2;
-		functions.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
-		functions.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2;
-		functions.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
-		functions.vkInvalidateMappedMemoryRanges = m_DeviceTable.vkInvalidateMappedMemoryRanges;
-		functions.vkMapMemory = m_DeviceTable.vkMapMemory;
-		functions.vkUnmapMemory = m_DeviceTable.vkUnmapMemory;
-
+		const auto functions = getVmaFunctions();
 		vmaCreateInfo.pVulkanFunctions = &functions;
 
 		FIREFLY_VALIDATE(vmaCreateAllocator(&vmaCreateInfo, &m_vAllocator), "Failed to create the allocator!");
+	}
 
-		// Create the command pool.
+	void Engine::createCommandPool()
+	{
 		const auto queue = FindQueue(m_Queues, VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
 
 		VkCommandPoolCreateInfo vCommandPoolCreateInfo = {};
@@ -358,8 +474,10 @@ namespace Firefly
 		vCommandPoolCreateInfo.queueFamilyIndex = queue.getFamily().value();
 
 		FIREFLY_VALIDATE(m_DeviceTable.vkCreateCommandPool(m_vLogicalDevice, &vCommandPoolCreateInfo, nullptr, &m_vCommandPool), "Failed to create the command pool!");
+	}
 
-		// Allocate the command buffer.
+	void Engine::allocateCommandBuffer()
+	{
 		VkCommandBufferAllocateInfo vAllocateInfo = {};
 		vAllocateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		vAllocateInfo.pNext = VK_NULL_HANDLE;
@@ -368,114 +486,6 @@ namespace Firefly
 		vAllocateInfo.commandBufferCount = 1;
 
 		FIREFLY_VALIDATE(m_DeviceTable.vkAllocateCommandBuffers(m_vLogicalDevice, &vAllocateInfo, &m_vCommandBuffer), "Failed to allocate command buffer!");
-	}
-
-	Engine::~Engine()
-	{
-		// Destroy the memory manager.
-		destroyAllocator();
-
-		// Free the command buffers.
-		freeCommandBuffer();
-
-		// Destroy the command pool.
-		destroyCommandPool();
-
-		// Destroy the logical device.
-		vkDestroyDevice(m_vLogicalDevice, nullptr);
-	}
-
-	VkCommandBuffer Engine::beginCommandBufferRecording()
-	{
-		// Skip if we're on the recording state.
-		if (m_bIsCommandBufferRecording)
-			return m_vCommandBuffer;
-
-		// Begin recording.
-		VkCommandBufferBeginInfo vBeginInfo = {};
-		vBeginInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		vBeginInfo.pNext = nullptr;
-		vBeginInfo.flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		FIREFLY_VALIDATE(m_DeviceTable.vkBeginCommandBuffer(m_vCommandBuffer, &vBeginInfo), "Failed to begin command buffer recording!");
-
-		m_bIsCommandBufferRecording = true;
-		return m_vCommandBuffer;
-	}
-
-	void Engine::endCommandBufferRecording()
-	{
-		// Skip if we weren't recording.
-		if (!m_bIsCommandBufferRecording)
-			return;
-
-		FIREFLY_VALIDATE(m_DeviceTable.vkEndCommandBuffer(m_vCommandBuffer), "Failed to end command buffer recording!");
-
-		m_bIsCommandBufferRecording = false;
-	}
-
-	void Engine::executeRecordedCommands(bool shouldWait)
-	{
-		// End recording if we haven't.
-		endCommandBufferRecording();
-
-		const auto queue = getQueue(VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT);
-
-		VkSubmitInfo vSubmitInfo = {};
-		vSubmitInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		vSubmitInfo.commandBufferCount = 1;
-		vSubmitInfo.pCommandBuffers = &m_vCommandBuffer;
-
-		VkFence vFence = VK_NULL_HANDLE;
-
-		// Create the fence if we need to wait.
-		if (shouldWait)
-		{
-			VkFenceCreateInfo vFenceCreateInfo = {};
-			vFenceCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-			vFenceCreateInfo.pNext = VK_NULL_HANDLE;
-			vFenceCreateInfo.flags = 0;
-
-			FIREFLY_VALIDATE(m_DeviceTable.vkCreateFence(getLogicalDevice(), &vFenceCreateInfo, nullptr, &vFence), "Failed to create the synchronization fence!");
-		}
-
-		// Submit the queue.
-		FIREFLY_VALIDATE(m_DeviceTable.vkQueueSubmit(queue.getQueue(), 1, &vSubmitInfo, vFence), "Failed to submit the queue!");
-
-		// Destroy the fence if we created it.
-		if (shouldWait)
-		{
-			FIREFLY_VALIDATE(m_DeviceTable.vkWaitForFences(getLogicalDevice(), 1, &vFence, VK_TRUE, std::numeric_limits<uint64_t>::max()), "Failed to wait for the fence!");
-			m_DeviceTable.vkDestroyFence(getLogicalDevice(), vFence, nullptr);
-		}
-	}
-
-	Queue Engine::getQueue(const VkQueueFlagBits flag) const
-	{
-		return FindQueue(m_Queues, flag);
-	}
-
-	VkFormat Engine::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) const
-	{
-		for (const auto format : candidates) 
-		{
-			VkFormatProperties props;
-			vkGetPhysicalDeviceFormatProperties(getPhysicalDevice(), format, &props);
-
-			if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
-				return format;
-			else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
-				return format;
-		}
-
-		throw BackendError("Failed to find supported format!");
-	}
-
-	VkFormat Engine::findBestDepthFormat() const
-	{
-		return findSupportedFormat(
-			{ VkFormat::VK_FORMAT_D32_SFLOAT_S8_UINT, VkFormat::VK_FORMAT_D24_UNORM_S8_UINT, VkFormat::VK_FORMAT_D32_SFLOAT },
-			VkImageTiling::VK_IMAGE_TILING_OPTIMAL, VkFormatFeatureFlagBits::VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 	}
 
 	void Engine::destroyAllocator()
@@ -491,5 +501,30 @@ namespace Firefly
 	void Engine::freeCommandBuffer()
 	{
 		m_DeviceTable.vkFreeCommandBuffers(getLogicalDevice(), m_vCommandPool, 1, &m_vCommandBuffer);
+	}
+
+	void Engine::initialize(VkQueueFlags flags, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features)
+	{
+		// Validate the pointer.
+		if (!m_pInstance)
+			throw BackendError("The instance pointer should not be null!");
+
+		// Make sure that we have the transfer queue.
+		flags |= VkQueueFlagBits::VK_QUEUE_TRANSFER_BIT;
+
+		// Create the physical device.
+		selectPhysicalDevice(flags, extensions);
+
+		// Create the logical device.
+		createLogicalDevice(flags, extensions, features);
+
+		// Create the memory manager's allocator.
+		createMemoryManager();
+
+		// Create the command pool.
+		createCommandPool();
+
+		// Allocate the command buffer.
+		allocateCommandBuffer();
 	}
 }

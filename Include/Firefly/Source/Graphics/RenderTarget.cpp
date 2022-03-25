@@ -18,18 +18,66 @@ namespace Firefly
 		return vClearColors;
 	}
 
-	RenderTarget::RenderTarget(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount)
+	RenderTarget::RenderTarget(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const uint8_t frameCount)
 		: EngineBoundObject(pEngine), m_Extent(extent), m_FrameCount(frameCount)
 	{
-		m_vFrameBuffers.resize(frameCount);
-		m_pCommandBuffers.reserve(frameCount);
 
-		// Create the attachments.
-		m_pColorAttachment = Image::create(pEngine, extent, vColorFormat, ImageType::TwoDimension, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-		m_pColorAttachment->changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-		m_pDepthAttachment = Image::create(pEngine, extent, getEngine()->findBestDepthFormat(), ImageType::TwoDimension, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	}
 
-		// Create the render pass.
+	RenderTarget::~RenderTarget()
+	{
+		if (!isTerminated())
+			terminate();
+	}
+
+	std::shared_ptr<RenderTarget> RenderTarget::create(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount)
+	{
+		const auto pointer = std::make_shared<RenderTarget>(pEngine, extent, frameCount);
+		pointer->initialize(vColorFormat);
+
+		return pointer;
+	}
+
+	CommandBuffer* RenderTarget::setupFrame(const std::vector<VkClearValue>& vClearColors)
+	{
+		const auto& pCommandBuffer = m_pCommandBuffers[getFrameIndex()];
+		pCommandBuffer->begin();
+		pCommandBuffer->bindRenderTarget(this, vClearColors);
+
+		return pCommandBuffer.get();
+	}
+
+	void RenderTarget::submitFrame(const bool shouldWait)
+	{
+		auto pCommandBuffer = m_pCommandBuffers[getFrameIndex()];
+		pCommandBuffer->unbindRenderTarget();
+
+		pCommandBuffer->submit(shouldWait);
+		incrementFrameIndex();
+	}
+
+	void RenderTarget::terminate()
+	{
+		for (const auto& pCommandBuffer : m_pCommandBuffers)
+			pCommandBuffer->terminate();
+
+		getEngine()->getDeviceTable().vkDestroyCommandPool(getEngine()->getLogicalDevice(), m_vCommandPool, nullptr);
+		getEngine()->getDeviceTable().vkDestroyRenderPass(getEngine()->getLogicalDevice(), m_vRenderPass, nullptr);
+
+		for (auto vFrameBuffer : m_vFrameBuffers)
+			getEngine()->getDeviceTable().vkDestroyFramebuffer(getEngine()->getLogicalDevice(), vFrameBuffer, nullptr);
+
+		m_vFrameBuffers.clear();
+		m_pCommandBuffers.clear();
+
+		m_pColorAttachment->terminate();
+		m_pDepthAttachment->terminate();
+
+		toggleTerminated();
+	}
+	
+	void RenderTarget::createRenderPass()
+	{
 		// Crate attachment descriptions.
 		std::array<VkAttachmentDescription, 2> vAttachmentDescriptions;
 		vAttachmentDescriptions[0].flags = 0;
@@ -104,8 +152,10 @@ namespace Firefly
 		vRenderPassCreateInfo.pSubpasses = &vSubpassDescription;
 
 		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateRenderPass(getEngine()->getLogicalDevice(), &vRenderPassCreateInfo, nullptr, &m_vRenderPass), "Failed to create render pass!");
-
-		// Create the frame buffers.
+	}
+	
+	void RenderTarget::createFramebuffer()
+	{
 		VkFramebufferCreateInfo vFramebufferCreateInfo = {};
 		vFramebufferCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		vFramebufferCreateInfo.flags = 0;
@@ -126,8 +176,10 @@ namespace Firefly
 			vFramebufferCreateInfo.pAttachments = vImageViews.data();
 			FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateFramebuffer(getEngine()->getLogicalDevice(), &vFramebufferCreateInfo, nullptr, &m_vFrameBuffers[i]), "Failed to create the frame buffer!");
 		}
+	}
 
-		// Create the command pool.
+	void RenderTarget::createCommandPool()
+	{
 		const auto queue = getEngine()->getQueue(VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT);
 
 		VkCommandPoolCreateInfo vCommandPoolCreateInfo = {};
@@ -137,8 +189,10 @@ namespace Firefly
 		vCommandPoolCreateInfo.queueFamilyIndex = queue.getFamily().value();
 
 		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateCommandPool(getEngine()->getLogicalDevice(), &vCommandPoolCreateInfo, nullptr, &m_vCommandPool), "Failed to create the command pool!");
+	}
 
-		// Allocate command buffers.
+	void RenderTarget::allocateCommandBuffer()
+	{
 		// Create the allocate info structure.
 		VkCommandBufferAllocateInfo vAllocateInfo = {};
 		vAllocateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -154,53 +208,27 @@ namespace Firefly
 		for (const auto vCommandBuffer : vCommandBuffers)
 			m_pCommandBuffers.emplace_back(CommandBuffer::create(getEngine(), m_vCommandPool, vCommandBuffer));
 	}
-
-	RenderTarget::~RenderTarget()
+	
+	void RenderTarget::initialize(const VkFormat vColorFormat)
 	{
-		if (!isTerminated())
-			terminate();
-	}
+		m_vFrameBuffers.resize(m_FrameCount);
+		m_pCommandBuffers.reserve(m_FrameCount);
 
-	CommandBuffer* RenderTarget::setupFrame(const std::vector<VkClearValue>& vClearColors)
-	{
-		const auto& pCommandBuffer = m_pCommandBuffers[getFrameIndex()];
-		pCommandBuffer->begin();
-		pCommandBuffer->bindRenderTarget(this, vClearColors);
+		// Create the attachments.
+		m_pColorAttachment = Image::create(getEngine(), m_Extent, vColorFormat, ImageType::TwoDimension, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		m_pColorAttachment->changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		m_pDepthAttachment = Image::create(getEngine(), m_Extent, getEngine()->findBestDepthFormat(), ImageType::TwoDimension, 1, VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-		return pCommandBuffer.get();
-	}
+		// Create the render pass.
+		createRenderPass();
 
-	void RenderTarget::submitFrame(const bool shouldWait)
-	{
-		auto pCommandBuffer = m_pCommandBuffers[getFrameIndex()];
-		pCommandBuffer->unbindRenderTarget();
+		// Create the frame buffers.
+		createFramebuffer();
 
-		pCommandBuffer->submit(shouldWait);
-		incrementFrameIndex();
-	}
+		// Create the command pool.
+		createCommandPool();
 
-	std::shared_ptr<RenderTarget> RenderTarget::create(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount)
-	{
-		return std::make_shared<RenderTarget>(pEngine, extent, vColorFormat, frameCount);
-	}
-
-	void RenderTarget::terminate()
-	{
-		for (const auto& pCommandBuffer : m_pCommandBuffers)
-			pCommandBuffer->terminate();
-
-		getEngine()->getDeviceTable().vkDestroyCommandPool(getEngine()->getLogicalDevice(), m_vCommandPool, nullptr);
-		getEngine()->getDeviceTable().vkDestroyRenderPass(getEngine()->getLogicalDevice(), m_vRenderPass, nullptr);
-
-		for (auto vFrameBuffer : m_vFrameBuffers)
-			getEngine()->getDeviceTable().vkDestroyFramebuffer(getEngine()->getLogicalDevice(), vFrameBuffer, nullptr);
-
-		m_vFrameBuffers.clear();
-		m_pCommandBuffers.clear();
-
-		m_pColorAttachment->terminate();
-		m_pDepthAttachment->terminate();
-
-		toggleTerminated();
+		// Allocate command buffers.
+		allocateCommandBuffer();
 	}
 }

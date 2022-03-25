@@ -162,6 +162,12 @@ namespace Firefly
 		void registerMouseInput(const uint32_t button, const uint32_t action, const uint32_t mod);
 
 	private:
+		/**
+		 * Initialize the surface.
+		 */
+		void initialize();
+
+	private:
 		std::string m_Title;
 		const std::shared_ptr<Instance> m_pInstance = nullptr;
 

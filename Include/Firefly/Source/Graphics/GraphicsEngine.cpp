@@ -16,12 +16,15 @@ namespace /* anonymous */
 namespace Firefly
 {
 	GraphicsEngine::GraphicsEngine(const std::shared_ptr<Instance>& pInstance)
-		: Engine(pInstance, VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT, {}, GetFeatures())
+		: Engine(pInstance)
 	{
 	}
 
 	std::shared_ptr<GraphicsEngine> GraphicsEngine::create(const std::shared_ptr<Instance>& pInstance)
 	{
-		return std::make_shared<GraphicsEngine>(pInstance);
+		auto pointer = std::make_shared<GraphicsEngine>(pInstance);
+		pointer->initialize(VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT, {}, GetFeatures());
+
+		return pointer;
 	}
 }

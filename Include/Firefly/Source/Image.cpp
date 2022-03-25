@@ -46,89 +46,6 @@ namespace Firefly
 	Image::Image(const std::shared_ptr<Engine>& pEngine, const VkExtent3D extent, const VkFormat format, const ImageType type, const uint32_t layers, const VkImageUsageFlags usageFlags)
 		: EngineBoundObject(pEngine), m_Extent(extent), m_Format(format), m_Type(type), m_Layers(layers), m_UsageFlags(usageFlags)
 	{
-		// Create the image.
-		VkImageCreateInfo vImageCreateInfo = {};
-		vImageCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		vImageCreateInfo.pNext = nullptr;
-		vImageCreateInfo.extent = m_Extent;
-		vImageCreateInfo.format = m_Format;
-		vImageCreateInfo.arrayLayers = m_Layers;
-		vImageCreateInfo.initialLayout = m_CurrentLayout;
-		vImageCreateInfo.imageType = VkImageType::VK_IMAGE_TYPE_2D;
-		vImageCreateInfo.queueFamilyIndexCount = 0;
-		vImageCreateInfo.pQueueFamilyIndices = nullptr;
-		vImageCreateInfo.samples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
-		vImageCreateInfo.tiling = VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
-		vImageCreateInfo.usage = m_UsageFlags;
-		vImageCreateInfo.mipLevels = 1;
-
-		if (m_Type == ImageType::CubeMap)
-			vImageCreateInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-
-		VmaAllocationCreateInfo vAllocationCreateInfo = {};
-		vAllocationCreateInfo.usage = VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY;
-
-		FIREFLY_VALIDATE(vmaCreateImage(getEngine()->getAllocator(), &vImageCreateInfo, &vAllocationCreateInfo, &m_vImage, &m_Allocation, nullptr), "Failed to create the image!");
-
-		// Create the image view.
-		VkImageViewCreateInfo vImageViewCreateInfo = {};
-		vImageViewCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		vImageViewCreateInfo.pNext = nullptr;
-		vImageViewCreateInfo.flags = 0;
-		vImageViewCreateInfo.format = m_Format;
-		vImageViewCreateInfo.image = m_vImage;
-		vImageViewCreateInfo.viewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
-		vImageViewCreateInfo.subresourceRange.layerCount = m_Layers;
-		vImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-		vImageViewCreateInfo.subresourceRange.levelCount = 1;
-		vImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-		vImageViewCreateInfo.subresourceRange.aspectMask = getImageAspectFlags();
-		vImageViewCreateInfo.components.r = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
-		vImageViewCreateInfo.components.g = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
-		vImageViewCreateInfo.components.b = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
-		vImageViewCreateInfo.components.a = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
-
-		if (m_Type == ImageType::CubeMap)
-			vImageViewCreateInfo.viewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
-
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateImageView(getEngine()->getLogicalDevice(), &vImageViewCreateInfo, nullptr, &m_vImageView), "Failed to create the image view!");
-
-		// Resolve the sampler usage.
-		if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT)
-		{
-			VkSamplerAddressMode addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-			if (m_Type == ImageType::CubeMap)	// TODO
-				addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-			VkSamplerCreateInfo vSamplerCreateInfo = {};
-			vSamplerCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			vSamplerCreateInfo.pNext = nullptr;
-			vSamplerCreateInfo.magFilter = VkFilter::VK_FILTER_LINEAR;
-			vSamplerCreateInfo.minFilter = VkFilter::VK_FILTER_LINEAR;
-			vSamplerCreateInfo.addressModeU = addressMode;
-			vSamplerCreateInfo.addressModeV = addressMode;
-			vSamplerCreateInfo.addressModeW = addressMode;
-			vSamplerCreateInfo.anisotropyEnable = VK_TRUE;
-			vSamplerCreateInfo.maxAnisotropy = getEngine()->getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
-			vSamplerCreateInfo.borderColor = VkBorderColor::VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-			vSamplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
-			vSamplerCreateInfo.compareEnable = VK_FALSE;
-			vSamplerCreateInfo.compareOp = VkCompareOp::VK_COMPARE_OP_ALWAYS;
-			vSamplerCreateInfo.mipmapMode = VkSamplerMipmapMode::VK_SAMPLER_MIPMAP_MODE_LINEAR;
-			vSamplerCreateInfo.minLod = 0.0;
-			vSamplerCreateInfo.maxLod = 1;
-			vSamplerCreateInfo.mipLodBias = 0.0;
-
-			FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateSampler(getEngine()->getLogicalDevice(), &vSamplerCreateInfo, nullptr, &m_vSampler), "Failed to create the image sampler!");
-		}
-
-		// Resolve the depth stencil attachment usage.
-		else if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-		{
-			//changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);	// TODO
-			m_CurrentLayout = VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-		}
 	}
 
 	Image::~Image()
@@ -342,7 +259,10 @@ namespace Firefly
 
 	std::shared_ptr<Firefly::Image> Image::create(const std::shared_ptr<Engine>& pEngine, const VkExtent3D extent, const VkFormat format, const ImageType type, const uint32_t layers /*= 1*/, const VkImageUsageFlags usageFlags /*= VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VkImageUsageFlagBits::VK_IMAGE_USAGE_TRANSFER_DST_BIT*/)
 	{
-		return std::make_shared<Image>(pEngine, extent, format, type, layers, usageFlags);
+		auto pointer = std::make_shared<Image>(pEngine, extent, format, type, layers, usageFlags);
+		pointer->initialize();
+
+		return pointer;
 	}
 
 	uint8_t Image::getPixelSize() const
@@ -614,6 +534,106 @@ namespace Firefly
 		}
 
 		return 0;
+	}
+
+	void Image::initialize()
+	{
+		// Create the image.
+		createImage();
+
+		// Create the image view.
+		createImageView();
+
+		// Resolve the sampler usage.
+		if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_SAMPLED_BIT)
+			createImageSampler();
+
+		// Resolve the depth stencil attachment usage.
+		else if (m_UsageFlags & VkImageUsageFlagBits::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+		{
+			//changeImageLayout(VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);	// TODO
+			m_CurrentLayout = VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+		}
+	}
+
+	void Image::createImage()
+	{
+		VkImageCreateInfo vImageCreateInfo = {};
+		vImageCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		vImageCreateInfo.pNext = nullptr;
+		vImageCreateInfo.extent = m_Extent;
+		vImageCreateInfo.format = m_Format;
+		vImageCreateInfo.arrayLayers = m_Layers;
+		vImageCreateInfo.initialLayout = m_CurrentLayout;
+		vImageCreateInfo.imageType = VkImageType::VK_IMAGE_TYPE_2D;
+		vImageCreateInfo.queueFamilyIndexCount = 0;
+		vImageCreateInfo.pQueueFamilyIndices = nullptr;
+		vImageCreateInfo.samples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
+		vImageCreateInfo.tiling = VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
+		vImageCreateInfo.usage = m_UsageFlags;
+		vImageCreateInfo.mipLevels = 1;
+
+		if (m_Type == ImageType::CubeMap)
+			vImageCreateInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+		VmaAllocationCreateInfo vAllocationCreateInfo = {};
+		vAllocationCreateInfo.usage = VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY;
+
+		FIREFLY_VALIDATE(vmaCreateImage(getEngine()->getAllocator(), &vImageCreateInfo, &vAllocationCreateInfo, &m_vImage, &m_Allocation, nullptr), "Failed to create the image!");
+	}
+
+	void Image::createImageView()
+	{
+		VkImageViewCreateInfo vImageViewCreateInfo = {};
+		vImageViewCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		vImageViewCreateInfo.pNext = nullptr;
+		vImageViewCreateInfo.flags = 0;
+		vImageViewCreateInfo.format = m_Format;
+		vImageViewCreateInfo.image = m_vImage;
+		vImageViewCreateInfo.viewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
+		vImageViewCreateInfo.subresourceRange.layerCount = m_Layers;
+		vImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		vImageViewCreateInfo.subresourceRange.levelCount = 1;
+		vImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		vImageViewCreateInfo.subresourceRange.aspectMask = getImageAspectFlags();
+		vImageViewCreateInfo.components.r = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
+		vImageViewCreateInfo.components.g = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
+		vImageViewCreateInfo.components.b = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
+		vImageViewCreateInfo.components.a = VkComponentSwizzle::VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		if (m_Type == ImageType::CubeMap)
+			vImageViewCreateInfo.viewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
+
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateImageView(getEngine()->getLogicalDevice(), &vImageViewCreateInfo, nullptr, &m_vImageView), "Failed to create the image view!");
+	}
+
+	void Image::createImageSampler()
+	{
+		VkSamplerAddressMode addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+		if (m_Type == ImageType::CubeMap)	// TODO
+			addressMode = VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+		VkSamplerCreateInfo vSamplerCreateInfo = {};
+		vSamplerCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		vSamplerCreateInfo.pNext = nullptr;
+		vSamplerCreateInfo.magFilter = VkFilter::VK_FILTER_LINEAR;
+		vSamplerCreateInfo.minFilter = VkFilter::VK_FILTER_LINEAR;
+		vSamplerCreateInfo.addressModeU = addressMode;
+		vSamplerCreateInfo.addressModeV = addressMode;
+		vSamplerCreateInfo.addressModeW = addressMode;
+		vSamplerCreateInfo.anisotropyEnable = VK_TRUE;
+		vSamplerCreateInfo.maxAnisotropy = getEngine()->getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
+		vSamplerCreateInfo.borderColor = VkBorderColor::VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		vSamplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+		vSamplerCreateInfo.compareEnable = VK_FALSE;
+		vSamplerCreateInfo.compareOp = VkCompareOp::VK_COMPARE_OP_ALWAYS;
+		vSamplerCreateInfo.mipmapMode = VkSamplerMipmapMode::VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		vSamplerCreateInfo.minLod = 0.0;
+		vSamplerCreateInfo.maxLod = 1;
+		vSamplerCreateInfo.mipLodBias = 0.0;
+
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateSampler(getEngine()->getLogicalDevice(), &vSamplerCreateInfo, nullptr, &m_vSampler), "Failed to create the image sampler!");
 	}
 
 	VkImageAspectFlags Image::getImageAspectFlags() const

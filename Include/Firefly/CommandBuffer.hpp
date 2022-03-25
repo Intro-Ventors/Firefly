@@ -168,6 +168,11 @@ namespace Firefly
 
 	private:
 		/**
+		 * Initialize the command buffer.
+		 */
+		void initialize();
+
+		/**
 		 * Create the semaphores.
 		 */
 		void createSemaphores();

@@ -75,6 +75,12 @@ namespace Firefly
 		std::vector<const char*> getValidationLayers() const { return m_ValidationLayers; }
 
 	private:
+		/**
+		 * Initialize the instance.
+		 */
+		void initialize();
+
+	private:
 		std::vector<const char*> m_ValidationLayers;
 
 		VkInstance m_vInstance = VK_NULL_HANDLE;

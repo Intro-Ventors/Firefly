@@ -84,7 +84,32 @@ namespace Firefly
 		// Initialize volk.
 		FIREFLY_VALIDATE(volkInitialize(), "Failed to initialize volk!");
 		FIREFLY_LOG_INFO("Volk initialized.");
+	}
 
+	Instance::~Instance()
+	{
+		// Destroy the debug utils messenger if created.
+		if (m_bEnableValidation)
+		{
+			// Get the destroyer from the shared library.
+			const auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkDestroyDebugUtilsMessengerEXT"));
+			vkDestroyDebugUtilsMessengerEXT(m_vInstance, m_vDebugUtilsMessenger, nullptr);
+		}
+
+		// Destroy the Vulkan instance.
+		vkDestroyInstance(m_vInstance, nullptr);
+	}
+
+	std::shared_ptr<Instance> Instance::create(const uint32_t vulkanAPIVersion, bool enableValidation)
+	{
+		auto pointer = std::make_shared<Instance>(vulkanAPIVersion, enableValidation);
+		pointer->initialize();
+
+		return pointer;
+	}
+	
+	void Instance::initialize()
+	{
 		if (m_VulkanVersion == 0)
 			m_VulkanVersion = volkGetInstanceVersion();
 
@@ -154,24 +179,5 @@ namespace Firefly
 			FIREFLY_VALIDATE(vkCreateDebugUtilsMessengerEXT(m_vInstance, &vDebugCreateInfo, nullptr, &m_vDebugUtilsMessenger), "Failed to create the debug messenger.");
 			FIREFLY_LOG_INFO("Debug messenger created.");
 		}
-	}
-
-	Instance::~Instance()
-	{
-		// Destroy the debug utils messenger if created.
-		if (m_bEnableValidation)
-		{
-			// Get the destroyer from the shared library.
-			const auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_vInstance, "vkDestroyDebugUtilsMessengerEXT"));
-			vkDestroyDebugUtilsMessengerEXT(m_vInstance, m_vDebugUtilsMessenger, nullptr);
-		}
-
-		// Destroy the Vulkan instance.
-		vkDestroyInstance(m_vInstance, nullptr);
-	}
-
-	std::shared_ptr<Instance> Instance::create(const uint32_t vulkanAPIVersion, bool enableValidation)
-	{
-		return std::make_shared<Instance>(vulkanAPIVersion, enableValidation);
 	}
 }

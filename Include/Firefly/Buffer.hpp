@@ -101,6 +101,12 @@ namespace Firefly
 		BufferType getType() const { return m_Type; }
 
 	private:
+		/**
+		 * Initialize the buffer.
+		 */
+		void initialize();
+
+	private:
 		const uint64_t m_Size = 0;
 
 		VmaAllocation m_Allocation = nullptr;

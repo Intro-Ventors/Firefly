@@ -49,17 +49,7 @@ namespace Firefly
 		 * @param flags The shader stage flags.
 		 * @param binding The shader bindings.
 		 */
-		explicit Shader(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& file, const VkShaderStageFlags flags);
-
-		/**
-		 * Constructor.
-		 *
-		 * @param pEngine The engine pointer.
-		 * @param shaderCode The shader source code.
-		 * @param flags The shader stage flags.
-		 * @param binding The shader bindings.
-		 */
-		explicit Shader(const std::shared_ptr<Engine>& pEngine, const ShaderCode& shaderCode, const VkShaderStageFlags flags);
+		explicit Shader(const std::shared_ptr<Engine>& pEngine, const VkShaderStageFlags flags);
 
 		/**
 		 * Destructor.
@@ -70,7 +60,7 @@ namespace Firefly
 		 * Create a new shader object.
 		 *
 		 * @param pEngine The engine pointer.
-		 * @param path The shader source path.
+		 * @param file The shader source path.
 		 * @param flags The shader stage flags.
 		 * @param binding The shader bindings.
 		 * @return The shader object.
@@ -157,6 +147,35 @@ namespace Firefly
 		 * @return The push constants.
 		 */
 		std::vector<VkPushConstantRange> getPushConstants() const { return m_PushConstants; }
+
+	private:
+		/**
+		 * Create the shader module.
+		 * 
+		 * @param code The shader code.
+		 */
+		void createShaderModule(const ShaderCode& code);
+
+		/**
+		 * Create the descriptor set layout.
+		 * 
+		 * @param code The shader code.
+		 */
+		void createDescriptorSetLayout(const ShaderCode& code);
+
+		/**
+		 * Initialize the shader.
+		 *
+		 * @param file The shader file path.
+		 */
+		void initialize(const std::filesystem::path& file);
+
+		/**
+		 * Initialize the shader.
+		 *
+		 * @param shaderCode The shader source code.
+		 */
+		void initialize(const ShaderCode& shaderCode);
 
 	private:
 		std::unordered_map<std::string, ShaderBinding> m_Bindings;

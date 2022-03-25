@@ -144,6 +144,26 @@ namespace Firefly
 
 	private:
 		/**
+		 * Create the image.
+		 */
+		void createImage();
+
+		/**
+		 * Create the image view.
+		 */
+		void createImageView();
+
+		/**
+		 * Create the image sampler.
+		 */
+		void createImageSampler();
+
+		/**
+		 * Initialize the image.
+		 */
+		void initialize();
+
+		/**
 		 * Check if our format has a stencil component.
 		 *
 		 * @return Boolean stating if we do or not.

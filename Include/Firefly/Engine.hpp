@@ -18,11 +18,8 @@ namespace Firefly
 		 * Constructor.
 		 *
 		 * @param pInstance The instance pointer to which this object is bound to.
-		 * @param flags The queue flag bits.
-		 * @param extensions The device extensions to activate.
-		 * @throws std::runtime_error If the pointer is null. It could also throw this same exception if there are no physical devices.
 		 */
-		explicit Engine(const std::shared_ptr<Instance>& pInstance, VkQueueFlags flags, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features = VkPhysicalDeviceFeatures());
+		explicit Engine(const std::shared_ptr<Instance>& pInstance);
 
 		/**
 		 * Virtual destructor.
@@ -119,6 +116,45 @@ namespace Firefly
 
 	private:
 		/**
+		 * Select a suitable physical device.
+		 *
+		 * @param flags The queue flag bits.
+		 * @param extensions The device extensions to activate.
+		 */
+		void selectPhysicalDevice(VkQueueFlags flags, const std::vector<const char*>& extensions);
+
+		/**
+		 * Get the VMA functions.
+		 *
+		 * @return The functions needed by VMA.
+		 */
+		VmaVulkanFunctions getVmaFunctions() const;
+
+		/**
+		 * Create the logical device.
+		 *
+		 * @param flags The queue flag bits.
+		 * @param extensions The device extensions to activate.
+		 * @param features The logical device features to enable.
+		 */
+		void createLogicalDevice(VkQueueFlags flags, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features);
+
+		/**
+		 * Create the memory manager.
+		 */
+		void createMemoryManager();
+
+		/**
+		 * Create the command pool.
+		 */
+		void createCommandPool();
+
+		/**s
+		 * Allocate the command buffer.
+		 */
+		void allocateCommandBuffer();
+
+		/**
 		 * Destroy the VMA Allocator.
 		 */
 		void destroyAllocator();
@@ -132,6 +168,17 @@ namespace Firefly
 		 * Free the command buffer.
 		 */
 		void freeCommandBuffer();
+
+	protected:
+		/**
+		 * Initialize the engine.
+		 *
+		 * @param flags The queue flag bits.
+		 * @param extensions The device extensions to activate.
+		 * @param features The logical device features to enable.
+		 * @throws std::runtime_error If the pointer is null. It could also throw this same exception if there are no physical devices.
+		 */
+		virtual void initialize(VkQueueFlags flags, const std::vector<const char*>& extensions, const VkPhysicalDeviceFeatures& features = VkPhysicalDeviceFeatures());
 
 	private:
 		VkPhysicalDeviceProperties m_Properties = {};

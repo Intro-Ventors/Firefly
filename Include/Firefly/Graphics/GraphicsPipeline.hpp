@@ -83,6 +83,21 @@ namespace Firefly
 
 	private:
 		/**
+		 * Create the pipeline layout.
+		 */
+		void createPipelineLayout();
+
+		/**
+		 * Create the pipeline.
+		 */
+		void createPipeline();
+
+		/**
+		 * Initialize the graphics pipeline.
+		 */
+		void initialize();
+
+		/**
 		 * Check if a shader exists in the pipeline.
 		 *
 		 * @param pShader The shader to check.

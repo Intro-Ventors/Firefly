@@ -229,69 +229,9 @@ namespace /* anonymous */
 
 namespace Firefly
 {
-	Shader::Shader(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& file, const VkShaderStageFlags flags)
+	Shader::Shader(const std::shared_ptr<Engine>& pEngine, const VkShaderStageFlags flags)
 		: EngineBoundObject(pEngine), m_Flags(flags)
 	{
-		// Load the shader data.
-		const auto shaderCode = LoadCode(file);
-
-		// Create the shader module.
-		VkShaderModuleCreateInfo vShaderModuleCreateInfo = {};
-		vShaderModuleCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		vShaderModuleCreateInfo.pNext = VK_NULL_HANDLE;
-		vShaderModuleCreateInfo.flags = 0;
-		vShaderModuleCreateInfo.codeSize = shaderCode.size();
-		vShaderModuleCreateInfo.pCode = shaderCode.data();
-
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateShaderModule(getEngine()->getLogicalDevice(), &vShaderModuleCreateInfo, nullptr, &m_vShaderModule), "Failed to create the shader module!");
-
-		// Perform reflection.
-		auto result = PerformReflection(shaderCode, flags);
-		m_InputAttributes = std::move(result.m_InputAttributes);
-		m_OutputAttributes = std::move(result.m_OutputAttributes);
-		m_Bindings = std::move(result.m_Bindings);
-		m_PushConstants = std::move(result.m_PushConstants);
-
-		// Create the descriptor set layout.
-		VkDescriptorSetLayoutCreateInfo vDescriptorSetLayoutCreateInfo = {};
-		vDescriptorSetLayoutCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		vDescriptorSetLayoutCreateInfo.pNext = nullptr;
-		vDescriptorSetLayoutCreateInfo.flags = 0;
-		vDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(result.m_LayoutBindings.size());
-		vDescriptorSetLayoutCreateInfo.pBindings = result.m_LayoutBindings.data();
-
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateDescriptorSetLayout(getEngine()->getLogicalDevice(), &vDescriptorSetLayoutCreateInfo, nullptr, &m_vDescriptorSetLayout), "Failed to create descriptor set layout!");
-	}
-	
-	Shader::Shader(const std::shared_ptr<Engine>& pEngine, const ShaderCode& shaderCode, const VkShaderStageFlags flags)
-		: EngineBoundObject(pEngine), m_Flags(flags)
-	{
-		// Create the shader module.
-		VkShaderModuleCreateInfo vShaderModuleCreateInfo = {};
-		vShaderModuleCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		vShaderModuleCreateInfo.pNext = VK_NULL_HANDLE;
-		vShaderModuleCreateInfo.flags = 0;
-		vShaderModuleCreateInfo.codeSize = shaderCode.size();
-		vShaderModuleCreateInfo.pCode = shaderCode.data();
-
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateShaderModule(getEngine()->getLogicalDevice(), &vShaderModuleCreateInfo, nullptr, &m_vShaderModule), "Failed to create the shader module!");
-
-		// Perform reflection.
-		auto result = PerformReflection(shaderCode, flags);
-		m_InputAttributes = std::move(result.m_InputAttributes);
-		m_OutputAttributes = std::move(result.m_OutputAttributes);
-		m_Bindings = std::move(result.m_Bindings);
-		m_PushConstants = std::move(result.m_PushConstants);
-
-		// Create the descriptor set layout.
-		VkDescriptorSetLayoutCreateInfo vDescriptorSetLayoutCreateInfo = {};
-		vDescriptorSetLayoutCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		vDescriptorSetLayoutCreateInfo.pNext = nullptr;
-		vDescriptorSetLayoutCreateInfo.flags = 0;
-		vDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(result.m_LayoutBindings.size());
-		vDescriptorSetLayoutCreateInfo.pBindings = result.m_LayoutBindings.data();
-
-		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateDescriptorSetLayout(getEngine()->getLogicalDevice(), &vDescriptorSetLayoutCreateInfo, nullptr, &m_vDescriptorSetLayout), "Failed to create descriptor set layout!");
 	}
 	
 	Shader::~Shader()
@@ -302,12 +242,18 @@ namespace Firefly
 	
 	std::shared_ptr<Shader> Shader::create(const std::shared_ptr<Engine>& pEngine, const std::filesystem::path& file, const VkShaderStageFlags flags)
 	{
-		return std::make_shared<Shader>(pEngine, file, flags);
+		const auto pointer = std::make_shared<Shader>(pEngine, flags);
+		pointer->initialize(file);
+
+		return pointer;
 	}
 	
 	std::shared_ptr<Shader> Shader::create(const std::shared_ptr<Engine>& pEngine, const ShaderCode& shaderCode, const VkShaderStageFlags flags)
 	{
-		return std::make_shared<Shader>(pEngine, shaderCode, flags);
+		const auto pointer = std::make_shared<Shader>(pEngine, flags);
+		pointer->initialize(shaderCode);
+
+		return pointer;
 	}
 	
 	void Shader::terminate()
@@ -315,5 +261,56 @@ namespace Firefly
 		getEngine()->getDeviceTable().vkDestroyDescriptorSetLayout(getEngine()->getLogicalDevice(), m_vDescriptorSetLayout, nullptr);
 		getEngine()->getDeviceTable().vkDestroyShaderModule(getEngine()->getLogicalDevice(), m_vShaderModule, nullptr);
 		toggleTerminated();
+	}
+
+	void Shader::createShaderModule(const ShaderCode& code)
+	{
+		VkShaderModuleCreateInfo vShaderModuleCreateInfo = {};
+		vShaderModuleCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		vShaderModuleCreateInfo.pNext = VK_NULL_HANDLE;
+		vShaderModuleCreateInfo.flags = 0;
+		vShaderModuleCreateInfo.codeSize = code.size();
+		vShaderModuleCreateInfo.pCode = code.data();
+
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateShaderModule(getEngine()->getLogicalDevice(), &vShaderModuleCreateInfo, nullptr, &m_vShaderModule), "Failed to create the shader module!");
+	}
+
+	void Shader::createDescriptorSetLayout(const ShaderCode& code)
+	{
+		auto result = PerformReflection(code, m_Flags);
+		m_InputAttributes = std::move(result.m_InputAttributes);
+		m_OutputAttributes = std::move(result.m_OutputAttributes);
+		m_Bindings = std::move(result.m_Bindings);
+		m_PushConstants = std::move(result.m_PushConstants);
+
+		VkDescriptorSetLayoutCreateInfo vDescriptorSetLayoutCreateInfo = {};
+		vDescriptorSetLayoutCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		vDescriptorSetLayoutCreateInfo.pNext = nullptr;
+		vDescriptorSetLayoutCreateInfo.flags = 0;
+		vDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(result.m_LayoutBindings.size());
+		vDescriptorSetLayoutCreateInfo.pBindings = result.m_LayoutBindings.data();
+
+		FIREFLY_VALIDATE(getEngine()->getDeviceTable().vkCreateDescriptorSetLayout(getEngine()->getLogicalDevice(), &vDescriptorSetLayoutCreateInfo, nullptr, &m_vDescriptorSetLayout), "Failed to create descriptor set layout!");
+	}
+
+	void Shader::initialize(const std::filesystem::path& file)
+	{
+		// Load the shader data.
+		const auto shaderCode = LoadCode(file);
+
+		// Create the shader module.
+		createShaderModule(shaderCode);
+
+		// Create the descriptor set layout.
+		createDescriptorSetLayout(shaderCode);
+	}
+
+	void Shader::initialize(const ShaderCode& shaderCode)
+	{
+		// Create the shader module.
+		createShaderModule(shaderCode);
+
+		// Create the descriptor set layout.
+		createDescriptorSetLayout(shaderCode);
 	}
 }

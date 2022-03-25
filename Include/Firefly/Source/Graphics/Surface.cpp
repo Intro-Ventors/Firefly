@@ -245,9 +245,83 @@ namespace Firefly
 		// Check if the instance pointer is valid.
 		if (!pInstance)
 			throw BackendError("The instance pointer should not be null!");
+	}
 
+	Surface::~Surface()
+	{
+		if (!m_IsTerminated)
+			terminate();
+
+		glfwTerminate();
+	}
+
+	std::shared_ptr<Surface> Surface::create(const std::shared_ptr<Instance>& pInstance, const uint32_t width, const uint32_t height, std::string&& title)
+	{
+		const auto pointer = std::make_shared<Surface>(pInstance, width, height, std::move(title));
+		pointer->initialize();
+
+		return pointer;
+	}
+
+	VkSurfaceCapabilitiesKHR Surface::getCapabilities(const Engine* pEngine) const
+	{
+		VkSurfaceCapabilitiesKHR vCapabilities = {};
+		FIREFLY_VALIDATE(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pEngine->getPhysicalDevice(), m_vSurface, &vCapabilities), "Failed to get the surface capabilities!");
+
+		return vCapabilities;
+	}
+
+	void Surface::update() const
+	{
+		glfwPollEvents();
+	}
+
+	void Surface::terminate()
+	{
+		vkDestroySurfaceKHR(getInstance()->getInstance(), m_vSurface, nullptr);
+		glfwDestroyWindow(m_pWindow);
+		m_IsTerminated = true;
+	}
+
+	void Surface::resize(const uint32_t width, const uint32_t height)
+	{
+		glfwSetWindowSize(m_pWindow, static_cast<int>(width), static_cast<int>(height));
+		m_Width = width;
+		m_Height = height;
+	}
+
+	void Surface::setFullScreenMode()
+	{
+		glfwMaximizeWindow(m_pWindow);
+		m_FullScreenMode = true;
+	}
+
+	void Surface::exitFullScreenMode()
+	{
+		glfwRestoreWindow(m_pWindow);
+		m_FullScreenMode = true;
+	}
+
+	void Surface::setTitle(const std::string& title)
+	{
+		glfwSetWindowTitle(m_pWindow, title.c_str());
+		m_Title = title;
+	}
+
+	void Surface::registerKeyInput(const uint32_t keyCode, const uint32_t action, const uint32_t mod)
+	{
+		m_KeyInputs.emplace_back(GetKeyInput(keyCode, action, mod));
+	}
+
+	void Surface::registerMouseInput(const uint32_t button, const uint32_t action, const uint32_t mod)
+	{
+		m_MouseInputs.emplace_back(GetMouseInput(button, action, mod));
+	}
+	
+	void Surface::initialize()
+	{
 		// If the width or height is 0, we enter the full screen mode.
-		if (width == 0 || height == 0)
+		if (m_Width == 0 || m_Height == 0)
 			m_FullScreenMode = true;
 
 		// Setup glfw.
@@ -312,73 +386,5 @@ namespace Firefly
 
 		// Create the surface.
 		FIREFLY_VALIDATE(glfwCreateWindowSurface(getInstance()->getInstance(), m_pWindow, nullptr, &m_vSurface), "Failed to create the Vulkan surface!");
-	}
-
-	Surface::~Surface()
-	{
-		if (!m_IsTerminated)
-			terminate();
-
-		glfwTerminate();
-	}
-
-	std::shared_ptr<Surface> Surface::create(const std::shared_ptr<Instance>& pInstance, const uint32_t width, const uint32_t height, std::string&& title)
-	{
-		return std::make_shared<Surface>(pInstance, width, height, std::move(title));
-	}
-
-	VkSurfaceCapabilitiesKHR Surface::getCapabilities(const Engine* pEngine) const
-	{
-		VkSurfaceCapabilitiesKHR vCapabilities = {};
-		FIREFLY_VALIDATE(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pEngine->getPhysicalDevice(), m_vSurface, &vCapabilities), "Failed to get the surface capabilities!");
-
-		return vCapabilities;
-	}
-
-	void Surface::update() const
-	{
-		glfwPollEvents();
-	}
-
-	void Surface::terminate()
-	{
-		vkDestroySurfaceKHR(getInstance()->getInstance(), m_vSurface, nullptr);
-		glfwDestroyWindow(m_pWindow);
-		m_IsTerminated = true;
-	}
-
-	void Surface::resize(const uint32_t width, const uint32_t height)
-	{
-		glfwSetWindowSize(m_pWindow, static_cast<int>(width), static_cast<int>(height));
-		m_Width = width;
-		m_Height = height;
-	}
-
-	void Surface::setFullScreenMode()
-	{
-		glfwMaximizeWindow(m_pWindow);
-		m_FullScreenMode = true;
-	}
-
-	void Surface::exitFullScreenMode()
-	{
-		glfwRestoreWindow(m_pWindow);
-		m_FullScreenMode = true;
-	}
-
-	void Surface::setTitle(const std::string& title)
-	{
-		glfwSetWindowTitle(m_pWindow, title.c_str());
-		m_Title = title;
-	}
-
-	void Surface::registerKeyInput(const uint32_t keyCode, const uint32_t action, const uint32_t mod)
-	{
-		m_KeyInputs.emplace_back(GetKeyInput(keyCode, action, mod));
-	}
-
-	void Surface::registerMouseInput(const uint32_t button, const uint32_t action, const uint32_t mod)
-	{
-		m_MouseInputs.emplace_back(GetMouseInput(button, action, mod));
 	}
 }

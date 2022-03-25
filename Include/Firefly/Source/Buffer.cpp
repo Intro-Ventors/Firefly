@@ -7,49 +7,6 @@ namespace Firefly
 	Buffer::Buffer(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type)
 		: EngineBoundObject(pEngine), m_Size(size), m_Type(type)
 	{
-		// Validate the inputs.
-		if (size == 0)
-			throw BackendError("Cannot create a buffer with 0 size!");
-
-		else if (type == BufferType::Unknown)
-			throw BackendError("The buffer type cannot be unknown!");
-
-		VmaAllocationCreateFlags vmaFlags = 0;
-
-		// If the memory usage is not set, we automatically select the best for the given type.
-		switch (type)
-		{
-		case Firefly::BufferType::Vertex:
-		case Firefly::BufferType::Index:
-			m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-			break;
-
-		case Firefly::BufferType::Uniform:
-		case Firefly::BufferType::Staging:
-			m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
-			vmaFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
-			break;
-
-		default:
-			throw BackendError("Invalid buffer type!");
-		}
-
-		// Create the buffer.
-		VkBufferCreateInfo vCreateInfo = {};
-		vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		vCreateInfo.pNext = nullptr;
-		vCreateInfo.flags = 0;
-		vCreateInfo.size = m_Size;
-		vCreateInfo.sharingMode = VkSharingMode::VK_SHARING_MODE_EXCLUSIVE;
-		vCreateInfo.queueFamilyIndexCount = 0;
-		vCreateInfo.pQueueFamilyIndices = nullptr;
-		vCreateInfo.usage = static_cast<VkBufferUsageFlags>(type);
-
-		VmaAllocationCreateInfo vmaAllocationCreateInfo = {};
-		vmaAllocationCreateInfo.usage = m_MemoryUsage;
-		vmaAllocationCreateInfo.flags = vmaFlags;
-
-		FIREFLY_VALIDATE(vmaCreateBuffer(getEngine()->getAllocator(), &vCreateInfo, &vmaAllocationCreateInfo, &m_vBuffer, &m_Allocation, nullptr), "Failed to create the buffer!");
 	}
 
 	Buffer::~Buffer()
@@ -60,7 +17,10 @@ namespace Firefly
 
 	std::shared_ptr<Buffer> Buffer::create(const std::shared_ptr<Engine>& pEngine, const uint64_t size, const BufferType type)
 	{
-		return std::make_shared<Buffer>(pEngine, size, type);
+		const auto pointer = std::make_shared<Buffer>(pEngine, size, type);
+		pointer->initialize();
+
+		return pointer;
 	}
 	
 	void Buffer::fromBuffer(const Buffer* pBuffer) const
@@ -112,5 +72,49 @@ namespace Firefly
 			vmaUnmapMemory(getEngine()->getAllocator(), m_Allocation);
 			m_bIsMapped = false;
 		}
+	}
+	
+	void Buffer::initialize()
+	{
+		// Validate the inputs.
+		if (m_Size == 0)
+			throw BackendError("Cannot create a buffer with 0 size!");
+
+		VmaAllocationCreateFlags vmaFlags = 0;
+
+		// If the memory usage is not set, we automatically select the best for the given type.
+		switch (m_Type)
+		{
+		case Firefly::BufferType::Vertex:
+		case Firefly::BufferType::Index:
+			m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+			break;
+
+		case Firefly::BufferType::Uniform:
+		case Firefly::BufferType::Staging:
+			m_MemoryUsage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+			vmaFlags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+			break;
+
+		default:
+			throw BackendError("Invalid buffer type!");
+		}
+
+		// Create the buffer.
+		VkBufferCreateInfo vCreateInfo = {};
+		vCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		vCreateInfo.pNext = nullptr;
+		vCreateInfo.flags = 0;
+		vCreateInfo.size = m_Size;
+		vCreateInfo.sharingMode = VkSharingMode::VK_SHARING_MODE_EXCLUSIVE;
+		vCreateInfo.queueFamilyIndexCount = 0;
+		vCreateInfo.pQueueFamilyIndices = nullptr;
+		vCreateInfo.usage = static_cast<VkBufferUsageFlags>(m_Type);
+
+		VmaAllocationCreateInfo vmaAllocationCreateInfo = {};
+		vmaAllocationCreateInfo.usage = m_MemoryUsage;
+		vmaAllocationCreateInfo.flags = vmaFlags;
+
+		FIREFLY_VALIDATE(vmaCreateBuffer(getEngine()->getAllocator(), &vCreateInfo, &vmaAllocationCreateInfo, &m_vBuffer, &m_Allocation, nullptr), "Failed to create the buffer!");
 	}
 }

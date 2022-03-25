@@ -38,15 +38,26 @@ namespace Firefly
 		 *
 		 * @param pEngine The engine pointer.
 		 * @param extent The frame buffer extent.
-		 * @param vColorFormat The color format to use.
+		 * 
 		 * @param frameCount The number of frame buffers to use. Default is 2.
 		 */
-		explicit RenderTarget(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount = 2);
+		explicit RenderTarget(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const uint8_t frameCount = 2);
 
 		/**
 		 * Destructor.
 		 */
 		~RenderTarget() override;
+
+		/**
+		 * Create a new render target object.
+		 *
+		 * @param pEngine The engine pointer.
+		 * @param extent The frame buffer extent.
+		 * @param vColorFormat The color format to use.
+		 * @param frameCount The number of frame buffers to use. Default is 2.
+		 * @return The render target pointer.
+		 */
+		static std::shared_ptr<RenderTarget> create(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount = 2);
 
 		/**
 		 * Setup the new frame.
@@ -62,17 +73,6 @@ namespace Firefly
 		 * @param shouldWait Whether or not if we should wait till execution ends. Default is true.
 		 */
 		void submitFrame(const bool shouldWait = true);
-
-		/**
-		 * Create a new render target object.
-		 *
-		 * @param pEngine The engine pointer.
-		 * @param extent The frame buffer extent.
-		 * @param vColorFormat The color format to use.
-		 * @param frameCount The number of frame buffers to use. Default is 2.
-		 * @return The render target pointer.
-		 */
-		static std::shared_ptr<RenderTarget> create(const std::shared_ptr<GraphicsEngine>& pEngine, const VkExtent3D extent, const VkFormat vColorFormat, const uint8_t frameCount = 2);
 
 		/**
 		 * Terminate the render target.
@@ -139,6 +139,34 @@ namespace Firefly
 		 * Increment the frame index.
 		 */
 		void incrementFrameIndex() { m_FrameIndex = ++m_FrameIndex % m_FrameCount; }
+
+	private:
+		/**
+		 * Create the render pass.
+		 */
+		void createRenderPass();
+
+		/**
+		 * Create the frame buffer.
+		 */
+		void createFramebuffer();
+
+		/**
+		 * Create the command pool.
+		 */
+		void createCommandPool();
+
+		/**
+		 * Allocate the command buffer.
+		 */
+		void allocateCommandBuffer();
+
+		/**
+		 * Initialize the render target.
+		 * 
+		 * @param vColorFormat The color format to use.
+		 */
+		void initialize(const VkFormat vColorFormat);
 
 	private:
 		const VkExtent3D m_Extent;
